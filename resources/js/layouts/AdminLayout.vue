@@ -1,36 +1,83 @@
 <script setup lang="ts">
+import { Link, router, usePage } from '@inertiajs/vue3';
+import { BookOpen, LayoutDashboard, ScrollText, Settings, UserRound } from '@lucide/vue';
+import type { SharedPageProps } from '@/types';
+
+const page = usePage<SharedPageProps>();
+const user = page.props.auth.user;
+
 const menu = [
-    'Dashboard',
-    'Ebook',
-    'Kategori',
-    'Penulis',
-    'Penerbit',
-    'Koleksi',
-    'Storage',
-    'Analytics',
-    'Pengaturan',
+    { label: 'Dashboard', href: '/admin', icon: LayoutDashboard, permission: 'admin.access' },
+    { label: 'Profil & Keamanan', href: '/admin/profile', icon: UserRound, permission: 'admin.access' },
+    { label: 'Audit Log', href: '/admin/audit-log', icon: ScrollText, permission: 'admin.view-audit' },
 ];
+
+function can(permission: string) {
+    return user?.permissions.includes(permission) ?? false;
+}
+
+function logout() {
+    router.post('/admin/logout');
+}
 </script>
 
 <template>
-    <div class="min-h-screen bg-background md:grid md:grid-cols-[248px_minmax(0,1fr)]">
-        <aside class="hidden border-r border-border bg-surface p-5 md:block">
-            <div class="mb-8 text-lg font-semibold">Digital Library</div>
+    <div class="min-h-screen bg-background md:grid md:grid-cols-[260px_minmax(0,1fr)]">
+        <aside class="hidden border-r border-border bg-surface md:flex md:min-h-screen md:flex-col">
+            <div class="flex min-h-20 items-center gap-3 border-b border-border px-6">
+                <div class="flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                    <BookOpen class="size-5" />
+                </div>
+                <div>
+                    <p class="font-semibold">Digital Library</p>
+                    <p class="text-xs text-muted-foreground">Administration</p>
+                </div>
+            </div>
 
-            <nav class="space-y-1">
-                <div
-                    v-for="(item, index) in menu"
-                    :key="item"
-                    class="rounded-xl px-4 py-3 text-sm"
-                    :class="index === 0 ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-muted'"
+            <nav class="flex-1 space-y-1 p-4">
+                <Link
+                    v-for="item in menu.filter((entry) => can(entry.permission))"
+                    :key="item.href"
+                    :href="item.href"
+                    class="flex min-h-11 items-center gap-3 rounded-xl px-4 text-sm text-foreground transition-colors hover:bg-muted"
+                    :class="{ 'bg-primary/10 text-primary': page.url === item.href }"
                 >
-                    {{ item }}
+                    <component :is="item.icon" class="size-4" />
+                    {{ item.label }}
+                </Link>
+
+                <div class="my-4 border-t border-border" />
+
+                <div class="flex min-h-11 items-center gap-3 rounded-xl px-4 text-sm text-muted-foreground">
+                    <Settings class="size-4" />
+                    Modul lain menyusul
                 </div>
             </nav>
+
+            <div class="border-t border-border p-4">
+                <div class="rounded-2xl bg-muted p-4">
+                    <p class="truncate text-sm font-medium">{{ user?.name }}</p>
+                    <p class="mt-1 truncate text-xs text-muted-foreground">{{ user?.email }}</p>
+                    <button
+                        class="mt-4 text-xs font-medium text-primary hover:underline"
+                        type="button"
+                        @click="logout"
+                    >
+                        Keluar
+                    </button>
+                </div>
+            </div>
         </aside>
 
-        <main class="min-w-0 p-5 sm:p-8 lg:p-10">
-            <slot />
-        </main>
+        <div class="min-w-0">
+            <header class="flex min-h-16 items-center justify-between border-b border-border bg-surface px-5 md:hidden">
+                <Link href="/admin" class="font-semibold">Digital Library</Link>
+                <Link href="/admin/profile" class="text-sm text-primary">Profil</Link>
+            </header>
+
+            <main class="min-w-0 p-5 sm:p-8 lg:p-10">
+                <slot />
+            </main>
+        </div>
     </div>
 </template>
