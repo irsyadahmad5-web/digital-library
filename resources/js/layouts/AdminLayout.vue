@@ -5,15 +5,22 @@ import type { SharedPageProps } from '@/types';
 
 const page = usePage<SharedPageProps>();
 const user = page.props.auth.user;
+const siteName = page.props.site.general.site_name || 'Digital Library';
+const logoUrl = page.props.site.general.logo_url;
 
 const menu = [
     { label: 'Dashboard', href: '/admin', icon: LayoutDashboard, permission: 'admin.access' },
+    { label: 'Pengaturan', href: '/admin/settings/general', icon: Settings, permission: 'admin.manage-settings', prefix: '/admin/settings' },
     { label: 'Profil & Keamanan', href: '/admin/profile', icon: UserRound, permission: 'admin.access' },
     { label: 'Audit Log', href: '/admin/audit-log', icon: ScrollText, permission: 'admin.view-audit' },
 ];
 
 function can(permission: string) {
     return user?.permissions.includes(permission) ?? false;
+}
+
+function isActive(item: (typeof menu)[number]) {
+    return item.prefix ? page.url.startsWith(item.prefix) : page.url === item.href;
 }
 
 function logout() {
@@ -25,11 +32,12 @@ function logout() {
     <div class="min-h-screen bg-background md:grid md:grid-cols-[260px_minmax(0,1fr)]">
         <aside class="hidden border-r border-border bg-surface md:flex md:min-h-screen md:flex-col">
             <div class="flex min-h-20 items-center gap-3 border-b border-border px-6">
-                <div class="flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-                    <BookOpen class="size-5" />
+                <div class="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary text-primary-foreground">
+                    <img v-if="logoUrl" :src="String(logoUrl)" alt="" class="size-full object-cover">
+                    <BookOpen v-else class="size-5" />
                 </div>
-                <div>
-                    <p class="font-semibold">Digital Library</p>
+                <div class="min-w-0">
+                    <p class="truncate font-semibold">{{ siteName }}</p>
                     <p class="text-xs text-muted-foreground">Administration</p>
                 </div>
             </div>
@@ -40,7 +48,7 @@ function logout() {
                     :key="item.href"
                     :href="item.href"
                     class="flex min-h-11 items-center gap-3 rounded-xl px-4 text-sm text-foreground transition-colors hover:bg-muted"
-                    :class="{ 'bg-primary/10 text-primary': page.url === item.href }"
+                    :class="{ 'bg-primary/10 text-primary': isActive(item) }"
                 >
                     <component :is="item.icon" class="size-4" />
                     {{ item.label }}
@@ -50,7 +58,7 @@ function logout() {
 
                 <div class="flex min-h-11 items-center gap-3 rounded-xl px-4 text-sm text-muted-foreground">
                     <Settings class="size-4" />
-                    Modul lain menyusul
+                    Modul katalog menyusul
                 </div>
             </nav>
 
@@ -71,7 +79,7 @@ function logout() {
 
         <div class="min-w-0">
             <header class="flex min-h-16 items-center justify-between border-b border-border bg-surface px-5 md:hidden">
-                <Link href="/admin" class="font-semibold">Digital Library</Link>
+                <Link href="/admin" class="max-w-[70%] truncate font-semibold">{{ siteName }}</Link>
                 <Link href="/admin/profile" class="text-sm text-primary">Profil</Link>
             </header>
 

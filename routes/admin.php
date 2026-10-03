@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Admin\PasswordController;
 use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\SessionController;
+use App\Http\Controllers\Admin\Settings\SettingsController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -57,5 +58,13 @@ Route::prefix('admin')
             Route::get('/audit-log', [AuditLogController::class, 'index'])
                 ->middleware('permission:admin.view-audit')
                 ->name('admin.audit.index');
+
+            Route::get('/settings/{group?}', [SettingsController::class, 'index'])
+                ->middleware('permission:admin.manage-settings')
+                ->name('admin.settings.index');
+
+            Route::post('/settings/{group}', [SettingsController::class, 'update'])
+                ->middleware('permission:admin.manage-settings')
+                ->name('admin.settings.update');
         });
     });
