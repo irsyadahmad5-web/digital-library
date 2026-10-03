@@ -4,6 +4,7 @@ use App\Http\Middleware\AdminSecurityHeaders;
 use App\Http\Middleware\EnsureActiveUser;
 use App\Http\Middleware\EnsurePermission;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\PublicMaintenanceMode;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -24,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'active' => EnsureActiveUser::class,
             'permission' => EnsurePermission::class,
             'admin.headers' => AdminSecurityHeaders::class,
+            'site.maintenance' => PublicMaintenanceMode::class,
         ]);
 
         $middleware->redirectGuestsTo(fn () => route('login'));

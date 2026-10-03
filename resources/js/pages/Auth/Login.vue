@@ -1,7 +1,12 @@
 <script setup lang="ts">
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import { BookOpen, LockKeyhole, Mail } from '@lucide/vue';
 import { Button } from '@/components/ui/button';
+import type { SharedPageProps } from '@/types';
+
+const page = usePage<SharedPageProps>();
+const siteName = page.props.site.general.site_name || 'Digital Library';
+const logoUrl = page.props.site.general.logo_url;
 
 const form = useForm({
     email: '',
@@ -23,10 +28,11 @@ function submit() {
         <div class="mx-auto grid min-h-[calc(100dvh-5rem)] max-w-6xl items-center gap-10 lg:grid-cols-[1.05fr_.95fr]">
             <section class="hidden lg:block">
                 <div class="max-w-xl">
-                    <div class="mb-6 inline-flex size-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
-                        <BookOpen class="size-6" />
+                    <div class="mb-6 inline-flex size-12 items-center justify-center overflow-hidden rounded-2xl bg-primary text-primary-foreground">
+                        <img v-if="logoUrl" :src="String(logoUrl)" alt="" class="size-full object-cover">
+                        <BookOpen v-else class="size-6" />
                     </div>
-                    <p class="text-sm font-semibold text-primary">Digital Library Admin</p>
+                    <p class="text-sm font-semibold text-primary">{{ siteName }} Admin</p>
                     <h1 class="mt-3 text-5xl font-semibold leading-tight tracking-tight">
                         Kelola perpustakaan dengan tenang dan aman.
                     </h1>
@@ -38,8 +44,9 @@ function submit() {
 
             <section class="mx-auto w-full max-w-md rounded-3xl border border-border bg-surface p-6 shadow-sm sm:p-8">
                 <div class="mb-8">
-                    <div class="mb-5 inline-flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary lg:hidden">
-                        <BookOpen class="size-5" />
+                    <div class="mb-5 inline-flex size-11 items-center justify-center overflow-hidden rounded-2xl bg-primary/10 text-primary lg:hidden">
+                        <img v-if="logoUrl" :src="String(logoUrl)" alt="" class="size-full object-cover">
+                        <BookOpen v-else class="size-5" />
                     </div>
                     <h2 class="text-2xl font-semibold tracking-tight">Masuk ke Admin</h2>
                     <p class="mt-2 text-sm leading-6 text-muted-foreground">

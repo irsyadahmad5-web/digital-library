@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Models\User;
+use App\Modules\Settings\Application\SettingsManager;
+use App\Modules\Settings\Support\SettingsRegistry;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -10,7 +12,8 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        //
+        $this->app->singleton(SettingsRegistry::class);
+        $this->app->singleton(SettingsManager::class);
     }
 
     public function boot(): void

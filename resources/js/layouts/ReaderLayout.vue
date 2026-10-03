@@ -1,11 +1,28 @@
 <script setup lang="ts">
-import { onBeforeUnmount, ref } from 'vue';
+import { computed, onBeforeUnmount, ref } from 'vue';
+import { usePage } from '@inertiajs/vue3';
+import type { SharedPageProps } from '@/types';
 
+const page = usePage<SharedPageProps>();
+const reader = page.props.site.reader;
 const controlsVisible = ref(true);
 let hideTimer: ReturnType<typeof setTimeout> | null = null;
 
+const readerBackground = computed(() => {
+    const theme = String(reader.default_theme || 'light');
+
+    if (theme === 'dark') return '#0B1120';
+    if (theme === 'sepia') return '#F4ECD8';
+
+    return '#EEF0F4';
+});
+
 function scheduleHide() {
     controlsVisible.value = true;
+
+    if (!reader.auto_hide_controls) {
+        return;
+    }
 
     if (hideTimer) {
         clearTimeout(hideTimer);
@@ -13,7 +30,7 @@ function scheduleHide() {
 
     hideTimer = setTimeout(() => {
         controlsVisible.value = false;
-    }, 3500);
+    }, Number(reader.hide_delay_ms || 3500));
 }
 
 onBeforeUnmount(() => {
@@ -25,7 +42,8 @@ onBeforeUnmount(() => {
 
 <template>
     <div
-        class="relative min-h-dvh overflow-hidden bg-reader-canvas text-white"
+        class="relative min-h-dvh overflow-hidden text-white"
+        :style="{ backgroundColor: readerBackground }"
         @pointermove="scheduleHide"
         @pointerdown="scheduleHide"
     >
