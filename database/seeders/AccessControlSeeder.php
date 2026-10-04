@@ -15,6 +15,7 @@ class AccessControlSeeder extends Seeder
             ['name' => 'Kelola Pengguna', 'slug' => 'admin.manage-users', 'group' => 'admin'],
             ['name' => 'Kelola Pengaturan', 'slug' => 'admin.manage-settings', 'group' => 'admin'],
             ['name' => 'Lihat Audit Log', 'slug' => 'admin.view-audit', 'group' => 'admin'],
+            ['name' => 'Kelola Master Data', 'slug' => 'library.manage-master-data', 'group' => 'library'],
         ])->mapWithKeys(function (array $data) {
             $permission = Permission::query()->updateOrCreate(
                 ['slug' => $data['slug']],
@@ -45,7 +46,12 @@ class AccessControlSeeder extends Seeder
         $superAdmin->permissions()->sync($permissions->pluck('id')->all());
         $administrator->permissions()->sync(
             $permissions
-                ->only(['admin.access', 'admin.manage-settings', 'admin.view-audit'])
+                ->only([
+                    'admin.access',
+                    'admin.manage-settings',
+                    'admin.view-audit',
+                    'library.manage-master-data',
+                ])
                 ->pluck('id')
                 ->all(),
         );

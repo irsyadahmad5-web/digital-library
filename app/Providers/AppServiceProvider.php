@@ -27,6 +27,7 @@ class AppServiceProvider extends ServiceProvider
             'admin.manage-users',
             'admin.manage-settings',
             'admin.view-audit',
+            'library.manage-master-data',
         ] as $permission) {
             Gate::define(
                 $permission,
