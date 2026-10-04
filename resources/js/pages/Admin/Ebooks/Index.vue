@@ -28,6 +28,8 @@ interface EbookItem {
     download_enabled: boolean;
     file_source_type: 'local' | 'external_url' | null;
     file_verification_status: string | null;
+    file_processing_status: string | null;
+    file_page_count: number | null;
     file_size_bytes: number | null;
     published_at: string | null;
     updated_at: string | null;
@@ -180,6 +182,24 @@ function formatBytes(value: number | null) {
     }
 
     return `${(value / 1024).toFixed(1)} KB`;
+}
+
+function processingLabel(value: string | null) {
+    return {
+        pending: 'Processing pending',
+        processing: 'Processing...',
+        processed: 'Processed',
+        failed: 'Processing gagal',
+    }[value ?? ''] ?? value ?? '';
+}
+
+function processingClass(value: string | null) {
+    return {
+        pending: 'text-amber-700',
+        processing: 'text-blue-700',
+        processed: 'text-emerald-700',
+        failed: 'text-red-700',
+    }[value ?? ''] ?? 'text-muted-foreground';
 }
 </script>
 
@@ -385,6 +405,14 @@ function formatBytes(value: number | null) {
                                             :class="ebook.file_verification_status === 'verified' ? 'text-emerald-700' : 'text-amber-700'"
                                         >
                                             {{ ebook.file_verification_status === 'verified' ? 'Terverifikasi' : ebook.file_verification_status }}
+                                        </p>
+                                        <p
+                                            v-if="ebook.file_processing_status"
+                                            class="mt-1"
+                                            :class="processingClass(ebook.file_processing_status)"
+                                        >
+                                            {{ processingLabel(ebook.file_processing_status) }}
+                                            <span v-if="ebook.file_page_count"> · {{ ebook.file_page_count }} hlm</span>
                                         </p>
                                     </div>
                                     <span v-else class="text-xs text-amber-700">Belum ada PDF</span>

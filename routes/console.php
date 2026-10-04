@@ -1,5 +1,6 @@
 <?php
 
+use App\Modules\Library\Application\Pdf\PdfProcessingManager;
 use App\Modules\Library\Application\Storage\ChunkUploadManager;
 use App\Modules\Library\Application\Storage\EbookFileManager;
 use Illuminate\Foundation\Inspiring;
@@ -25,10 +26,30 @@ Artisan::command('ebooks:external:verify', function () {
     );
 })->purpose('Reverify due external ebook PDF sources');
 
+Artisan::command('ebooks:pdf:process {--limit=5} {--ebook=}', function () {
+    $limit = max(1, min(50, (int) $this->option('limit')));
+    $ebook = $this->option('ebook');
+    $ebookId = is_numeric($ebook) ? (int) $ebook : null;
+
+    $result = app(PdfProcessingManager::class)->processPending(
+        $limit,
+        $ebookId,
+    );
+
+    $this->info(
+        "Checked {$result['checked']} PDF source(s): "
+        ."{$result['processed']} processed, {$result['failed']} failed.",
+    );
+})->purpose('Process pending ebook PDF metadata and first-page previews');
+
 Schedule::command('ebooks:uploads:cleanup')
     ->hourly()
     ->withoutOverlapping();
 
 Schedule::command('ebooks:external:verify')
     ->hourly()
+    ->withoutOverlapping();
+
+Schedule::command('ebooks:pdf:process --limit=5')
+    ->everyMinute()
     ->withoutOverlapping();
