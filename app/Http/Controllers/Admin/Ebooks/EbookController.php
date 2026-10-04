@@ -7,6 +7,7 @@ use App\Http\Requests\Admin\Ebooks\BulkEbookRequest;
 use App\Http\Requests\Admin\Ebooks\EbookRequest;
 use App\Modules\Audit\Application\AuditLogger;
 use App\Modules\Library\Application\EbookCoverManager;
+use App\Modules\Library\Application\Pdf\PdfToolchain;
 use App\Modules\Library\Application\Storage\EbookFileManager;
 use App\Modules\Library\Application\Storage\UploadPolicy;
 use App\Modules\Library\Domain\Models\Author;
@@ -35,6 +36,7 @@ class EbookController extends Controller
         private readonly SettingsManager $settings,
         private readonly EbookFileManager $files,
         private readonly UploadPolicy $uploadPolicy,
+        private readonly PdfToolchain $pdfToolchain,
     ) {}
 
     public function index(Request $request): Response
@@ -348,6 +350,7 @@ class EbookController extends Controller
                 min(10, (int) $this->settings->get('uploads', 'max_cover_mb')),
             ),
             'fileSource' => $ebook ? $this->files->serialize($ebook->file) : null,
+            'processingConfig' => $this->processingConfig(),
             'uploadConfig' => [
                 'max_pdf_mb' => (int) $this->settings->get('uploads', 'max_pdf_mb'),
                 'max_pdf_bytes' => $this->uploadPolicy->maxPdfBytes(),
@@ -388,7 +391,8 @@ class EbookController extends Controller
             'subtitle' => $ebook->subtitle,
             'slug' => $ebook->slug,
             'isbn' => $ebook->isbn,
-            'cover_url' => $this->covers->url($ebook->cover_path),
+            'cover_url' => $this->covers->url($ebook->cover_path)
+                ?? $this->files->previewUrl($ebook->file),
             'authors' => $ebook->authors->pluck('name')->values()->all(),
             'publisher' => $ebook->publisher?->name,
             'language' => $ebook->language?->name,
@@ -398,6 +402,8 @@ class EbookController extends Controller
             'download_enabled' => $ebook->download_enabled,
             'file_source_type' => $ebook->file?->source_type,
             'file_verification_status' => $ebook->file?->verification_status,
+            'file_processing_status' => $ebook->file?->processing_status,
+            'file_page_count' => $ebook->file?->page_count,
             'file_size_bytes' => $ebook->file?->size_bytes,
             'published_at' => $ebook->published_at?->toIso8601String(),
             'updated_at' => $ebook->updated_at?->toIso8601String(),
@@ -554,6 +560,22 @@ class EbookController extends Controller
         }
 
         return $candidate;
+    }
+
+    /**
+     * @return array<string, bool>
+     */
+    private function processingConfig(): array
+    {
+        $availability = $this->pdfToolchain->availability();
+        $pdfInfo = is_string($availability['pdfinfo'] ?? false);
+        $pdfToCairo = is_string($availability['pdftocairo'] ?? false);
+
+        return [
+            'pdfinfo_available' => $pdfInfo,
+            'pdftocairo_available' => $pdfToCairo,
+            'available' => $pdfInfo && $pdfToCairo,
+        ];
     }
 
     /**

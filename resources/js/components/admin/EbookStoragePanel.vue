@@ -24,9 +24,21 @@ interface FileSource {
     size_bytes: number | null;
     sha256: string | null;
     verification_status: 'verified' | 'skipped' | 'failed' | string;
+    processing_status: 'pending' | 'processing' | 'processed' | 'failed' | string;
+    page_count: number | null;
+    pdf_metadata: Record<string, unknown> | null;
+    preview_url: string | null;
+    processed_at: string | null;
+    processing_error: string | null;
     verified_at: string | null;
     last_checked_at: string | null;
     last_error: string | null;
+}
+
+interface ProcessingConfig {
+    pdfinfo_available: boolean;
+    pdftocairo_available: boolean;
+    available: boolean;
 }
 
 interface UploadConfig {
@@ -73,6 +85,7 @@ const props = defineProps<{
     ebookId: number;
     source: FileSource | null;
     config: UploadConfig;
+    processingConfig: ProcessingConfig;
 }>();
 
 const mode = ref<'local' | 'external_url'>(
@@ -91,6 +104,8 @@ const externalUrl = ref(
 const externalBusy = ref(false);
 const externalError = ref('');
 const removingSource = ref(false);
+const processingBusy = ref(false);
+const processingError = ref('');
 
 watch(
     () => props.source,
@@ -102,6 +117,8 @@ watch(
         if (source?.source_type === 'external_url') {
             externalUrl.value = source.external_url ?? '';
         }
+
+        processingError.value = '';
     },
 );
 
@@ -341,7 +358,8 @@ async function removeSource() {
         );
         session.value = null;
         selectedFile.value = null;
-        router.reload({ only: ['fileSource'] });
+        processingError.value = '';
+        router.reload({ only: ['fileSource', 'ebook'] });
     } catch (error) {
         uploadError.value = error instanceof Error
             ? error.message
@@ -349,6 +367,56 @@ async function removeSource() {
     } finally {
         removingSource.value = false;
     }
+}
+
+async function processPdf() {
+    if (!props.source || processingBusy.value || !props.processingConfig.available) return;
+
+    processingBusy.value = true;
+    processingError.value = '';
+
+    try {
+        await apiFetch(
+            `/admin/ebooks/${props.ebookId}/processing`,
+            { method: 'POST' },
+        );
+
+        router.reload({ only: ['fileSource', 'ebook'] });
+    } catch (error) {
+        processingError.value = error instanceof Error
+            ? error.message
+            : 'PDF gagal diproses.';
+        router.reload({ only: ['fileSource', 'ebook'] });
+    } finally {
+        processingBusy.value = false;
+    }
+}
+
+function processingLabel(status: string) {
+    return {
+        pending: 'Menunggu pemrosesan',
+        processing: 'Sedang diproses',
+        processed: 'Sudah diproses',
+        failed: 'Pemrosesan gagal',
+    }[status] ?? status;
+}
+
+function processingClass(status: string) {
+    return {
+        pending: 'bg-amber-50 text-amber-700',
+        processing: 'bg-blue-50 text-blue-700',
+        processed: 'bg-emerald-50 text-emerald-700',
+        failed: 'bg-red-50 text-red-700',
+    }[status] ?? 'bg-muted text-muted-foreground';
+}
+
+function metadataText(key: string) {
+    const value = props.source?.pdf_metadata?.[key];
+
+    if (value === null || value === undefined || value === '') return '—';
+    if (typeof value === 'boolean') return value ? 'Ya' : 'Tidak';
+
+    return String(value);
 }
 
 function formatBytes(value: number | null | undefined) {
@@ -444,6 +512,113 @@ function verificationLabel(source: FileSource) {
                 </div>
 
                 <CheckCircle2 class="size-6 shrink-0 text-emerald-600" />
+            </div>
+        </div>
+
+        <div v-if="source" class="border-b border-border px-5 py-5 sm:px-7">
+            <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <p class="text-sm font-semibold">PDF Processing</p>
+                        <span
+                            class="inline-flex rounded-full px-2.5 py-1 text-xs font-medium"
+                            :class="processingClass(source.processing_status)"
+                        >
+                            {{ processingLabel(source.processing_status) }}
+                        </span>
+                    </div>
+                    <p class="mt-2 max-w-2xl text-xs leading-5 text-muted-foreground">
+                        Metadata dan thumbnail diproses dengan pdfinfo + pdftocairo. Source pending juga diproses otomatis oleh scheduler.
+                    </p>
+                </div>
+
+                <Button
+                    type="button"
+                    variant="secondary"
+                    :disabled="processingBusy || source.processing_status === 'processing' || !processingConfig.available"
+                    @click="processPdf"
+                >
+                    <LoaderCircle v-if="processingBusy || source.processing_status === 'processing'" class="size-4 animate-spin" />
+                    <RotateCcw v-else class="size-4" />
+                    {{ processingBusy ? 'Memproses...' : (source.processing_status === 'processed' ? 'Proses ulang' : 'Proses sekarang') }}
+                </Button>
+            </div>
+
+            <div
+                v-if="!processingConfig.available"
+                class="mt-4 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800"
+            >
+                Toolchain PDF server belum lengkap.
+                pdfinfo: {{ processingConfig.pdfinfo_available ? 'tersedia' : 'tidak tersedia' }},
+                pdftocairo: {{ processingConfig.pdftocairo_available ? 'tersedia' : 'tidak tersedia' }}.
+            </div>
+
+            <p
+                v-if="processingError || source.processing_error"
+                class="mt-4 flex items-start gap-2 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700"
+            >
+                <XCircle class="mt-0.5 size-4 shrink-0" />
+                {{ processingError || source.processing_error }}
+            </p>
+
+            <div v-if="source.processing_status === 'processed'" class="mt-5 grid gap-5 lg:grid-cols-[180px_minmax(0,1fr)]">
+                <div class="overflow-hidden rounded-xl border border-border bg-muted">
+                    <img
+                        v-if="source.preview_url"
+                        :src="source.preview_url"
+                        alt="Preview halaman pertama PDF"
+                        class="aspect-[3/4] w-full object-cover"
+                    >
+                    <div v-else class="flex aspect-[3/4] items-center justify-center text-muted-foreground">
+                        <FileText class="size-8" />
+                    </div>
+                </div>
+
+                <div>
+                    <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                        <div class="rounded-xl bg-muted/60 px-4 py-3">
+                            <p class="text-xs text-muted-foreground">Jumlah halaman</p>
+                            <p class="mt-1 text-sm font-semibold">{{ source.page_count ?? '—' }}</p>
+                        </div>
+                        <div class="rounded-xl bg-muted/60 px-4 py-3">
+                            <p class="text-xs text-muted-foreground">PDF version</p>
+                            <p class="mt-1 text-sm font-semibold">{{ metadataText('pdf_version') }}</p>
+                        </div>
+                        <div class="rounded-xl bg-muted/60 px-4 py-3">
+                            <p class="text-xs text-muted-foreground">Page size</p>
+                            <p class="mt-1 truncate text-sm font-semibold" :title="metadataText('page_size')">
+                                {{ metadataText('page_size') }}
+                            </p>
+                        </div>
+                        <div class="rounded-xl bg-muted/60 px-4 py-3">
+                            <p class="text-xs text-muted-foreground">Title metadata</p>
+                            <p class="mt-1 truncate text-sm font-semibold" :title="metadataText('title')">
+                                {{ metadataText('title') }}
+                            </p>
+                        </div>
+                        <div class="rounded-xl bg-muted/60 px-4 py-3">
+                            <p class="text-xs text-muted-foreground">Author metadata</p>
+                            <p class="mt-1 truncate text-sm font-semibold" :title="metadataText('author')">
+                                {{ metadataText('author') }}
+                            </p>
+                        </div>
+                        <div class="rounded-xl bg-muted/60 px-4 py-3">
+                            <p class="text-xs text-muted-foreground">Optimized</p>
+                            <p class="mt-1 text-sm font-semibold">{{ metadataText('optimized') }}</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                        <div class="rounded-xl border border-border px-4 py-3">
+                            <p class="text-xs text-muted-foreground">Creator</p>
+                            <p class="mt-1 truncate text-sm" :title="metadataText('creator')">{{ metadataText('creator') }}</p>
+                        </div>
+                        <div class="rounded-xl border border-border px-4 py-3">
+                            <p class="text-xs text-muted-foreground">Producer</p>
+                            <p class="mt-1 truncate text-sm" :title="metadataText('producer')">{{ metadataText('producer') }}</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 

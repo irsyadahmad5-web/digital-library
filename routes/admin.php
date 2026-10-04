@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Admin\Auth\NewPasswordController;
 use App\Http\Controllers\Admin\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Admin\Ebooks\EbookController;
+use App\Http\Controllers\Admin\Ebooks\Storage\EbookPdfProcessingController;
 use App\Http\Controllers\Admin\Ebooks\Storage\EbookStorageController;
 use App\Http\Controllers\Admin\Ebooks\Storage\EbookUploadController;
 use App\Http\Controllers\Admin\MasterData\MasterDataController;
@@ -85,6 +86,10 @@ Route::prefix('admin')
                     Route::delete('/{id}/storage', [EbookStorageController::class, 'destroy'])
                         ->whereNumber('id')
                         ->name('admin.ebooks.storage.destroy');
+
+                    Route::post('/{id}/processing', [EbookPdfProcessingController::class, 'store'])
+                        ->whereNumber('id')
+                        ->name('admin.ebooks.processing.store');
 
                     Route::post('/{id}/uploads', [EbookUploadController::class, 'start'])
                         ->whereNumber('id')

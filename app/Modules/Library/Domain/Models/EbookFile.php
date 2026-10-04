@@ -21,6 +21,13 @@ class EbookFile extends Model
         'etag',
         'last_modified',
         'verification_status',
+        'processing_status',
+        'page_count',
+        'pdf_metadata',
+        'preview_path',
+        'processing_started_at',
+        'processed_at',
+        'processing_error',
         'verified_at',
         'last_checked_at',
         'last_error',
@@ -32,6 +39,10 @@ class EbookFile extends Model
     {
         return [
             'size_bytes' => 'integer',
+            'page_count' => 'integer',
+            'pdf_metadata' => 'array',
+            'processing_started_at' => 'datetime',
+            'processed_at' => 'datetime',
             'verified_at' => 'datetime',
             'last_checked_at' => 'datetime',
         ];

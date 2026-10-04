@@ -31,9 +31,21 @@ interface FileSource {
     size_bytes: number | null;
     sha256: string | null;
     verification_status: string;
+    processing_status: string;
+    page_count: number | null;
+    pdf_metadata: Record<string, unknown> | null;
+    preview_url: string | null;
+    processed_at: string | null;
+    processing_error: string | null;
     verified_at: string | null;
     last_checked_at: string | null;
     last_error: string | null;
+}
+
+interface ProcessingConfig {
+    pdfinfo_available: boolean;
+    pdftocairo_available: boolean;
+    available: boolean;
 }
 
 interface UploadConfig {
@@ -74,6 +86,7 @@ const props = defineProps<{
     ebook: EbookData | null;
     maxCoverMb: number;
     fileSource: FileSource | null;
+    processingConfig: ProcessingConfig;
     uploadConfig: UploadConfig;
     options: {
         authors: OptionItem[];
@@ -322,6 +335,7 @@ onBeforeUnmount(() => {
                         :ebook-id="ebook.id"
                         :source="fileSource"
                         :config="uploadConfig"
+                        :processing-config="processingConfig"
                     />
 
                     <section v-else class="rounded-2xl border border-border bg-surface">

@@ -24,6 +24,7 @@ class EbookFileManager
         $oldLocalPath = $existing?->source_type === 'local'
             ? $existing->path
             : null;
+        $oldPreviewPath = $existing?->preview_path;
 
         $file = DB::transaction(function () use ($ebook, $verified, $userId, $existing): EbookFile {
             $file = $existing ?? new EbookFile([
@@ -43,6 +44,13 @@ class EbookFileManager
                 'etag' => $verified['etag'],
                 'last_modified' => $verified['last_modified'],
                 'verification_status' => $verified['verification_status'],
+                'processing_status' => 'pending',
+                'page_count' => null,
+                'pdf_metadata' => null,
+                'preview_path' => null,
+                'processing_started_at' => null,
+                'processed_at' => null,
+                'processing_error' => null,
                 'verified_at' => $verified['verified_at'],
                 'last_checked_at' => $verified['last_checked_at'],
                 'last_error' => null,
@@ -55,6 +63,10 @@ class EbookFileManager
 
         if ($oldLocalPath) {
             Storage::disk('local')->delete($oldLocalPath);
+        }
+
+        if ($oldPreviewPath) {
+            Storage::disk('public')->delete($oldPreviewPath);
         }
 
         return $file;
@@ -75,6 +87,7 @@ class EbookFileManager
         $oldLocalPath = $existing?->source_type === 'local'
             ? $existing->path
             : null;
+        $oldPreviewPath = $existing?->preview_path;
 
         $file = DB::transaction(function () use ($ebook, $metadata, $userId, $existing): EbookFile {
             $file = $existing ?? new EbookFile([
@@ -94,6 +107,13 @@ class EbookFileManager
                 'etag' => null,
                 'last_modified' => null,
                 'verification_status' => 'verified',
+                'processing_status' => 'pending',
+                'page_count' => null,
+                'pdf_metadata' => null,
+                'preview_path' => null,
+                'processing_started_at' => null,
+                'processed_at' => null,
+                'processing_error' => null,
                 'verified_at' => now(),
                 'last_checked_at' => now(),
                 'last_error' => null,
@@ -106,6 +126,10 @@ class EbookFileManager
 
         if ($oldLocalPath && $oldLocalPath !== $metadata['path']) {
             Storage::disk('local')->delete($oldLocalPath);
+        }
+
+        if ($oldPreviewPath) {
+            Storage::disk('public')->delete($oldPreviewPath);
         }
 
         return $file;
@@ -148,7 +172,12 @@ class EbookFileManager
             try {
                 $result = $this->externalVerifier->verify((string) $file->external_url);
 
-                $file->forceFill([
+                $contentChanged = $file->external_url !== $result['external_url']
+                    || $file->size_bytes !== $result['size_bytes']
+                    || $file->etag !== $result['etag']
+                    || $file->last_modified !== $result['last_modified'];
+
+                $payload = [
                     'external_url' => $result['external_url'],
                     'mime_type' => $result['mime_type'],
                     'size_bytes' => $result['size_bytes'],
@@ -158,7 +187,15 @@ class EbookFileManager
                     'verified_at' => $result['verified_at'],
                     'last_checked_at' => $result['last_checked_at'],
                     'last_error' => null,
-                ])->save();
+                ];
+
+                if ($contentChanged) {
+                    $payload['processing_status'] = 'pending';
+                    $payload['processing_error'] = null;
+                    $payload['processed_at'] = null;
+                }
+
+                $file->forceFill($payload)->save();
 
                 $verified++;
             } catch (Throwable $exception) {
@@ -188,12 +225,26 @@ class EbookFileManager
         }
 
         $localPath = $file->source_type === 'local' ? $file->path : null;
+        $previewPath = $file->preview_path;
 
         DB::transaction(fn () => $file->delete());
 
         if ($localPath) {
             Storage::disk('local')->delete($localPath);
         }
+
+        if ($previewPath) {
+            Storage::disk('public')->delete($previewPath);
+        }
+    }
+
+    public function previewUrl(?EbookFile $file): ?string
+    {
+        if (! $file?->preview_path) {
+            return null;
+        }
+
+        return Storage::disk('public')->url($file->preview_path);
     }
 
     /**
@@ -214,6 +265,12 @@ class EbookFileManager
             'size_bytes' => $file->size_bytes,
             'sha256' => $file->sha256,
             'verification_status' => $file->verification_status,
+            'processing_status' => $file->processing_status,
+            'page_count' => $file->page_count,
+            'pdf_metadata' => $file->pdf_metadata,
+            'preview_url' => $this->previewUrl($file),
+            'processed_at' => $file->processed_at?->toIso8601String(),
+            'processing_error' => $file->processing_error,
             'verified_at' => $file->verified_at?->toIso8601String(),
             'last_checked_at' => $file->last_checked_at?->toIso8601String(),
             'last_error' => $file->last_error,
