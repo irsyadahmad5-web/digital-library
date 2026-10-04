@@ -3,6 +3,7 @@
 namespace App\Modules\Library\Domain\Models;
 
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -44,6 +45,16 @@ class Ebook extends Model
             'download_enabled' => 'boolean',
             'published_at' => 'datetime',
         ];
+    }
+
+    public function scopePubliclyVisible(Builder $query): Builder
+    {
+        return $query
+            ->where('publication_status', 'published')
+            ->whereNotNull('published_at')
+            ->whereHas('file', fn (Builder $file): Builder => $file
+                ->where('processing_status', 'processed')
+                ->whereIn('verification_status', ['verified', 'skipped']));
     }
 
     public function publisher(): BelongsTo
