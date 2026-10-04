@@ -3,6 +3,7 @@
 namespace App\Modules\Library\Domain\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Language extends Model
@@ -17,5 +18,10 @@ class Language extends Model
             'is_active' => 'boolean',
             'sort_order' => 'integer',
         ];
+    }
+
+    public function ebooks(): HasMany
+    {
+        return $this->hasMany(Ebook::class);
     }
 }
