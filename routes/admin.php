@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Admin\Auth\NewPasswordController;
 use App\Http\Controllers\Admin\Auth\PasswordResetLinkController;
+use App\Http\Controllers\Admin\MasterData\MasterDataController;
 use App\Http\Controllers\Admin\PasswordController;
 use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\SessionController;
@@ -58,6 +59,30 @@ Route::prefix('admin')
             Route::get('/audit-log', [AuditLogController::class, 'index'])
                 ->middleware('permission:admin.view-audit')
                 ->name('admin.audit.index');
+
+            Route::middleware('permission:library.manage-master-data')
+                ->prefix('master-data')
+                ->group(function (): void {
+                    Route::get('/', [MasterDataController::class, 'redirect'])
+                        ->name('admin.master-data.redirect');
+
+                    Route::post('/{entity}/bulk', [MasterDataController::class, 'bulk'])
+                        ->name('admin.master-data.bulk');
+
+                    Route::get('/{entity}', [MasterDataController::class, 'index'])
+                        ->name('admin.master-data.index');
+
+                    Route::post('/{entity}', [MasterDataController::class, 'store'])
+                        ->name('admin.master-data.store');
+
+                    Route::put('/{entity}/{id}', [MasterDataController::class, 'update'])
+                        ->whereNumber('id')
+                        ->name('admin.master-data.update');
+
+                    Route::delete('/{entity}/{id}', [MasterDataController::class, 'destroy'])
+                        ->whereNumber('id')
+                        ->name('admin.master-data.destroy');
+                });
 
             Route::get('/settings/{group?}', [SettingsController::class, 'index'])
                 ->middleware('permission:admin.manage-settings')

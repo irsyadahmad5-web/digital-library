@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, router, usePage } from '@inertiajs/vue3';
-import { BookOpen, LayoutDashboard, ScrollText, Settings, UserRound } from '@lucide/vue';
+import { BookOpen, LayoutDashboard, LibraryBig, ScrollText, Settings, UserRound } from '@lucide/vue';
 import type { SharedPageProps } from '@/types';
 
 const page = usePage<SharedPageProps>();
@@ -10,6 +10,7 @@ const logoUrl = page.props.site.general.logo_url;
 
 const menu = [
     { label: 'Dashboard', href: '/admin', icon: LayoutDashboard, permission: 'admin.access' },
+    { label: 'Master Data', href: '/admin/master-data/categories', icon: LibraryBig, permission: 'library.manage-master-data', prefix: '/admin/master-data' },
     { label: 'Pengaturan', href: '/admin/settings/general', icon: Settings, permission: 'admin.manage-settings', prefix: '/admin/settings' },
     { label: 'Profil & Keamanan', href: '/admin/profile', icon: UserRound, permission: 'admin.access' },
     { label: 'Audit Log', href: '/admin/audit-log', icon: ScrollText, permission: 'admin.view-audit' },
@@ -57,8 +58,8 @@ function logout() {
                 <div class="my-4 border-t border-border" />
 
                 <div class="flex min-h-11 items-center gap-3 rounded-xl px-4 text-sm text-muted-foreground">
-                    <Settings class="size-4" />
-                    Modul katalog menyusul
+                    <BookOpen class="size-4" />
+                    Modul ebook menyusul
                 </div>
             </nav>
 
