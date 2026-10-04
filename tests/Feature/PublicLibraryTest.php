@@ -54,9 +54,10 @@ class PublicLibraryTest extends TestCase
             ->assertInertia(
                 fn (Assert $page) => $page
                     ->component('Public/Home')
-                    ->has('latestBooks', 1)
-                    ->where('latestBooks.0.title', 'Ready Public Book')
-                    ->where('latestBooks.0.slug', $public['ebook']->slug),
+                    ->where('sections.2.type', 'latest_books')
+                    ->has('sections.2.data', 1)
+                    ->where('sections.2.data.0.title', 'Ready Public Book')
+                    ->where('sections.2.data.0.slug', $public['ebook']->slug),
             );
     }
 

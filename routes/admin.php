@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\MasterData\MasterDataController;
 use App\Http\Controllers\Admin\PasswordController;
 use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\SessionController;
+use App\Http\Controllers\Admin\Settings\HomepageBuilderController;
 use App\Http\Controllers\Admin\Settings\SettingsController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -151,6 +152,16 @@ Route::prefix('admin')
                     Route::delete('/{entity}/{id}', [MasterDataController::class, 'destroy'])
                         ->whereNumber('id')
                         ->name('admin.master-data.destroy');
+                });
+
+            Route::middleware('permission:admin.manage-settings')
+                ->prefix('homepage-builder')
+                ->group(function (): void {
+                    Route::get('/', [HomepageBuilderController::class, 'index'])
+                        ->name('admin.homepage-builder.index');
+
+                    Route::put('/', [HomepageBuilderController::class, 'update'])
+                        ->name('admin.homepage-builder.update');
                 });
 
             Route::get('/settings/{group?}', [SettingsController::class, 'index'])

@@ -64,3 +64,11 @@ export interface TaxonomyInfo {
     description: string | null;
     parent: PublicNamedLink | null;
 }
+
+export interface HomepageSectionPayload {
+    id: number;
+    type: 'hero' | 'search' | 'latest_books' | 'categories' | 'collections';
+    title: string;
+    config: Record<string, unknown>;
+    data: PublicBookCard[] | DirectoryItem[] | null;
+}
