@@ -8,6 +8,7 @@ use App\Modules\Identity\Domain\Models\Role;
 use App\Modules\Settings\Application\SettingsManager;
 use App\Modules\Settings\Domain\Models\HomepageSection;
 use App\Modules\Settings\Domain\Models\Setting;
+use App\Modules\Settings\Support\HomepageSectionRegistry;
 use App\Modules\Settings\Support\SettingsRegistry;
 use Database\Seeders\AccessControlSeeder;
 use Database\Seeders\SettingsSeeder;
@@ -38,7 +39,10 @@ class AdminSettingsCoreTest extends TestCase
             ->sum(fn (array $group): int => count($group['fields']));
 
         $this->assertSame($expected, Setting::query()->count());
-        $this->assertSame(4, HomepageSection::query()->count());
+        $this->assertSame(
+            count(app(HomepageSectionRegistry::class)->types()),
+            HomepageSection::query()->count(),
+        );
     }
 
     public function test_super_admin_can_open_settings_page(): void

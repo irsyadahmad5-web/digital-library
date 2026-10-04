@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Library\Application\PublicLibrary\PublicLibraryCatalog;
+use App\Modules\Settings\Application\HomepageBuilderManager;
 use App\Modules\Settings\Application\SettingsManager;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -15,20 +16,13 @@ class PublicLibraryController extends Controller
     public function __construct(
         private readonly PublicLibraryCatalog $catalog,
         private readonly SettingsManager $settings,
+        private readonly HomepageBuilderManager $homepageBuilder,
     ) {}
 
     public function home(): InertiaResponse
     {
-        $homepage = $this->settings->public()['homepage'] ?? [];
-        $latestLimit = max(4, min(24, (int) ($homepage['latest_limit'] ?? 8)));
-
         return Inertia::render('Public/Home', [
-            'latestBooks' => ($homepage['show_latest'] ?? true)
-                ? $this->catalog->latest($latestLimit)
-                : [],
-            'categories' => ($homepage['show_categories'] ?? true)
-                ? array_slice($this->catalog->directoryCategories(), 0, 12)
-                : [],
+            'sections' => $this->homepageBuilder->publicPayload(),
         ]);
     }
 

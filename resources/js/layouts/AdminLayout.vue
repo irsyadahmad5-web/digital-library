@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, router, usePage } from '@inertiajs/vue3';
-import { BookOpen, LayoutDashboard, LibraryBig, ScrollText, Settings, UserRound } from '@lucide/vue';
+import { BookOpen, LayoutDashboard, LibraryBig, PanelsTopLeft, ScrollText, Settings, UserRound } from '@lucide/vue';
 import type { SharedPageProps } from '@/types';
 
 const page = usePage<SharedPageProps>();
@@ -12,6 +12,7 @@ const menu = [
     { label: 'Dashboard', href: '/admin', icon: LayoutDashboard, permission: 'admin.access' },
     { label: 'Ebook', href: '/admin/ebooks', icon: BookOpen, permission: 'library.manage-ebooks', prefix: '/admin/ebooks' },
     { label: 'Master Data', href: '/admin/master-data/categories', icon: LibraryBig, permission: 'library.manage-master-data', prefix: '/admin/master-data' },
+    { label: 'Homepage Builder', href: '/admin/homepage-builder', icon: PanelsTopLeft, permission: 'admin.manage-settings', prefix: '/admin/homepage-builder' },
     { label: 'Pengaturan', href: '/admin/settings/general', icon: Settings, permission: 'admin.manage-settings', prefix: '/admin/settings' },
     { label: 'Profil & Keamanan', href: '/admin/profile', icon: UserRound, permission: 'admin.access' },
     { label: 'Audit Log', href: '/admin/audit-log', icon: ScrollText, permission: 'admin.view-audit' },

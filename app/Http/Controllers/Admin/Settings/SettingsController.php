@@ -23,9 +23,13 @@ class SettingsController extends Controller
         private readonly SettingsMediaManager $media,
     ) {}
 
-    public function index(Request $request, ?string $group = null): Response
+    public function index(Request $request, ?string $group = null): Response|RedirectResponse
     {
         $group ??= 'general';
+
+        if ($group === 'homepage') {
+            return redirect()->route('admin.homepage-builder.index');
+        }
 
         abort_unless(
             in_array($group, $this->registry->groupNames(), true),
@@ -33,6 +37,7 @@ class SettingsController extends Controller
         );
 
         $groups = collect($this->registry->groups())
+            ->except('homepage')
             ->map(fn (array $definition, string $key) => [
                 'key' => $key,
                 'label' => $definition['label'],

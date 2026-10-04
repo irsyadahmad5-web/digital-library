@@ -19,6 +19,7 @@ class HomepageSection extends Model
         return [
             'config_json' => 'array',
             'is_enabled' => 'boolean',
+            'sort_order' => 'integer',
         ];
     }
 }
