@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
-import { BookOpen, Download, Eye, FilePenLine, Plus, Search, Trash2 } from '@lucide/vue';
+import { BookOpen, Cloud, Download, Eye, FilePenLine, HardDrive, Plus, Search, Trash2 } from '@lucide/vue';
 import AdminLayout from '@/layouts/AdminLayout.vue';
 import { Button } from '@/components/ui/button';
 import type { SharedPageProps } from '@/types';
@@ -26,6 +26,9 @@ interface EbookItem {
     publication_status: 'draft' | 'published' | 'archived';
     read_enabled: boolean;
     download_enabled: boolean;
+    file_source_type: 'local' | 'external_url' | null;
+    file_verification_status: string | null;
+    file_size_bytes: number | null;
     published_at: string | null;
     updated_at: string | null;
 }
@@ -165,6 +168,18 @@ function formatDate(value: string | null) {
         dateStyle: 'medium',
         timeStyle: 'short',
     }).format(new Date(value));
+}
+
+function formatBytes(value: number | null) {
+    if (value === null) return '';
+
+    const mb = value / (1024 * 1024);
+
+    if (mb >= 1) {
+        return `${mb.toFixed(mb >= 10 ? 1 : 2)} MB`;
+    }
+
+    return `${(value / 1024).toFixed(1)} KB`;
 }
 </script>
 
@@ -306,6 +321,7 @@ function formatDate(value: string | null) {
                                 </th>
                                 <th class="min-w-[340px] px-4 py-3">Ebook</th>
                                 <th class="min-w-[180px] px-4 py-3">Klasifikasi</th>
+                                <th class="min-w-[140px] px-4 py-3">File PDF</th>
                                 <th class="px-4 py-3">Status</th>
                                 <th class="px-4 py-3">Akses</th>
                                 <th class="whitespace-nowrap px-4 py-3">Diperbarui</th>
@@ -351,6 +367,27 @@ function formatDate(value: string | null) {
                                     <p v-if="ebook.collection" class="mt-1 text-xs text-muted-foreground">
                                         {{ ebook.collection }}
                                     </p>
+                                </td>
+
+                                <td class="px-4 py-4">
+                                    <div v-if="ebook.file_source_type" class="text-xs">
+                                        <span class="inline-flex items-center gap-1.5 font-medium text-foreground">
+                                            <HardDrive v-if="ebook.file_source_type === 'local'" class="size-3.5 text-primary" />
+                                            <Cloud v-else class="size-3.5 text-primary" />
+                                            {{ ebook.file_source_type === 'local' ? 'Local' : 'External' }}
+                                        </span>
+                                        <p class="mt-1 text-muted-foreground">
+                                            {{ ebook.file_size_bytes ? formatBytes(ebook.file_size_bytes) : 'Ukuran belum diketahui' }}
+                                        </p>
+                                        <p
+                                            v-if="ebook.file_verification_status"
+                                            class="mt-1"
+                                            :class="ebook.file_verification_status === 'verified' ? 'text-emerald-700' : 'text-amber-700'"
+                                        >
+                                            {{ ebook.file_verification_status === 'verified' ? 'Terverifikasi' : ebook.file_verification_status }}
+                                        </p>
+                                    </div>
+                                    <span v-else class="text-xs text-amber-700">Belum ada PDF</span>
                                 </td>
 
                                 <td class="px-4 py-4">
@@ -404,11 +441,11 @@ function formatDate(value: string | null) {
                             </tr>
 
                             <tr v-if="!ebooks.data.length">
-                                <td colspan="7" class="px-4 py-16 text-center">
+                                <td colspan="8" class="px-4 py-16 text-center">
                                     <BookOpen class="mx-auto size-8 text-muted-foreground" />
                                     <p class="mt-3 font-medium">Belum ada ebook</p>
                                     <p class="mt-1 text-sm text-muted-foreground">
-                                        Tambahkan metadata ebook pertama. File PDF akan dikelola pada Storage & Upload Engine.
+                                        Tambahkan ebook pertama, lalu hubungkan PDF melalui upload lokal atau URL cloud.
                                     </p>
                                 </td>
                             </tr>
