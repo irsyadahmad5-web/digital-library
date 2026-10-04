@@ -10,6 +10,7 @@ const logoUrl = page.props.site.general.logo_url;
 
 const menu = [
     { label: 'Dashboard', href: '/admin', icon: LayoutDashboard, permission: 'admin.access' },
+    { label: 'Ebook', href: '/admin/ebooks', icon: BookOpen, permission: 'library.manage-ebooks', prefix: '/admin/ebooks' },
     { label: 'Master Data', href: '/admin/master-data/categories', icon: LibraryBig, permission: 'library.manage-master-data', prefix: '/admin/master-data' },
     { label: 'Pengaturan', href: '/admin/settings/general', icon: Settings, permission: 'admin.manage-settings', prefix: '/admin/settings' },
     { label: 'Profil & Keamanan', href: '/admin/profile', icon: UserRound, permission: 'admin.access' },
@@ -56,11 +57,6 @@ function logout() {
                 </Link>
 
                 <div class="my-4 border-t border-border" />
-
-                <div class="flex min-h-11 items-center gap-3 rounded-xl px-4 text-sm text-muted-foreground">
-                    <BookOpen class="size-4" />
-                    Modul ebook menyusul
-                </div>
             </nav>
 
             <div class="border-t border-border p-4">

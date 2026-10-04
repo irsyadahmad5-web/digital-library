@@ -28,6 +28,7 @@ class AppServiceProvider extends ServiceProvider
             'admin.manage-settings',
             'admin.view-audit',
             'library.manage-master-data',
+            'library.manage-ebooks',
         ] as $permission) {
             Gate::define(
                 $permission,
