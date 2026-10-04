@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Admin\Auth\NewPasswordController;
 use App\Http\Controllers\Admin\Auth\PasswordResetLinkController;
+use App\Http\Controllers\Admin\Ebooks\EbookController;
 use App\Http\Controllers\Admin\MasterData\MasterDataController;
 use App\Http\Controllers\Admin\PasswordController;
 use App\Http\Controllers\Admin\ProfileController;
@@ -59,6 +60,34 @@ Route::prefix('admin')
             Route::get('/audit-log', [AuditLogController::class, 'index'])
                 ->middleware('permission:admin.view-audit')
                 ->name('admin.audit.index');
+
+            Route::middleware('permission:library.manage-ebooks')
+                ->prefix('ebooks')
+                ->group(function (): void {
+                    Route::get('/', [EbookController::class, 'index'])
+                        ->name('admin.ebooks.index');
+
+                    Route::get('/create', [EbookController::class, 'create'])
+                        ->name('admin.ebooks.create');
+
+                    Route::post('/bulk', [EbookController::class, 'bulk'])
+                        ->name('admin.ebooks.bulk');
+
+                    Route::post('/', [EbookController::class, 'store'])
+                        ->name('admin.ebooks.store');
+
+                    Route::get('/{id}/edit', [EbookController::class, 'edit'])
+                        ->whereNumber('id')
+                        ->name('admin.ebooks.edit');
+
+                    Route::put('/{id}', [EbookController::class, 'update'])
+                        ->whereNumber('id')
+                        ->name('admin.ebooks.update');
+
+                    Route::delete('/{id}', [EbookController::class, 'destroy'])
+                        ->whereNumber('id')
+                        ->name('admin.ebooks.destroy');
+                });
 
             Route::middleware('permission:library.manage-master-data')
                 ->prefix('master-data')
