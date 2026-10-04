@@ -7,6 +7,8 @@ use App\Http\Requests\Admin\Ebooks\BulkEbookRequest;
 use App\Http\Requests\Admin\Ebooks\EbookRequest;
 use App\Modules\Audit\Application\AuditLogger;
 use App\Modules\Library\Application\EbookCoverManager;
+use App\Modules\Library\Application\Storage\EbookFileManager;
+use App\Modules\Library\Application\Storage\UploadPolicy;
 use App\Modules\Library\Domain\Models\Author;
 use App\Modules\Library\Domain\Models\Category;
 use App\Modules\Library\Domain\Models\Collection;
@@ -31,6 +33,8 @@ class EbookController extends Controller
     public function __construct(
         private readonly EbookCoverManager $covers,
         private readonly SettingsManager $settings,
+        private readonly EbookFileManager $files,
+        private readonly UploadPolicy $uploadPolicy,
     ) {}
 
     public function index(Request $request): Response
@@ -55,6 +59,7 @@ class EbookController extends Controller
                 'publisher:id,name',
                 'language:id,name,code',
                 'collection:id,name',
+                'file',
             ])
             ->latest('updated_at')
             ->latest('id');
@@ -192,6 +197,7 @@ class EbookController extends Controller
                 'authors:id',
                 'categories:id',
                 'tags:id',
+                'file',
             ])
             ->findOrFail($id);
 
@@ -341,6 +347,17 @@ class EbookController extends Controller
                 1,
                 min(10, (int) $this->settings->get('uploads', 'max_cover_mb')),
             ),
+            'fileSource' => $ebook ? $this->files->serialize($ebook->file) : null,
+            'uploadConfig' => [
+                'max_pdf_mb' => (int) $this->settings->get('uploads', 'max_pdf_mb'),
+                'max_pdf_bytes' => $this->uploadPolicy->maxPdfBytes(),
+                'configured_chunk_mb' => (int) $this->settings->get('uploads', 'chunk_size_mb'),
+                'effective_chunk_bytes' => $this->uploadPolicy->effectiveChunkBytes(),
+                'checksum_enabled' => $this->uploadPolicy->checksumEnabled(),
+                'preferred_source' => (string) $this->settings->get('storage', 'preferred_source'),
+                'verify_external_urls' => (bool) $this->settings->get('storage', 'verify_external_urls'),
+                'https_only_external' => (bool) $this->settings->get('storage', 'https_only_external'),
+            ],
             'options' => [
                 'authors' => $this->simpleOptions(Author::class, $selectedAuthors),
                 'categories' => $this->categoryOptions($selectedCategories),
@@ -379,6 +396,9 @@ class EbookController extends Controller
             'publication_status' => $ebook->publication_status,
             'read_enabled' => $ebook->read_enabled,
             'download_enabled' => $ebook->download_enabled,
+            'file_source_type' => $ebook->file?->source_type,
+            'file_verification_status' => $ebook->file?->verification_status,
+            'file_size_bytes' => $ebook->file?->size_bytes,
             'published_at' => $ebook->published_at?->toIso8601String(),
             'updated_at' => $ebook->updated_at?->toIso8601String(),
         ];

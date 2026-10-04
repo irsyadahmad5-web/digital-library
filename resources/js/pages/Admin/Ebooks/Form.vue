@@ -10,6 +10,7 @@ import {
     Upload,
     XCircle,
 } from '@lucide/vue';
+import EbookStoragePanel from '@/components/admin/EbookStoragePanel.vue';
 import RelationChecklist from '@/components/admin/RelationChecklist.vue';
 import { Button } from '@/components/ui/button';
 import AdminLayout from '@/layouts/AdminLayout.vue';
@@ -19,6 +20,31 @@ interface OptionItem {
     value: number;
     label: string;
     active?: boolean;
+}
+
+interface FileSource {
+    id: number;
+    source_type: 'local' | 'external_url';
+    original_name: string | null;
+    external_url: string | null;
+    mime_type: string | null;
+    size_bytes: number | null;
+    sha256: string | null;
+    verification_status: string;
+    verified_at: string | null;
+    last_checked_at: string | null;
+    last_error: string | null;
+}
+
+interface UploadConfig {
+    max_pdf_mb: number;
+    max_pdf_bytes: number;
+    configured_chunk_mb: number;
+    effective_chunk_bytes: number;
+    checksum_enabled: boolean;
+    preferred_source: 'local' | 'external_url';
+    verify_external_urls: boolean;
+    https_only_external: boolean;
 }
 
 interface EbookData {
@@ -47,6 +73,8 @@ interface EbookData {
 const props = defineProps<{
     ebook: EbookData | null;
     maxCoverMb: number;
+    fileSource: FileSource | null;
+    uploadConfig: UploadConfig;
     options: {
         authors: OptionItem[];
         categories: OptionItem[];
@@ -172,7 +200,7 @@ onBeforeUnmount(() => {
                         {{ isEdit ? 'Edit Ebook' : 'Tambah Ebook' }}
                     </h1>
                     <p class="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-                        Lengkapi metadata dan akses ebook. File PDF belum diunggah di tahap ini dan akan ditangani Storage & Upload Engine.
+                        Lengkapi metadata, source PDF, klasifikasi, dan kebijakan akses ebook dari satu halaman.
                     </p>
                 </div>
 
@@ -286,6 +314,27 @@ onBeforeUnmount(() => {
                                 />
                                 <p v-if="form.errors.description" class="mt-2 text-sm text-red-600">{{ form.errors.description }}</p>
                             </label>
+                        </div>
+                    </section>
+
+                    <EbookStoragePanel
+                        v-if="ebook"
+                        :ebook-id="ebook.id"
+                        :source="fileSource"
+                        :config="uploadConfig"
+                    />
+
+                    <section v-else class="rounded-2xl border border-border bg-surface">
+                        <div class="p-5 sm:p-7">
+                            <div class="flex items-start gap-3">
+                                <BookOpen class="mt-0.5 size-5 shrink-0 text-primary" />
+                                <div>
+                                    <h2 class="font-semibold">File PDF tersedia setelah metadata disimpan</h2>
+                                    <p class="mt-1 text-sm leading-6 text-muted-foreground">
+                                        Simpan ebook terlebih dahulu. Setelah ID ebook terbentuk, halaman edit akan menampilkan upload chunk/resumable dan pilihan URL cloud.
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     </section>
 
@@ -469,7 +518,7 @@ onBeforeUnmount(() => {
                                     {{ form.hasErrors ? 'Periksa form' : 'Siap disimpan' }}
                                 </p>
                                 <p class="mt-1 text-xs leading-5 text-muted-foreground">
-                                    Metadata dapat diubah lagi kapan saja. PDF tidak terpengaruh pada Stage 08.
+                                    Metadata dapat diubah kapan saja. Source PDF dikelola terpisah sehingga perubahan metadata tidak memindahkan file.
                                 </p>
                             </div>
                         </div>

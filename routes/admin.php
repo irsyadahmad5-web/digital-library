@@ -5,6 +5,8 @@ use App\Http\Controllers\Admin\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Admin\Auth\NewPasswordController;
 use App\Http\Controllers\Admin\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Admin\Ebooks\EbookController;
+use App\Http\Controllers\Admin\Ebooks\Storage\EbookStorageController;
+use App\Http\Controllers\Admin\Ebooks\Storage\EbookUploadController;
 use App\Http\Controllers\Admin\MasterData\MasterDataController;
 use App\Http\Controllers\Admin\PasswordController;
 use App\Http\Controllers\Admin\ProfileController;
@@ -75,6 +77,39 @@ Route::prefix('admin')
 
                     Route::post('/', [EbookController::class, 'store'])
                         ->name('admin.ebooks.store');
+
+                    Route::post('/{id}/storage/external', [EbookStorageController::class, 'external'])
+                        ->whereNumber('id')
+                        ->name('admin.ebooks.storage.external');
+
+                    Route::delete('/{id}/storage', [EbookStorageController::class, 'destroy'])
+                        ->whereNumber('id')
+                        ->name('admin.ebooks.storage.destroy');
+
+                    Route::post('/{id}/uploads', [EbookUploadController::class, 'start'])
+                        ->whereNumber('id')
+                        ->name('admin.ebooks.uploads.start');
+
+                    Route::get('/{id}/uploads/{session}', [EbookUploadController::class, 'status'])
+                        ->whereNumber('id')
+                        ->whereUuid('session')
+                        ->name('admin.ebooks.uploads.status');
+
+                    Route::post('/{id}/uploads/{session}/chunks/{index}', [EbookUploadController::class, 'chunk'])
+                        ->whereNumber('id')
+                        ->whereUuid('session')
+                        ->whereNumber('index')
+                        ->name('admin.ebooks.uploads.chunk');
+
+                    Route::post('/{id}/uploads/{session}/complete', [EbookUploadController::class, 'complete'])
+                        ->whereNumber('id')
+                        ->whereUuid('session')
+                        ->name('admin.ebooks.uploads.complete');
+
+                    Route::delete('/{id}/uploads/{session}', [EbookUploadController::class, 'destroy'])
+                        ->whereNumber('id')
+                        ->whereUuid('session')
+                        ->name('admin.ebooks.uploads.destroy');
 
                     Route::get('/{id}/edit', [EbookController::class, 'edit'])
                         ->whereNumber('id')
