@@ -35,6 +35,7 @@ export interface PublicBookDetail extends PublicBookCard {
     description: string | null;
     isbn: string | null;
     edition: string | null;
+    reader_revision: string | null;
     tags: PublicNamedLink[];
 }
 

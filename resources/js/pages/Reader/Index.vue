@@ -23,6 +23,7 @@ import {
     MoreHorizontal,
     Plus,
     RefreshCw,
+    RotateCcw,
     RotateCw,
     Rows3,
     Search,
@@ -41,6 +42,17 @@ import PdfPage, { type ReaderTheme } from '@/components/reader/PdfPage.vue';
 import PdfThumbnail from '@/components/reader/PdfThumbnail.vue';
 import ReaderDrawer from '@/components/reader/ReaderDrawer.vue';
 import ReaderLayout from '@/layouts/ReaderLayout.vue';
+import {
+    clearBookProgress,
+    clearReaderPreferences,
+    readBookProgress,
+    readerLocalStorageAvailable,
+    readReaderPreferences,
+    writeBookProgress,
+    writeReaderPreferences,
+    type ReaderPreferencesV1,
+    type ReaderProgressV1,
+} from '@/composables/readerLocalState';
 import type { SharedPageProps } from '@/types';
 
 type ReaderMode = 'continuous' | 'single' | 'book';
@@ -52,6 +64,7 @@ interface ReaderBook {
     slug: string;
     authors: string[];
     page_count: number | null;
+    revision: string;
 }
 
 interface SearchResult {
@@ -132,6 +145,15 @@ const isBookSpread = ref(false);
 const isFullscreen = ref(false);
 const visibility = new Map<number, number>();
 
+const storageAvailable = ref(false);
+const resumeProgress = ref<ReaderProgressV1 | null>(null);
+const resumePromptOpen = ref(false);
+let storedPreferences: ReaderPreferencesV1 | null = null;
+let preferencesDirty = false;
+let progressWritesEnabled = false;
+let preferenceSaveTimer: ReturnType<typeof setTimeout> | null = null;
+let progressSaveTimer: ReturnType<typeof setTimeout> | null = null;
+
 const searchQuery = ref('');
 const searchResults = ref<SearchResult[]>([]);
 const isSearching = ref(false);
@@ -207,6 +229,25 @@ const bookSpreadKey = computed(() =>
     `${bookPages.value.join('-')}-${rotation.value}-${readerTheme.value}`,
 );
 
+const resumePercent = computed(() =>
+    Math.round((resumeProgress.value?.documentProgress ?? 0) * 100),
+);
+
+const resumeUpdatedLabel = computed(() => {
+    const raw = resumeProgress.value?.updatedAt;
+
+    if (!raw) return '';
+
+    const date = new Date(raw);
+
+    if (Number.isNaN(date.getTime())) return '';
+
+    return new Intl.DateTimeFormat('id-ID', {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+    }).format(date);
+});
+
 function clamp(value: number, min: number, max: number) {
     return Math.min(max, Math.max(min, value));
 }
@@ -221,7 +262,11 @@ function clearHideTimer() {
 function scheduleControlsHide() {
     clearHideTimer();
 
-    if (!autoHideControls.value || activeDrawer.value !== null) {
+    if (
+        !autoHideControls.value
+        || activeDrawer.value !== null
+        || resumePromptOpen.value
+    ) {
         controlsVisible.value = true;
 
         return;
@@ -251,6 +296,299 @@ function openDrawer(drawer: Exclude<ReaderDrawerName, null>) {
 
 function closeDrawer() {
     activeDrawer.value = null;
+}
+
+function clearPreferenceSaveTimer() {
+    if (preferenceSaveTimer) {
+        clearTimeout(preferenceSaveTimer);
+        preferenceSaveTimer = null;
+    }
+}
+
+function clearProgressSaveTimer() {
+    if (progressSaveTimer) {
+        clearTimeout(progressSaveTimer);
+        progressSaveTimer = null;
+    }
+}
+
+function loadLocalReaderState() {
+    storageAvailable.value = readerLocalStorageAvailable();
+
+    if (!storageAvailable.value) {
+        storedPreferences = null;
+        resumeProgress.value = null;
+
+        return;
+    }
+
+    storedPreferences = readReaderPreferences();
+    resumeProgress.value = readBookProgress(
+        props.book.slug,
+        props.book.revision,
+    );
+
+    if (!storedPreferences) return;
+
+    readerMode.value = storedPreferences.mode === 'book' && !enableFlipMode.value
+        ? 'continuous'
+        : storedPreferences.mode;
+    readerTheme.value = storedPreferences.theme;
+    rotation.value = storedPreferences.rotation;
+}
+
+function applyInitialView() {
+    if (!storedPreferences) {
+        applyInitialScale();
+
+        return;
+    }
+
+    fitMode.value = storedPreferences.fitMode;
+
+    if (fitMode.value === 'custom') {
+        scale.value = clamp(storedPreferences.scale, 0.5, 2);
+
+        return;
+    }
+
+    updateFitScale();
+}
+
+function prepareResumePrompt() {
+    const progress = resumeProgress.value;
+
+    if (!progress) {
+        progressWritesEnabled = true;
+
+        return;
+    }
+
+    const page = clamp(progress.page, 1, Math.max(1, totalPages.value));
+    const meaningful = page > 1
+        || progress.pageOffsetRatio >= 0.05
+        || progress.documentProgress >= 0.02;
+
+    if (!meaningful) {
+        progressWritesEnabled = true;
+
+        return;
+    }
+
+    resumePromptOpen.value = true;
+    progressWritesEnabled = false;
+    controlsVisible.value = true;
+    clearHideTimer();
+}
+
+function captureReadingPosition() {
+    const container = scroller.value;
+
+    if (!container || readerMode.value !== 'continuous') {
+        return {
+            pageOffsetRatio: 0,
+            documentProgress: totalPages.value > 1
+                ? clamp(
+                    (currentPage.value - 1) / Math.max(1, totalPages.value - 1),
+                    0,
+                    1,
+                )
+                : 0,
+        };
+    }
+
+    const maxScroll = Math.max(1, container.scrollHeight - container.clientHeight);
+    const documentProgress = clamp(container.scrollTop / maxScroll, 0, 1);
+    const pageElement = document.getElementById(
+        `pdf-page-${currentPage.value}`,
+    );
+
+    if (!pageElement) {
+        return {
+            pageOffsetRatio: 0,
+            documentProgress,
+        };
+    }
+
+    const containerRect = container.getBoundingClientRect();
+    const pageRect = pageElement.getBoundingClientRect();
+    const pageHeight = Math.max(1, pageElement.offsetHeight);
+    const pageOffsetRatio = clamp(
+        (containerRect.top - pageRect.top) / pageHeight,
+        0,
+        1,
+    );
+
+    return {
+        pageOffsetRatio,
+        documentProgress,
+    };
+}
+
+function savePreferencesNow() {
+    clearPreferenceSaveTimer();
+
+    if (!storageAvailable.value || !preferencesDirty) return;
+
+    writeReaderPreferences({
+        mode: readerMode.value,
+        theme: readerTheme.value,
+        scale: clamp(scale.value, 0.5, 2),
+        fitMode: fitMode.value,
+        rotation: rotation.value,
+    });
+
+    preferencesDirty = false;
+}
+
+function schedulePreferenceSave() {
+    if (!storageAvailable.value) return;
+
+    preferencesDirty = true;
+    clearPreferenceSaveTimer();
+    preferenceSaveTimer = setTimeout(savePreferencesNow, 250);
+}
+
+function saveProgressNow() {
+    clearProgressSaveTimer();
+
+    if (!storageAvailable.value || !progressWritesEnabled) return;
+
+    const position = captureReadingPosition();
+
+    writeBookProgress({
+        slug: props.book.slug,
+        revision: props.book.revision,
+        page: clamp(currentPage.value, 1, Math.max(1, totalPages.value)),
+        pageOffsetRatio: position.pageOffsetRatio,
+        documentProgress: position.documentProgress,
+        totalPages: totalPages.value,
+    });
+
+    resumeProgress.value = readBookProgress(
+        props.book.slug,
+        props.book.revision,
+    );
+}
+
+function scheduleProgressSave() {
+    if (!storageAvailable.value || !progressWritesEnabled) return;
+
+    clearProgressSaveTimer();
+    progressSaveTimer = setTimeout(saveProgressNow, 450);
+}
+
+async function restoreReadingProgress(progress: ReaderProgressV1) {
+    const target = clamp(progress.page, 1, Math.max(1, totalPages.value));
+
+    currentPage.value = target;
+    pageInput.value = String(target);
+
+    if (readerMode.value !== 'continuous') {
+        return;
+    }
+
+    await nextTick();
+    await new Promise<void>((resolve) => {
+        requestAnimationFrame(() => resolve());
+    });
+    await new Promise<void>((resolve) => {
+        requestAnimationFrame(() => resolve());
+    });
+
+    const container = scroller.value;
+    const pageElement = document.getElementById(`pdf-page-${target}`);
+
+    if (!container) return;
+
+    if (!pageElement) {
+        const maxScroll = Math.max(0, container.scrollHeight - container.clientHeight);
+        container.scrollTop = progress.documentProgress * maxScroll;
+
+        return;
+    }
+
+    const containerRect = container.getBoundingClientRect();
+    const pageRect = pageElement.getBoundingClientRect();
+    const desiredOffset = pageElement.offsetHeight * progress.pageOffsetRatio;
+    const nextScroll = container.scrollTop
+        + (pageRect.top - containerRect.top)
+        + desiredOffset
+        - 96;
+    const maxScroll = Math.max(0, container.scrollHeight - container.clientHeight);
+
+    container.scrollTop = clamp(nextScroll, 0, maxScroll);
+}
+
+async function continueReading() {
+    const progress = resumeProgress.value;
+
+    resumePromptOpen.value = false;
+
+    if (progress) {
+        await restoreReadingProgress(progress);
+    }
+
+    progressWritesEnabled = true;
+    saveProgressNow();
+    handleActivity();
+}
+
+async function startFromBeginning() {
+    clearBookProgress(props.book.slug);
+    resumeProgress.value = null;
+    resumePromptOpen.value = false;
+    progressWritesEnabled = true;
+
+    currentPage.value = 1;
+    pageInput.value = '1';
+
+    await nextTick();
+
+    if (scroller.value) {
+        scroller.value.scrollTop = 0;
+    }
+
+    saveProgressNow();
+    handleActivity();
+}
+
+async function clearCurrentBookProgress() {
+    clearBookProgress(props.book.slug);
+    resumeProgress.value = null;
+    progressWritesEnabled = true;
+    await startFromBeginning();
+}
+
+function resetReaderPreferences() {
+    clearReaderPreferences();
+    storedPreferences = null;
+    preferencesDirty = false;
+
+    readerMode.value = initialMode();
+    readerTheme.value = initialTheme();
+    rotation.value = 0;
+
+    nextTick(() => {
+        applyInitialScale();
+    });
+
+    handleActivity();
+}
+
+function saveReaderStateNow() {
+    savePreferencesNow();
+    saveProgressNow();
+}
+
+function onScrollerScroll() {
+    scheduleProgressSave();
+}
+
+function onVisibilityChange() {
+    if (document.visibilityState === 'hidden') {
+        saveReaderStateNow();
+    }
 }
 
 async function loadPdf() {
@@ -303,7 +641,8 @@ async function loadPdf() {
         basePageHeight.value = viewport.height;
 
         await nextTick();
-        applyInitialScale();
+        applyInitialView();
+        prepareResumePrompt();
         handleActivity();
     } catch {
         loadError.value = 'PDF tidak dapat dimuat. Periksa koneksi lalu coba kembali.';
@@ -385,18 +724,21 @@ function zoomBy(delta: number) {
         0.5,
         2,
     );
+    schedulePreferenceSave();
     handleActivity();
 }
 
 function fitWidth() {
     fitMode.value = 'width';
     scale.value = fitWidthScale();
+    schedulePreferenceSave();
     handleActivity();
 }
 
 function fitPage() {
     fitMode.value = 'page';
     scale.value = fitPageScale();
+    schedulePreferenceSave();
     handleActivity();
 }
 
@@ -404,6 +746,7 @@ function rotate() {
     rotation.value = (rotation.value + 90) % 360;
 
     nextTick(() => updateFitScale());
+    schedulePreferenceSave();
     handleActivity();
 }
 
@@ -431,6 +774,8 @@ function setMode(mode: ReaderMode) {
         }
     });
 
+    schedulePreferenceSave();
+    scheduleProgressSave();
     handleActivity();
 }
 
@@ -445,6 +790,7 @@ function cycleMode() {
 
 function setTheme(theme: ReaderTheme) {
     readerTheme.value = theme;
+    schedulePreferenceSave();
     handleActivity();
 }
 
@@ -487,6 +833,7 @@ function goToPage(value?: number, smooth = true) {
         });
     }
 
+    scheduleProgressSave();
     handleActivity();
 }
 
@@ -508,6 +855,7 @@ function handleVisibility(pageNumber: number, ratio: number) {
     if (bestRatio > 0) {
         currentPage.value = bestPage;
         pageInput.value = String(bestPage);
+        scheduleProgressSave();
     }
 }
 
@@ -741,6 +1089,8 @@ function isTypingTarget(target: EventTarget | null) {
 }
 
 function onKeydown(event: KeyboardEvent) {
+    if (resumePromptOpen.value) return;
+
     if (isTypingTarget(event.target)) {
         if (event.key === 'Escape') {
             (event.target as HTMLElement).blur();
@@ -818,12 +1168,14 @@ watch(readerMode, () => {
 });
 
 onMounted(() => {
+    loadLocalReaderState();
     updateViewportMode();
     void loadPdf();
 
     if (scroller.value) {
         resizeObserver = new ResizeObserver(onResize);
         resizeObserver.observe(scroller.value);
+        scroller.value.addEventListener('scroll', onScrollerScroll, { passive: true });
         scroller.value.addEventListener('wheel', onWheel, { passive: false });
         scroller.value.addEventListener('touchstart', onTouchStart, { passive: true });
         scroller.value.addEventListener('touchend', onTouchEnd, { passive: true });
@@ -831,15 +1183,21 @@ onMounted(() => {
 
     window.addEventListener('resize', onResize);
     window.addEventListener('keydown', onKeydown);
+    window.addEventListener('pagehide', saveReaderStateNow);
+    document.addEventListener('visibilitychange', onVisibilityChange);
     document.addEventListener('fullscreenchange', onFullscreenChange);
 });
 
 onBeforeUnmount(async () => {
+    saveReaderStateNow();
     clearHideTimer();
+    clearPreferenceSaveTimer();
+    clearProgressSaveTimer();
     cancelSearch();
     resizeObserver?.disconnect();
 
     if (scroller.value) {
+        scroller.value.removeEventListener('scroll', onScrollerScroll);
         scroller.value.removeEventListener('wheel', onWheel);
         scroller.value.removeEventListener('touchstart', onTouchStart);
         scroller.value.removeEventListener('touchend', onTouchEnd);
@@ -847,6 +1205,8 @@ onBeforeUnmount(async () => {
 
     window.removeEventListener('resize', onResize);
     window.removeEventListener('keydown', onKeydown);
+    window.removeEventListener('pagehide', saveReaderStateNow);
+    document.removeEventListener('visibilitychange', onVisibilityChange);
     document.removeEventListener('fullscreenchange', onFullscreenChange);
 
     if (loadingTask.value) {
@@ -1115,6 +1475,65 @@ onBeforeUnmount(async () => {
         </template>
 
         <template #overlay>
+            <Transition
+                enter-active-class="transition duration-200 ease-out"
+                enter-from-class="opacity-0 translate-y-2"
+                enter-to-class="opacity-100 translate-y-0"
+                leave-active-class="transition duration-150 ease-in"
+                leave-from-class="opacity-100 translate-y-0"
+                leave-to-class="opacity-0 translate-y-2"
+            >
+                <div
+                    v-if="resumePromptOpen && resumeProgress"
+                    class="absolute inset-0 z-[70] flex items-end justify-center bg-slate-950/35 p-3 backdrop-blur-[1px] sm:items-center sm:p-6"
+                >
+                    <section
+                        class="w-full max-w-md rounded-3xl border border-white/10 bg-slate-950/95 p-5 text-slate-100 shadow-2xl sm:p-6"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="resume-reading-title"
+                    >
+                        <div class="flex size-11 items-center justify-center rounded-2xl bg-blue-500/15 text-blue-300">
+                            <BookOpen class="size-5" />
+                        </div>
+
+                        <h2 id="resume-reading-title" class="mt-4 text-lg font-semibold text-white">
+                            Lanjutkan membaca?
+                        </h2>
+                        <p class="mt-2 text-sm leading-6 text-slate-400">
+                            Terakhir Anda membaca sampai halaman
+                            <span class="font-semibold text-slate-200">
+                                {{ resumeProgress.page }}
+                            </span>
+                            <template v-if="resumePercent > 0">
+                                · sekitar {{ resumePercent }}%
+                            </template>
+                            .
+                        </p>
+                        <p v-if="resumeUpdatedLabel" class="mt-1 text-xs text-slate-500">
+                            Disimpan {{ resumeUpdatedLabel }} di browser ini.
+                        </p>
+
+                        <div class="mt-5 grid gap-2 sm:grid-cols-2">
+                            <button
+                                type="button"
+                                class="min-h-11 rounded-xl bg-white px-4 text-sm font-semibold text-slate-950 hover:bg-slate-100"
+                                @click="continueReading"
+                            >
+                                Lanjutkan membaca
+                            </button>
+                            <button
+                                type="button"
+                                class="min-h-11 rounded-xl border border-white/10 bg-white/[0.04] px-4 text-sm font-semibold text-slate-200 hover:bg-white/[0.08]"
+                                @click="startFromBeginning"
+                            >
+                                Mulai dari awal
+                            </button>
+                        </div>
+                    </section>
+                </div>
+            </Transition>
+
             <ReaderDrawer
                 :open="activeDrawer === 'thumbnails'"
                 title="Thumbnail halaman"
@@ -1398,6 +1817,46 @@ onBeforeUnmount(async () => {
                             <span>M</span><span>Mode</span>
                             <span>T / S</span><span>Thumbnail / Cari</span>
                             <span>R / F</span><span>Putar / Fullscreen</span>
+                        </div>
+                    </section>
+
+                    <section class="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                        <div class="flex items-center justify-between gap-3">
+                            <div>
+                                <p class="text-xs font-semibold text-white">Penyimpanan lokal</p>
+                                <p class="mt-1 text-[11px] leading-5 text-slate-500">
+                                    Preferensi dan posisi baca hanya disimpan di browser ini.
+                                </p>
+                            </div>
+                            <span
+                                class="shrink-0 rounded-full px-2.5 py-1 text-[10px] font-semibold"
+                                :class="storageAvailable
+                                    ? 'bg-emerald-400/10 text-emerald-300'
+                                    : 'bg-amber-400/10 text-amber-300'"
+                            >
+                                {{ storageAvailable ? 'Aktif' : 'Tidak tersedia' }}
+                            </span>
+                        </div>
+
+                        <div class="mt-4 grid gap-2">
+                            <button
+                                type="button"
+                                class="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 text-xs font-semibold text-slate-200 hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-40"
+                                :disabled="!storageAvailable"
+                                @click="resetReaderPreferences"
+                            >
+                                <RotateCcw class="size-4" />
+                                Reset preferensi reader
+                            </button>
+                            <button
+                                type="button"
+                                class="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 text-xs font-semibold text-slate-200 hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-40"
+                                :disabled="!storageAvailable"
+                                @click="clearCurrentBookProgress"
+                            >
+                                <RotateCcw class="size-4" />
+                                Hapus posisi ebook ini
+                            </button>
                         </div>
                     </section>
                 </div>

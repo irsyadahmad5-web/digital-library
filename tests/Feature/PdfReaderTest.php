@@ -25,7 +25,7 @@ class PdfReaderTest extends TestCase
 
     public function test_readable_public_book_opens_reader_without_exposing_storage_path(): void
     {
-        [$ebook] = $this->localBook('Reader Book');
+        [$ebook, $file] = $this->localBook('Reader Book');
 
         $this->get('/read/'.$ebook->slug)
             ->assertOk()
@@ -34,11 +34,32 @@ class PdfReaderTest extends TestCase
                     ->component('Reader/Index')
                     ->where('book.title', 'Reader Book')
                     ->where('book.slug', $ebook->slug)
+                    ->where('book.revision', $file->readerRevision())
                     ->where('sourceUrl', route('reader.source', ['slug' => $ebook->slug]))
                     ->where('backUrl', route('books.show', ['slug' => $ebook->slug]))
                     ->missing('path')
                     ->missing('external_url'),
             );
+    }
+
+    public function test_reader_revision_tracks_content_not_routine_metadata_updates(): void
+    {
+        [, $file] = $this->localBook('Stable Reader Revision');
+
+        $initial = $file->readerRevision();
+
+        $file->forceFill([
+            'last_checked_at' => now(),
+            'last_error' => null,
+        ])->save();
+
+        $this->assertSame($initial, $file->fresh()->readerRevision());
+
+        $file->forceFill([
+            'sha256' => hash('sha256', 'replacement-pdf-content'),
+        ])->save();
+
+        $this->assertNotSame($initial, $file->fresh()->readerRevision());
     }
 
     public function test_read_disabled_or_non_public_book_cannot_open_reader_source(): void

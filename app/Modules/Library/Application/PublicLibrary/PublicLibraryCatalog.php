@@ -162,6 +162,7 @@ class PublicLibraryCatalog
             'description' => $ebook->description,
             'isbn' => $ebook->isbn,
             'edition' => $ebook->edition,
+            'reader_revision' => $ebook->file?->readerRevision(),
             'tags' => $ebook->tags
                 ->where('is_active', true)
                 ->map(fn ($tag): array => [
