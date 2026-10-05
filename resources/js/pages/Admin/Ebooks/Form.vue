@@ -474,7 +474,7 @@ onBeforeUnmount(() => {
                             </label>
 
                             <div class="rounded-xl bg-muted px-4 py-3 text-xs leading-5 text-muted-foreground">
-                                Route baca/download aman akan diimplementasikan pada stage reader dan access control. Flag ini sudah menjadi sumber kebijakan per ebook.
+                                Akses baca dan download diterapkan langsung pada route publik yang aman. File private maupun URL eksternal tidak diekspos ke pengunjung.
                             </div>
                         </div>
                     </section>

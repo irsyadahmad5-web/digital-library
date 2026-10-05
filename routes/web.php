@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Public\PublicDownloadController;
 use App\Http\Controllers\Public\PublicLibraryController;
 use App\Http\Controllers\Public\PublicReaderController;
 use Illuminate\Support\Facades\Route;
@@ -40,6 +41,9 @@ Route::middleware('site.maintenance')->group(function (): void {
 
     Route::get('/book/{slug}', [PublicLibraryController::class, 'book'])
         ->name('books.show');
+
+    Route::match(['GET', 'HEAD'], '/book/{slug}/download', [PublicDownloadController::class, 'download'])
+        ->name('books.download');
 
     Route::get('/read/{slug}', [PublicReaderController::class, 'show'])
         ->name('reader.show');

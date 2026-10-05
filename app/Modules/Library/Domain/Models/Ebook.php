@@ -94,6 +94,11 @@ class Ebook extends Model
         return $this->hasOne(EbookFile::class);
     }
 
+    public function downloadStat(): HasOne
+    {
+        return $this->hasOne(EbookDownloadStat::class);
+    }
+
     public function uploadSessions(): HasMany
     {
         return $this->hasMany(EbookUploadSession::class);
