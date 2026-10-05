@@ -60,7 +60,7 @@ class SettingsRegistry
                 'label' => 'Reader',
                 'description' => 'Pengalaman default pembaca PDF.',
                 'fields' => [
-                    'default_mode' => $this->select('Mode baca default', 'continuous', true, ['continuous' => 'Continuous scroll', 'flip' => 'Flip seperti buku']),
+                    'default_mode' => $this->select('Mode baca default', 'continuous', true, ['continuous' => 'Continuous scroll', 'single' => 'Single page', 'flip' => 'Flip seperti buku']),
                     'default_theme' => $this->select('Tema reader', 'light', true, ['light' => 'Light', 'sepia' => 'Sepia', 'dark' => 'Dark']),
                     'auto_hide_controls' => $this->makeField('Auto-hide controls', 'boolean', true, true, ['required', 'boolean']),
                     'hide_delay_ms' => $this->number('Waktu hide controls (ms)', 3500, true, 1000, 10000),

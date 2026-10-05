@@ -141,6 +141,38 @@ class AdminSettingsCoreTest extends TestCase
         Storage::disk('public')->assertExists($path);
     }
 
+    public function test_reader_settings_support_single_page_and_advanced_reader_defaults(): void
+    {
+        $user = $this->createSuperAdmin();
+        $manager = app(SettingsManager::class);
+
+        $response = $this->actingAs($user)->post('/admin/settings/reader', [
+            'default_mode' => 'single',
+            'default_theme' => 'sepia',
+            'auto_hide_controls' => true,
+            'hide_delay_ms' => 2400,
+            'default_zoom' => 110,
+            'page_gap_px' => 20,
+            'enable_flip_mode' => false,
+        ]);
+
+        $response->assertSessionHasNoErrors();
+
+        $this->assertSame('single', $manager->get('reader', 'default_mode'));
+        $this->assertSame('sepia', $manager->get('reader', 'default_theme'));
+        $this->assertTrue((bool) $manager->get('reader', 'auto_hide_controls'));
+        $this->assertSame(2400, $manager->get('reader', 'hide_delay_ms'));
+        $this->assertSame(110, $manager->get('reader', 'default_zoom'));
+        $this->assertSame(20, $manager->get('reader', 'page_gap_px'));
+        $this->assertFalse((bool) $manager->get('reader', 'enable_flip_mode'));
+
+        $public = $manager->public();
+
+        $this->assertSame('single', $public['reader']['default_mode']);
+        $this->assertSame('sepia', $public['reader']['default_theme']);
+        $this->assertFalse((bool) $public['reader']['enable_flip_mode']);
+    }
+
     public function test_public_payload_does_not_expose_private_admin_settings(): void
     {
         $public = app(SettingsManager::class)->public();
