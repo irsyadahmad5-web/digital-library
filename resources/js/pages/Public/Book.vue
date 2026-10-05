@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import { Head, Link, usePage } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 import {
     ArrowRight,
     BookOpen,
@@ -14,6 +14,7 @@ import {
     UserRound,
 } from '@lucide/vue';
 import PublicBookCard from '@/components/public/PublicBookCard.vue';
+import SeoHead from '@/components/public/SeoHead.vue';
 import PublicLayout from '@/layouts/PublicLayout.vue';
 import {
     readBookProgress,
@@ -24,10 +25,12 @@ import type {
     PublicBookCard as PublicBook,
     PublicBookDetail,
 } from '@/types/public-library';
+import type { SeoPayload } from '@/types/seo';
 
 const props = defineProps<{
     book: PublicBookDetail;
     relatedBooks: PublicBook[];
+    seo: SeoPayload;
 }>();
 
 const page = usePage<SharedPageProps>();
@@ -67,14 +70,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <Head>
-        <title>{{ book.title }}</title>
-        <meta
-            v-if="book.description"
-            name="description"
-            :content="book.description.slice(0, 300)"
-        >
-    </Head>
+    <SeoHead :seo="seo" />
 
     <PublicLayout>
         <section class="mx-auto px-5 py-10 sm:px-8 sm:py-14" style="max-width: var(--content-max-width)">

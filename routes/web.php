@@ -3,7 +3,14 @@
 use App\Http\Controllers\Public\PublicDownloadController;
 use App\Http\Controllers\Public\PublicLibraryController;
 use App\Http\Controllers\Public\PublicReaderController;
+use App\Http\Controllers\Public\SeoController;
 use Illuminate\Support\Facades\Route;
+
+Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])
+    ->name('seo.sitemap');
+
+Route::get('/robots.txt', [SeoController::class, 'robots'])
+    ->name('seo.robots');
 
 Route::middleware('site.maintenance')->group(function (): void {
     Route::get('/', [PublicLibraryController::class, 'home'])

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Public;
 use App\Http\Controllers\Controller;
 use App\Modules\Analytics\Application\AnalyticsTracker;
 use App\Modules\Library\Application\PublicLibrary\PublicLibraryCatalog;
+use App\Modules\Seo\Application\SeoManager;
 use App\Modules\Settings\Application\HomepageBuilderManager;
 use App\Modules\Settings\Application\SettingsManager;
 use Illuminate\Http\Request;
@@ -19,6 +20,7 @@ class PublicLibraryController extends Controller
         private readonly SettingsManager $settings,
         private readonly HomepageBuilderManager $homepageBuilder,
         private readonly AnalyticsTracker $analytics,
+        private readonly SeoManager $seo,
     ) {}
 
     public function home(Request $request): InertiaResponse
@@ -27,6 +29,7 @@ class PublicLibraryController extends Controller
 
         return Inertia::render('Public/Home', [
             'sections' => $this->homepageBuilder->publicPayload(),
+            'seo' => $this->seo->home($request),
         ]);
     }
 
@@ -69,6 +72,7 @@ class PublicLibraryController extends Controller
                 'per_page' => (int) ($filters['per_page'] ?? 12),
             ],
             'filterOptions' => $this->catalog->filterOptions(),
+            'seo' => $this->seo->library($request, $filters),
         ]);
     }
 
@@ -76,10 +80,12 @@ class PublicLibraryController extends Controller
     {
         $ebook = $this->catalog->findBook($slug);
         $this->analytics->recordPageView($request, 'book', $ebook);
+        $detail = $this->catalog->detail($ebook);
 
         return Inertia::render('Public/Book', [
-            'book' => $this->catalog->detail($ebook),
+            'book' => $detail,
             'relatedBooks' => $this->catalog->related($ebook, 4),
+            'seo' => $this->seo->book($request, $ebook, $detail),
         ]);
     }
 
@@ -87,28 +93,28 @@ class PublicLibraryController extends Controller
     {
         $this->analytics->recordPageView($request, 'directory');
 
-        return $this->directory('categories');
+        return $this->directory($request, 'categories');
     }
 
     public function authors(Request $request): InertiaResponse
     {
         $this->analytics->recordPageView($request, 'directory');
 
-        return $this->directory('authors');
+        return $this->directory($request, 'authors');
     }
 
     public function publishers(Request $request): InertiaResponse
     {
         $this->analytics->recordPageView($request, 'directory');
 
-        return $this->directory('publishers');
+        return $this->directory($request, 'publishers');
     }
 
     public function collections(Request $request): InertiaResponse
     {
         $this->analytics->recordPageView($request, 'directory');
 
-        return $this->directory('collections');
+        return $this->directory($request, 'collections');
     }
 
     public function category(Request $request, string $slug): InertiaResponse
@@ -131,7 +137,7 @@ class PublicLibraryController extends Controller
         return $this->taxonomy($request, 'collection', $slug);
     }
 
-    private function directory(string $type): InertiaResponse
+    private function directory(Request $request, string $type): InertiaResponse
     {
         [$title, $singular, $items] = match ($type) {
             'categories' => [
@@ -161,6 +167,7 @@ class PublicLibraryController extends Controller
             'title' => $title,
             'type' => $singular,
             'items' => $items,
+            'seo' => $this->seo->directory($request, $title, $singular),
         ]);
     }
 
@@ -176,6 +183,11 @@ class PublicLibraryController extends Controller
         $filters[$type] = $slug;
         $this->analytics->recordPageView($request, 'directory');
 
+        $hasNonCanonicalQuery = collect($request->query())
+            ->except('page')
+            ->filter(fn (mixed $value): bool => $value !== null && $value !== '')
+            ->isNotEmpty();
+
         return Inertia::render('Public/Taxonomy', [
             'type' => $type,
             'taxonomy' => $taxonomy,
@@ -187,6 +199,12 @@ class PublicLibraryController extends Controller
                 'sort' => (string) ($filters['sort'] ?? 'newest'),
                 'per_page' => (int) ($filters['per_page'] ?? 12),
             ],
+            'seo' => $this->seo->taxonomy(
+                $request,
+                $type,
+                $taxonomy,
+                $hasNonCanonicalQuery,
+            ),
         ]);
     }
 
@@ -201,6 +219,12 @@ class PublicLibraryController extends Controller
             'description' => (string) ($general['description'] ?? ''),
             'organization' => (string) ($general['organization_name'] ?? ''),
             'contact' => null,
+            'seo' => $this->seo->info(
+                $request,
+                'about',
+                'Tentang',
+                (string) ($general['description'] ?? ''),
+            ),
         ]);
     }
 
@@ -219,12 +243,20 @@ class PublicLibraryController extends Controller
                 'phone' => (string) ($general['phone'] ?? ''),
                 'email' => (string) ($general['email'] ?? ''),
             ],
+            'seo' => $this->seo->info(
+                $request,
+                'contact',
+                'Kontak',
+                'Hubungi pengelola perpustakaan melalui informasi berikut.',
+            ),
         ]);
     }
 
-    public function notFound(): Response
+    public function notFound(Request $request): Response
     {
-        return Inertia::render('Public/NotFound')
+        return Inertia::render('Public/NotFound', [
+            'seo' => $this->seo->notFound($request),
+        ])
             ->toResponse(request())
             ->setStatusCode(404);
     }

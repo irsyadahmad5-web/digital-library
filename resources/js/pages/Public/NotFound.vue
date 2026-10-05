@@ -1,11 +1,17 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { Link } from '@inertiajs/vue3';
 import { ArrowLeft, BookOpen } from '@lucide/vue';
+import SeoHead from '@/components/public/SeoHead.vue';
 import PublicLayout from '@/layouts/PublicLayout.vue';
+import type { SeoPayload } from '@/types/seo';
+
+defineProps<{
+    seo: SeoPayload;
+}>();
 </script>
 
 <template>
-    <Head title="Halaman tidak ditemukan" />
+    <SeoHead :seo="seo" />
 
     <PublicLayout>
         <section class="mx-auto px-5 py-20 sm:px-8 sm:py-28" style="max-width: var(--content-max-width)">
