@@ -68,7 +68,7 @@ export interface TaxonomyInfo {
 
 export interface HomepageSectionPayload {
     id: number;
-    type: 'hero' | 'search' | 'latest_books' | 'categories' | 'collections';
+    type: 'hero' | 'search' | 'latest_books' | 'popular_books' | 'recommendations' | 'categories' | 'collections';
     title: string;
     config: Record<string, unknown>;
     data: PublicBookCard[] | DirectoryItem[] | null;

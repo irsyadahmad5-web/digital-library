@@ -421,7 +421,7 @@ class PublicLibraryTest extends TestCase
         $publisher ??= $this->publisher('Publisher '.Str::random(8));
         $collection ??= $this->collection('Collection '.Str::random(8));
         $language ??= $this->language(
-            strtolower(Str::random(2)),
+            strtolower(Str::random(8)),
             'Language '.Str::random(8),
         );
 

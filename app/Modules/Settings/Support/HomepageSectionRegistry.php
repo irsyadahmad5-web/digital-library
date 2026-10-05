@@ -35,8 +35,8 @@ class HomepageSectionRegistry
                 'default_title' => 'Cari Ebook',
                 'fields' => [
                     'title' => $this->text('Judul section', 'Temukan ebook', 120),
-                    'subtitle' => $this->textarea('Deskripsi', 'Cari berdasarkan judul, penulis, kategori, penerbit, tag, atau ISBN.', 300),
-                    'placeholder' => $this->text('Placeholder pencarian', 'Cari judul, penulis, kategori, penerbit, atau ISBN...', 180),
+                    'subtitle' => $this->textarea('Deskripsi', 'Cari berdasarkan judul, penulis, kategori, tag, penerbit, koleksi, bahasa, atau ISBN.', 300),
+                    'placeholder' => $this->text('Placeholder pencarian', 'Cari judul, penulis, kategori, tag, penerbit, koleksi, atau ISBN...', 180),
                 ],
             ],
             'latest_books' => [
@@ -83,9 +83,9 @@ class HomepageSectionRegistry
             ],
             'popular_books' => [
                 'label' => 'Ebook Populer',
-                'description' => 'Urutan berdasarkan statistik pembacaan/download nyata.',
-                'provider_available' => false,
-                'provider_note' => 'Menunggu Stage 18 — Statistics & Analytics.',
+                'description' => 'Urutan berdasarkan statistik download agregat yang sudah tersedia.',
+                'provider_available' => true,
+                'provider_note' => 'Menggunakan counter download agregat Stage 16; analytics lanjutan tetap di Stage 18.',
                 'default_enabled' => false,
                 'default_title' => 'Ebook Populer',
                 'fields' => [
@@ -96,9 +96,9 @@ class HomepageSectionRegistry
             ],
             'recommendations' => [
                 'label' => 'Rekomendasi',
-                'description' => 'Rekomendasi homepage berbasis discovery signal yang nyata.',
-                'provider_available' => false,
-                'provider_note' => 'Menunggu Stage 17 — Search & Discovery.',
+                'description' => 'Rekomendasi homepage berbasis variasi kategori, koleksi, dan recency.',
+                'provider_available' => true,
+                'provider_note' => 'Discovery Stage 17 memilih ebook lintas topik secara deterministik tanpa profiling pengunjung.',
                 'default_enabled' => false,
                 'default_title' => 'Rekomendasi',
                 'fields' => [

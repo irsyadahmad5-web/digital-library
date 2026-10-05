@@ -34,11 +34,16 @@ class PublicLibraryController extends Controller
             'author' => ['nullable', 'string', 'max:240'],
             'publisher' => ['nullable', 'string', 'max:240'],
             'collection' => ['nullable', 'string', 'max:240'],
+            'tag' => ['nullable', 'string', 'max:240'],
             'language' => ['nullable', 'string', 'max:32'],
             'year' => ['nullable', 'integer', 'min:1000', 'max:9999'],
-            'sort' => ['nullable', 'in:newest,title,year_desc,year_asc'],
+            'sort' => ['nullable', 'in:relevance,popular,newest,title,year_desc,year_asc'],
             'per_page' => ['nullable', 'integer', 'in:12,24,48'],
         ]);
+
+        $search = trim((string) ($filters['q'] ?? ''));
+        $defaultSort = $search !== '' ? 'relevance' : 'newest';
+        $filters['sort'] = (string) ($filters['sort'] ?? $defaultSort);
 
         return Inertia::render('Public/Library', [
             'books' => $this->catalog->paginate(
@@ -46,14 +51,15 @@ class PublicLibraryController extends Controller
                 (int) ($filters['per_page'] ?? 12),
             ),
             'filters' => [
-                'q' => (string) ($filters['q'] ?? ''),
+                'q' => $search,
                 'category' => (string) ($filters['category'] ?? ''),
                 'author' => (string) ($filters['author'] ?? ''),
                 'publisher' => (string) ($filters['publisher'] ?? ''),
                 'collection' => (string) ($filters['collection'] ?? ''),
+                'tag' => (string) ($filters['tag'] ?? ''),
                 'language' => (string) ($filters['language'] ?? ''),
                 'year' => $filters['year'] ?? null,
-                'sort' => (string) ($filters['sort'] ?? 'newest'),
+                'sort' => $filters['sort'],
                 'per_page' => (int) ($filters['per_page'] ?? 12),
             ],
             'filterOptions' => $this->catalog->filterOptions(),
@@ -148,7 +154,7 @@ class PublicLibraryController extends Controller
         $taxonomy = $this->catalog->taxonomy($type, $slug);
 
         $filters = $request->validate([
-            'sort' => ['nullable', 'in:newest,title,year_desc,year_asc'],
+            'sort' => ['nullable', 'in:popular,newest,title,year_desc,year_asc'],
             'per_page' => ['nullable', 'integer', 'in:12,24,48'],
         ]);
 

@@ -243,6 +243,8 @@ class HomepageBuilderManager
         $data = match ($section->type) {
             'hero', 'search' => null,
             'latest_books' => $this->catalog->latest((int) ($config['limit'] ?? 8)),
+            'popular_books' => $this->catalog->popular((int) ($config['limit'] ?? 8)),
+            'recommendations' => $this->catalog->recommended((int) ($config['limit'] ?? 8)),
             'categories' => array_slice(
                 $this->catalog->directoryCategories(),
                 0,
@@ -257,7 +259,11 @@ class HomepageBuilderManager
         };
 
         if (
-            in_array($section->type, ['latest_books', 'categories', 'collections'], true)
+            in_array(
+                $section->type,
+                ['latest_books', 'popular_books', 'recommendations', 'categories', 'collections'],
+                true,
+            )
             && $data === []
         ) {
             return null;

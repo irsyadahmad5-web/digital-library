@@ -10,9 +10,11 @@ use App\Modules\Library\Domain\Models\Collection;
 use App\Modules\Library\Domain\Models\Ebook;
 use App\Modules\Library\Domain\Models\Language;
 use App\Modules\Library\Domain\Models\Publisher;
+use App\Modules\Library\Domain\Models\Tag;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection as SupportCollection;
 
 class PublicLibraryCatalog
 {
@@ -33,32 +35,13 @@ class PublicLibraryCatalog
                 'collection:id,name,slug,is_active',
                 'tags:id,name,slug,is_active',
                 'file',
+                'downloadStat:id,ebook_id,downloads,last_downloaded_at',
             ]);
 
-        $search = trim((string) ($filters['q'] ?? ''));
+        $search = $this->normalizeSearch($filters['q'] ?? '');
 
         if ($search !== '') {
-            $query->where(function (Builder $builder) use ($search): void {
-                $like = '%'.$search.'%';
-
-                $builder
-                    ->where('title', 'like', $like)
-                    ->orWhere('subtitle', 'like', $like)
-                    ->orWhere('isbn', 'like', $like)
-                    ->orWhere('description', 'like', $like)
-                    ->orWhereHas('authors', fn (Builder $relation): Builder => $relation
-                        ->where('is_active', true)
-                        ->where('name', 'like', $like))
-                    ->orWhereHas('categories', fn (Builder $relation): Builder => $relation
-                        ->where('is_active', true)
-                        ->where('name', 'like', $like))
-                    ->orWhereHas('publisher', fn (Builder $relation): Builder => $relation
-                        ->where('is_active', true)
-                        ->where('name', 'like', $like))
-                    ->orWhereHas('tags', fn (Builder $relation): Builder => $relation
-                        ->where('is_active', true)
-                        ->where('name', 'like', $like));
-            });
+            $this->applySearch($query, $search);
         }
 
         if ($slug = $this->cleanSlug($filters['category'] ?? null)) {
@@ -97,6 +80,15 @@ class PublicLibraryCatalog
             );
         }
 
+        if ($slug = $this->cleanSlug($filters['tag'] ?? null)) {
+            $query->whereHas(
+                'tags',
+                fn (Builder $relation): Builder => $relation
+                    ->where('is_active', true)
+                    ->where('slug', $slug),
+            );
+        }
+
         if ($language = $this->cleanSlug($filters['language'] ?? null)) {
             $query->whereHas(
                 'language',
@@ -112,7 +104,13 @@ class PublicLibraryCatalog
             $query->where('publication_year', $year);
         }
 
-        return $this->applySort($query, (string) ($filters['sort'] ?? 'newest'));
+        $defaultSort = $search !== '' ? 'relevance' : 'newest';
+
+        return $this->applySort(
+            $query,
+            (string) ($filters['sort'] ?? $defaultSort),
+            $search,
+        );
     }
 
     public function paginate(array $filters, int $perPage = 12): LengthAwarePaginator
@@ -138,6 +136,83 @@ class PublicLibraryCatalog
         return $this->query(['sort' => 'newest'])
             ->limit(max(1, min(24, $limit)))
             ->get()
+            ->map(fn (Ebook $ebook): array => $this->card($ebook))
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function popular(int $limit): array
+    {
+        return $this->query(['sort' => 'popular'])
+            ->whereHas(
+                'downloadStat',
+                fn (Builder $query): Builder => $query->where('downloads', '>', 0),
+            )
+            ->limit(max(1, min(24, $limit)))
+            ->get()
+            ->map(fn (Ebook $ebook): array => $this->card($ebook))
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function recommended(int $limit): array
+    {
+        $limit = max(1, min(24, $limit));
+        $candidateLimit = min(96, max(24, $limit * 8));
+
+        /** @var SupportCollection<int, Ebook> $candidates */
+        $candidates = $this->query(['sort' => 'newest'])
+            ->limit($candidateLimit)
+            ->get();
+
+        if ($candidates->isEmpty()) {
+            return [];
+        }
+
+        $selected = collect();
+        $seenTopics = [];
+
+        foreach ($candidates as $ebook) {
+            $topicKey = $this->discoveryTopicKey($ebook);
+
+            if ($topicKey === null || isset($seenTopics[$topicKey])) {
+                continue;
+            }
+
+            $selected->push($ebook);
+            $seenTopics[$topicKey] = true;
+
+            if ($selected->count() >= $limit) {
+                break;
+            }
+        }
+
+        if ($selected->count() < $limit) {
+            $selectedIds = $selected
+                ->map(fn (Ebook $item): int|string => $item->getKey())
+                ->all();
+
+            foreach ($candidates as $ebook) {
+                if (in_array($ebook->getKey(), $selectedIds, true)) {
+                    continue;
+                }
+
+                $selected->push($ebook);
+                $selectedIds[] = $ebook->getKey();
+
+                if ($selected->count() >= $limit) {
+                    break;
+                }
+            }
+        }
+
+        return $selected
             ->map(fn (Ebook $ebook): array => $this->card($ebook))
             ->values()
             ->all();
@@ -179,28 +254,114 @@ class PublicLibraryCatalog
      */
     public function related(Ebook $ebook, int $limit = 4): array
     {
+        $limit = max(1, min(12, $limit));
+
         $categoryIds = $ebook->categories
             ->where('is_active', true)
             ->modelKeys();
+        $tagIds = $ebook->tags
+            ->where('is_active', true)
+            ->modelKeys();
+        $authorIds = $ebook->authors
+            ->where('is_active', true)
+            ->modelKeys();
+
+        $hasSignals = $categoryIds !== []
+            || $tagIds !== []
+            || $authorIds !== []
+            || $ebook->publisher_id !== null
+            || $ebook->collection_id !== null
+            || $ebook->language_id !== null;
 
         $query = $this->query()
             ->whereKeyNot($ebook->getKey());
 
-        if ($categoryIds !== []) {
-            $query->whereHas(
-                'categories',
-                fn (Builder $relation): Builder => $relation
-                    ->whereIn('categories.id', $categoryIds),
-            );
-        } elseif ($ebook->publisher_id !== null) {
-            $query->where('publisher_id', $ebook->publisher_id);
-        } else {
-            $query->whereRaw('1 = 0');
+        if ($hasSignals) {
+            $query->where(function (Builder $builder) use (
+                $categoryIds,
+                $tagIds,
+                $authorIds,
+                $ebook,
+            ): void {
+                $hasCondition = false;
+
+                if ($categoryIds !== []) {
+                    $builder->whereHas(
+                        'categories',
+                        fn (Builder $relation): Builder => $relation
+                            ->whereIn('categories.id', $categoryIds),
+                    );
+                    $hasCondition = true;
+                }
+
+                if ($tagIds !== []) {
+                    $method = $hasCondition ? 'orWhereHas' : 'whereHas';
+                    $builder->{$method}(
+                        'tags',
+                        fn (Builder $relation): Builder => $relation
+                            ->whereIn('tags.id', $tagIds),
+                    );
+                    $hasCondition = true;
+                }
+
+                if ($authorIds !== []) {
+                    $method = $hasCondition ? 'orWhereHas' : 'whereHas';
+                    $builder->{$method}(
+                        'authors',
+                        fn (Builder $relation): Builder => $relation
+                            ->whereIn('authors.id', $authorIds),
+                    );
+                    $hasCondition = true;
+                }
+
+                foreach ([
+                    'publisher_id' => $ebook->publisher_id,
+                    'collection_id' => $ebook->collection_id,
+                    'language_id' => $ebook->language_id,
+                ] as $column => $value) {
+                    if ($value === null) {
+                        continue;
+                    }
+
+                    if ($hasCondition) {
+                        $builder->orWhere($column, $value);
+                    } else {
+                        $builder->where($column, $value);
+                        $hasCondition = true;
+                    }
+                }
+            });
         }
 
-        return $query
-            ->limit(max(1, min(12, $limit)))
-            ->get()
+        /** @var SupportCollection<int, Ebook> $candidates */
+        $candidates = $query
+            ->limit($hasSignals ? 60 : $limit)
+            ->get();
+
+        if ($hasSignals) {
+            $candidates = $candidates
+                ->sort(function (Ebook $left, Ebook $right) use ($ebook): int {
+                    $scoreComparison = $this->relatedScore($right, $ebook)
+                        <=> $this->relatedScore($left, $ebook);
+
+                    if ($scoreComparison !== 0) {
+                        return $scoreComparison;
+                    }
+
+                    $rightPublished = $right->published_at?->getTimestamp() ?? 0;
+                    $leftPublished = $left->published_at?->getTimestamp() ?? 0;
+
+                    if ($rightPublished !== $leftPublished) {
+                        return $rightPublished <=> $leftPublished;
+                    }
+
+                    return $right->getKey() <=> $left->getKey();
+                })
+                ->values();
+        }
+
+        return $candidates
+            ->take($limit)
             ->map(fn (Ebook $related): array => $this->card($related))
             ->values()
             ->all();
@@ -216,6 +377,7 @@ class PublicLibraryCatalog
             'authors' => $this->directoryAuthors(),
             'publishers' => $this->directoryPublishers(),
             'collections' => $this->directoryCollections(),
+            'tags' => $this->directoryTags(),
             'languages' => $this->directoryLanguages(),
         ];
     }
@@ -272,6 +434,30 @@ class PublicLibraryCatalog
     public function directoryCollections(): array
     {
         return $this->directoryHasMany(Collection::query(), 'description');
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function directoryTags(): array
+    {
+        return Tag::query()
+            ->where('is_active', true)
+            ->whereHas('ebooks', fn (Builder $query): Builder => $query->publiclyVisible())
+            ->withCount([
+                'ebooks as ebooks_count' => fn (Builder $query): Builder => $query->publiclyVisible(),
+            ])
+            ->orderByDesc('ebooks_count')
+            ->orderBy('name')
+            ->get()
+            ->map(fn (Tag $tag): array => [
+                'name' => $tag->name,
+                'slug' => $tag->slug,
+                'description' => null,
+                'count' => $tag->ebooks_count,
+            ])
+            ->values()
+            ->all();
     }
 
     /**
@@ -360,10 +546,61 @@ class PublicLibraryCatalog
         ];
     }
 
-    private function applySort(Builder $query, string $sort): Builder
+    private function applySearch(Builder $query, string $search): void
     {
+        foreach ($this->searchTerms($search) as $term) {
+            $like = '%'.$term.'%';
+
+            $query->where(function (Builder $builder) use ($like): void {
+                $builder
+                    ->where('ebooks.title', 'like', $like)
+                    ->orWhere('ebooks.subtitle', 'like', $like)
+                    ->orWhere('ebooks.isbn', 'like', $like)
+                    ->orWhere('ebooks.description', 'like', $like)
+                    ->orWhereHas('authors', fn (Builder $relation): Builder => $relation
+                        ->where('is_active', true)
+                        ->where('name', 'like', $like))
+                    ->orWhereHas('categories', fn (Builder $relation): Builder => $relation
+                        ->where('is_active', true)
+                        ->where('name', 'like', $like))
+                    ->orWhereHas('publisher', fn (Builder $relation): Builder => $relation
+                        ->where('is_active', true)
+                        ->where('name', 'like', $like))
+                    ->orWhereHas('collection', fn (Builder $relation): Builder => $relation
+                        ->where('is_active', true)
+                        ->where('name', 'like', $like))
+                    ->orWhereHas('tags', fn (Builder $relation): Builder => $relation
+                        ->where('is_active', true)
+                        ->where('name', 'like', $like))
+                    ->orWhereHas('language', fn (Builder $relation): Builder => $relation
+                        ->where('is_active', true)
+                        ->where(function (Builder $language) use ($like): void {
+                            $language
+                                ->where('name', 'like', $like)
+                                ->orWhere('native_name', 'like', $like)
+                                ->orWhere('code', 'like', $like);
+                        }));
+            });
+        }
+    }
+
+    private function applySort(
+        Builder $query,
+        string $sort,
+        string $search = '',
+    ): Builder {
+        if ($sort === 'relevance' && $search !== '') {
+            return $this->applyRelevanceSort($query, $search);
+        }
+
         return match ($sort) {
-            'title' => $query->orderBy('title')->orderBy('id'),
+            'popular' => $query
+                ->orderByRaw(
+                    'COALESCE((SELECT downloads FROM ebook_download_stats WHERE ebook_download_stats.ebook_id = ebooks.id), 0) DESC',
+                )
+                ->orderByDesc('published_at')
+                ->orderByDesc('ebooks.id'),
+            'title' => $query->orderBy('title')->orderBy('ebooks.id'),
             'year_desc' => $query
                 ->orderByRaw('publication_year IS NULL')
                 ->orderByDesc('publication_year')
@@ -372,8 +609,124 @@ class PublicLibraryCatalog
                 ->orderByRaw('publication_year IS NULL')
                 ->orderBy('publication_year')
                 ->orderBy('title'),
-            default => $query->orderByDesc('published_at')->orderByDesc('id'),
+            default => $query
+                ->orderByDesc('published_at')
+                ->orderByDesc('ebooks.id'),
         };
+    }
+
+    private function applyRelevanceSort(Builder $query, string $search): Builder
+    {
+        $needle = mb_strtolower($search);
+        $contains = '%'.$needle.'%';
+        $prefix = $needle.'%';
+
+        $expressions = [
+            'CASE WHEN LOWER(ebooks.title) = ? THEN 180 WHEN LOWER(ebooks.title) LIKE ? THEN 140 WHEN LOWER(ebooks.title) LIKE ? THEN 100 ELSE 0 END',
+            'CASE WHEN LOWER(COALESCE(ebooks.subtitle, \'\')) LIKE ? THEN 45 ELSE 0 END',
+            'CASE WHEN LOWER(COALESCE(ebooks.isbn, \'\')) = ? THEN 160 WHEN LOWER(COALESCE(ebooks.isbn, \'\')) LIKE ? THEN 80 ELSE 0 END',
+            'CASE WHEN LOWER(COALESCE(ebooks.description, \'\')) LIKE ? THEN 15 ELSE 0 END',
+            'CASE WHEN EXISTS (
+                SELECT 1 FROM ebook_author ea
+                INNER JOIN authors a ON a.id = ea.author_id
+                WHERE ea.ebook_id = ebooks.id
+                  AND a.deleted_at IS NULL
+                  AND a.is_active = 1
+                  AND LOWER(a.name) LIKE ?
+            ) THEN 70 ELSE 0 END',
+            'CASE WHEN EXISTS (
+                SELECT 1 FROM category_ebook ce
+                INNER JOIN categories c ON c.id = ce.category_id
+                WHERE ce.ebook_id = ebooks.id
+                  AND c.deleted_at IS NULL
+                  AND c.is_active = 1
+                  AND LOWER(c.name) LIKE ?
+            ) THEN 55 ELSE 0 END',
+            'CASE WHEN EXISTS (
+                SELECT 1 FROM publishers p
+                WHERE p.id = ebooks.publisher_id
+                  AND p.deleted_at IS NULL
+                  AND p.is_active = 1
+                  AND LOWER(p.name) LIKE ?
+            ) THEN 45 ELSE 0 END',
+            'CASE WHEN EXISTS (
+                SELECT 1 FROM ebook_tag et
+                INNER JOIN tags t ON t.id = et.tag_id
+                WHERE et.ebook_id = ebooks.id
+                  AND t.deleted_at IS NULL
+                  AND t.is_active = 1
+                  AND LOWER(t.name) LIKE ?
+            ) THEN 45 ELSE 0 END',
+            'CASE WHEN EXISTS (
+                SELECT 1 FROM collections co
+                WHERE co.id = ebooks.collection_id
+                  AND co.deleted_at IS NULL
+                  AND co.is_active = 1
+                  AND LOWER(co.name) LIKE ?
+            ) THEN 35 ELSE 0 END',
+            'CASE WHEN EXISTS (
+                SELECT 1 FROM languages l
+                WHERE l.id = ebooks.language_id
+                  AND l.deleted_at IS NULL
+                  AND l.is_active = 1
+                  AND (
+                      LOWER(l.name) LIKE ?
+                      OR LOWER(COALESCE(l.native_name, \'\')) LIKE ?
+                      OR LOWER(l.code) LIKE ?
+                  )
+            ) THEN 20 ELSE 0 END',
+        ];
+
+        $bindings = [
+            $needle,
+            $prefix,
+            $contains,
+            $contains,
+            $needle,
+            $contains,
+            $contains,
+            $contains,
+            $contains,
+            $contains,
+            $contains,
+            $contains,
+            $contains,
+            $contains,
+        ];
+
+        foreach ($this->searchTerms($search) as $term) {
+            $expressions[] = 'CASE WHEN LOWER(ebooks.title) LIKE ? THEN 18 ELSE 0 END';
+            $bindings[] = '%'.mb_strtolower($term).'%';
+        }
+
+        return $query
+            ->orderByRaw('('.implode(' + ', $expressions).') DESC', $bindings)
+            ->orderByDesc('published_at')
+            ->orderByDesc('ebooks.id');
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function searchTerms(string $search): array
+    {
+        $terms = preg_split('/\s+/u', $search, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+
+        return array_values(array_slice(array_unique($terms), 0, 6));
+    }
+
+    private function normalizeSearch(mixed $value): string
+    {
+        if (! is_scalar($value)) {
+            return '';
+        }
+
+        $value = trim((string) $value);
+        $value = str_replace(['%', '_'], ' ', $value);
+        $value = preg_replace('/[\x00-\x1F\x7F]+/u', ' ', $value) ?? '';
+        $value = preg_replace('/\s+/u', ' ', $value) ?? '';
+
+        return mb_substr(trim($value), 0, 120);
     }
 
     private function cleanSlug(mixed $value): ?string
@@ -385,6 +738,70 @@ class PublicLibraryCatalog
         $value = trim($value);
 
         return $value !== '' ? $value : null;
+    }
+
+    private function discoveryTopicKey(Ebook $ebook): ?string
+    {
+        $category = $ebook->categories
+            ->where('is_active', true)
+            ->first();
+
+        if ($category !== null) {
+            return 'category:'.$category->getKey();
+        }
+
+        if ($ebook->collection_id !== null) {
+            return 'collection:'.$ebook->collection_id;
+        }
+
+        if ($ebook->publisher_id !== null) {
+            return 'publisher:'.$ebook->publisher_id;
+        }
+
+        return null;
+    }
+
+    private function relatedScore(Ebook $candidate, Ebook $source): int
+    {
+        $score = 0;
+
+        $score += count(array_intersect(
+            $candidate->categories->where('is_active', true)->modelKeys(),
+            $source->categories->where('is_active', true)->modelKeys(),
+        )) * 8;
+
+        $score += count(array_intersect(
+            $candidate->tags->where('is_active', true)->modelKeys(),
+            $source->tags->where('is_active', true)->modelKeys(),
+        )) * 6;
+
+        $score += count(array_intersect(
+            $candidate->authors->where('is_active', true)->modelKeys(),
+            $source->authors->where('is_active', true)->modelKeys(),
+        )) * 5;
+
+        if (
+            $source->publisher_id !== null
+            && $candidate->publisher_id === $source->publisher_id
+        ) {
+            $score += 3;
+        }
+
+        if (
+            $source->collection_id !== null
+            && $candidate->collection_id === $source->collection_id
+        ) {
+            $score += 3;
+        }
+
+        if (
+            $source->language_id !== null
+            && $candidate->language_id === $source->language_id
+        ) {
+            $score += 1;
+        }
+
+        return $score;
     }
 
     /**
