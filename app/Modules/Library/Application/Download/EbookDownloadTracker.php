@@ -3,6 +3,7 @@
 namespace App\Modules\Library\Application\Download;
 
 use App\Modules\Analytics\Application\AnalyticsTracker;
+use App\Modules\Library\Application\PublicLibrary\PublicLibraryCache;
 use App\Modules\Library\Domain\Models\Ebook;
 use App\Modules\Library\Domain\Models\EbookDownloadStat;
 use App\Modules\Settings\Application\SettingsManager;
@@ -16,6 +17,7 @@ class EbookDownloadTracker
     public function __construct(
         private readonly SettingsManager $settings,
         private readonly AnalyticsTracker $analytics,
+        private readonly PublicLibraryCache $publicCache,
     ) {}
 
     public function recordSuccessfulDownload(
@@ -55,6 +57,7 @@ class EbookDownloadTracker
 
         if ($updated > 0) {
             $this->analytics->recordDownload($request, $ebook);
+            $this->publicCache->flush();
 
             return;
         }
@@ -76,5 +79,6 @@ class EbookDownloadTracker
         }
 
         $this->analytics->recordDownload($request, $ebook);
+        $this->publicCache->flush();
     }
 }

@@ -1,3 +1,13 @@
+<IfModule mod_headers.c>
+    <IfModule mod_setenvif.c>
+        SetEnvIf Request_URI "^/build/assets/" DL_IMMUTABLE_ASSET=1
+        Header set Cache-Control "public, max-age=31536000, immutable" env=DL_IMMUTABLE_ASSET
+
+        SetEnvIf Request_URI "^/storage/ebooks/(covers|generated-previews)/" DL_PUBLIC_MEDIA=1
+        Header set Cache-Control "public, max-age=2592000, stale-while-revalidate=86400" env=DL_PUBLIC_MEDIA
+    </IfModule>
+</IfModule>
+
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes

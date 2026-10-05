@@ -3,6 +3,7 @@
 namespace App\Modules\Settings\Application;
 
 use App\Modules\Analytics\Application\AnalyticsReport;
+use App\Modules\Library\Application\PublicLibrary\PublicLibraryCache;
 use App\Modules\Library\Application\PublicLibrary\PublicLibraryCatalog;
 use App\Modules\Settings\Domain\Models\HomepageSection;
 use App\Modules\Settings\Support\HomepageSectionRegistry;
@@ -18,6 +19,7 @@ class HomepageBuilderManager
         private readonly SettingsManager $settings,
         private readonly PublicLibraryCatalog $catalog,
         private readonly AnalyticsReport $analytics,
+        private readonly PublicLibraryCache $cache,
     ) {}
 
     public function ensureDefaults(): void
@@ -189,17 +191,23 @@ class HomepageBuilderManager
      */
     public function publicPayload(): array
     {
-        $this->ensureDefaults();
+        return $this->cache->remember(
+            'homepage:public-payload',
+            120,
+            function (): array {
+                $this->ensureDefaults();
 
-        return HomepageSection::query()
-            ->where('is_enabled', true)
-            ->orderBy('sort_order')
-            ->orderBy('id')
-            ->get()
-            ->map(fn (HomepageSection $section): ?array => $this->serializePublic($section))
-            ->filter()
-            ->values()
-            ->all();
+                return HomepageSection::query()
+                    ->where('is_enabled', true)
+                    ->orderBy('sort_order')
+                    ->orderBy('id')
+                    ->get()
+                    ->map(fn (HomepageSection $section): ?array => $this->serializePublic($section))
+                    ->filter()
+                    ->values()
+                    ->all();
+            },
+        );
     }
 
     /**
