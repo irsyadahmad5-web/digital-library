@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed, onMounted, ref } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
 import {
     ArrowRight,
@@ -13,15 +14,47 @@ import {
 } from '@lucide/vue';
 import PublicBookCard from '@/components/public/PublicBookCard.vue';
 import PublicLayout from '@/layouts/PublicLayout.vue';
+import {
+    readBookProgress,
+    type ReaderProgressV1,
+} from '@/composables/readerLocalState';
 import type {
     PublicBookCard as PublicBook,
     PublicBookDetail,
 } from '@/types/public-library';
 
-defineProps<{
+const props = defineProps<{
     book: PublicBookDetail;
     relatedBooks: PublicBook[];
 }>();
+
+const readingProgress = ref<ReaderProgressV1 | null>(null);
+
+const hasReadingProgress = computed(() =>
+    Boolean(
+        readingProgress.value
+        && (
+            readingProgress.value.page > 1
+            || readingProgress.value.pageOffsetRatio >= 0.05
+            || readingProgress.value.documentProgress >= 0.02
+        )
+    ),
+);
+
+const readButtonLabel = computed(() =>
+    hasReadingProgress.value
+        ? `Lanjutkan · halaman ${readingProgress.value?.page ?? 1}`
+        : 'Baca Ebook',
+);
+
+onMounted(() => {
+    if (!props.book.read_enabled || !props.book.reader_revision) return;
+
+    readingProgress.value = readBookProgress(
+        props.book.slug,
+        props.book.reader_revision,
+    );
+});
 </script>
 
 <template>
@@ -90,7 +123,7 @@ defineProps<{
                             class="inline-flex min-h-12 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
                         >
                             <BookOpen class="size-4" />
-                            Baca Ebook
+                            {{ readButtonLabel }}
                             <ArrowRight class="size-4" />
                         </Link>
                     </div>

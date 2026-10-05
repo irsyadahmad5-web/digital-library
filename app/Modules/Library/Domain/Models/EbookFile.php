@@ -48,6 +48,23 @@ class EbookFile extends Model
         ];
     }
 
+    public function readerRevision(): string
+    {
+        $contentIdentity = $this->sha256 ?: implode('|', [
+            (string) $this->source_type,
+            (string) ($this->etag ?? ''),
+            (string) ($this->size_bytes ?? 0),
+            (string) ($this->path ?? ''),
+            (string) ($this->external_url ?? ''),
+        ]);
+
+        return hash_hmac(
+            'sha256',
+            (string) $this->ebook_id.'|'.$contentIdentity,
+            (string) config('app.key'),
+        );
+    }
+
     public function ebook(): BelongsTo
     {
         return $this->belongsTo(Ebook::class);

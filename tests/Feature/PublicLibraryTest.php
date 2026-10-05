@@ -292,6 +292,7 @@ class PublicLibraryTest extends TestCase
                     ->where('book.isbn', '9781111111111')
                     ->where('book.edition', 'Edisi Kedua')
                     ->where('book.page_count', 321)
+                    ->where('book.reader_revision', $fixture['file']->readerRevision())
                     ->where('book.publisher.name', 'Kawan Press')
                     ->where('book.collection.name', 'Belajar Digital')
                     ->where('book.language.name', 'Indonesia')

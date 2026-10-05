@@ -33,6 +33,7 @@ class PublicReaderController extends Controller
                     ->values()
                     ->all(),
                 'page_count' => $ebook->file?->page_count ?? $ebook->page_count,
+                'revision' => $ebook->file?->readerRevision() ?? '',
             ],
             'sourceUrl' => route('reader.source', ['slug' => $ebook->slug]),
             'backUrl' => route('books.show', ['slug' => $ebook->slug]),
