@@ -68,7 +68,7 @@ class HomepageBuilderTest extends TestCase
                     ->where('schemas.latest_books.provider_available', true)
                     ->where('schemas.popular_books.provider_available', true)
                     ->where('schemas.recommendations.provider_available', true)
-                    ->where('schemas.statistics.provider_available', false),
+                    ->where('schemas.statistics.provider_available', true),
             );
     }
 
@@ -233,17 +233,21 @@ class HomepageBuilderTest extends TestCase
             );
     }
 
-    public function test_statistics_provider_remains_unavailable_until_stage_18(): void
+    public function test_statistics_provider_is_available_with_privacy_safe_public_totals(): void
     {
         HomepageSection::query()
             ->where('type', 'statistics')
             ->update(['is_enabled' => true]);
 
-        $publicTypes = collect(app(HomepageBuilderManager::class)->publicPayload())
-            ->pluck('type')
-            ->all();
+        $statistics = collect(app(HomepageBuilderManager::class)->publicPayload())
+            ->firstWhere('type', 'statistics');
 
-        $this->assertNotContains('statistics', $publicTypes);
+        $this->assertNotNull($statistics);
+        $this->assertCount(4, $statistics['data']);
+        $this->assertSame(
+            ['ebooks', 'authors', 'categories', 'downloads'],
+            collect($statistics['data'])->pluck('key')->all(),
+        );
     }
 
     public function test_old_partial_builder_is_completed_without_reordering_existing_sections(): void

@@ -8,6 +8,7 @@ import type { SharedPageProps } from '@/types';
 import type {
     DirectoryItem,
     HomepageSectionPayload,
+    HomepageStatistic,
     PublicBookCard as PublicBook,
 } from '@/types/public-library';
 
@@ -37,6 +38,10 @@ function bookData(section: HomepageSectionPayload) {
 
 function directoryData(section: HomepageSectionPayload) {
     return (section.data ?? []) as DirectoryItem[];
+}
+
+function statisticsData(section: HomepageSectionPayload) {
+    return (section.data ?? []) as HomepageStatistic[];
 }
 
 function bookSectionEyebrow(section: HomepageSectionPayload) {
@@ -280,6 +285,34 @@ function bookSectionHref(section: HomepageSectionPayload) {
                             {{ item.count }} ebook
                         </p>
                     </Link>
+                </div>
+            </section>
+
+            <section
+                v-else-if="section.type === 'statistics' && statisticsData(section).length"
+                class="mx-auto px-5 py-10 sm:px-8"
+                style="max-width: var(--content-max-width)"
+            >
+                <div class="rounded-3xl border border-border bg-surface px-6 py-8 sm:px-10 sm:py-10">
+                    <p class="text-sm font-medium text-primary">
+                        {{ configString(section, 'eyebrow', 'Perpustakaan dalam angka') }}
+                    </p>
+                    <h2 class="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
+                        {{ configString(section, 'title', 'Statistik') }}
+                    </h2>
+
+                    <div class="mt-7 grid grid-cols-2 gap-4 lg:grid-cols-4">
+                        <div
+                            v-for="item in statisticsData(section)"
+                            :key="item.key"
+                            class="rounded-2xl bg-muted/60 p-5"
+                        >
+                            <p class="text-3xl font-semibold tracking-tight sm:text-4xl">
+                                {{ item.value.toLocaleString('id-ID') }}
+                            </p>
+                            <p class="mt-2 text-sm text-muted-foreground">{{ item.label }}</p>
+                        </div>
+                    </div>
                 </div>
             </section>
         </template>

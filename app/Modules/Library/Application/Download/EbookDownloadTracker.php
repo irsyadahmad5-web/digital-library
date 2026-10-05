@@ -2,6 +2,7 @@
 
 namespace App\Modules\Library\Application\Download;
 
+use App\Modules\Analytics\Application\AnalyticsTracker;
 use App\Modules\Library\Domain\Models\Ebook;
 use App\Modules\Library\Domain\Models\EbookDownloadStat;
 use App\Modules\Settings\Application\SettingsManager;
@@ -14,6 +15,7 @@ class EbookDownloadTracker
 {
     public function __construct(
         private readonly SettingsManager $settings,
+        private readonly AnalyticsTracker $analytics,
     ) {}
 
     public function recordSuccessfulDownload(
@@ -52,6 +54,8 @@ class EbookDownloadTracker
             ]);
 
         if ($updated > 0) {
+            $this->analytics->recordDownload($request, $ebook);
+
             return;
         }
 
@@ -70,5 +74,7 @@ class EbookDownloadTracker
                     'updated_at' => $now,
                 ]);
         }
+
+        $this->analytics->recordDownload($request, $ebook);
     }
 }

@@ -185,6 +185,7 @@ class AdminSettingsCoreTest extends TestCase
         $this->assertArrayNotHasKey('track_downloads', $public['downloads']);
         $this->assertArrayNotHasKey('uploads', $public);
         $this->assertArrayNotHasKey('storage', $public);
+        $this->assertArrayNotHasKey('analytics', $public);
         $this->assertArrayNotHasKey('enabled', $public['maintenance']);
     }
 

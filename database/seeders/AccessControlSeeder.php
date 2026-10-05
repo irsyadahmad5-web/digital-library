@@ -15,6 +15,7 @@ class AccessControlSeeder extends Seeder
             ['name' => 'Kelola Pengguna', 'slug' => 'admin.manage-users', 'group' => 'admin'],
             ['name' => 'Kelola Pengaturan', 'slug' => 'admin.manage-settings', 'group' => 'admin'],
             ['name' => 'Lihat Audit Log', 'slug' => 'admin.view-audit', 'group' => 'admin'],
+            ['name' => 'Lihat Analytics', 'slug' => 'admin.view-analytics', 'group' => 'admin'],
             ['name' => 'Kelola Master Data', 'slug' => 'library.manage-master-data', 'group' => 'library'],
             ['name' => 'Kelola Ebook', 'slug' => 'library.manage-ebooks', 'group' => 'library'],
         ])->mapWithKeys(function (array $data) {
@@ -51,6 +52,7 @@ class AccessControlSeeder extends Seeder
                     'admin.access',
                     'admin.manage-settings',
                     'admin.view-audit',
+                    'admin.view-analytics',
                     'library.manage-master-data',
                     'library.manage-ebooks',
                 ])
