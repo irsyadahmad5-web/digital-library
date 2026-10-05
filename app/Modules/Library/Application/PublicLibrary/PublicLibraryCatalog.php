@@ -21,22 +21,27 @@ class PublicLibraryCatalog
     public function __construct(
         private readonly EbookCoverManager $covers,
         private readonly EbookFileManager $files,
+        private readonly PublicLibraryCache $cache,
     ) {}
 
-    public function query(array $filters = []): Builder
+    public function query(array $filters = [], bool $includeTags = false): Builder
     {
+        $relations = [
+            'authors:id,name,slug,is_active',
+            'categories:id,parent_id,name,slug,is_active',
+            'publisher:id,name,slug,is_active',
+            'language:id,code,name,native_name,is_active',
+            'collection:id,name,slug,is_active',
+            'file:id,ebook_id,source_type,disk,path,external_url,size_bytes,sha256,etag,verification_status,processing_status,preview_path',
+        ];
+
+        if ($includeTags) {
+            $relations[] = 'tags:id,name,slug,is_active';
+        }
+
         $query = Ebook::query()
             ->publiclyVisible()
-            ->with([
-                'authors:id,name,slug,is_active',
-                'categories:id,parent_id,name,slug,is_active',
-                'publisher:id,name,slug,is_active',
-                'language:id,code,name,native_name,is_active',
-                'collection:id,name,slug,is_active',
-                'tags:id,name,slug,is_active',
-                'file',
-                'downloadStat:id,ebook_id,downloads,last_downloaded_at',
-            ]);
+            ->with($relations);
 
         $search = $this->normalizeSearch($filters['q'] ?? '');
 
@@ -133,12 +138,18 @@ class PublicLibraryCatalog
      */
     public function latest(int $limit): array
     {
-        return $this->query(['sort' => 'newest'])
-            ->limit(max(1, min(24, $limit)))
-            ->get()
-            ->map(fn (Ebook $ebook): array => $this->card($ebook))
-            ->values()
-            ->all();
+        $limit = max(1, min(24, $limit));
+
+        return $this->cache->remember(
+            'catalog:latest:'.$limit,
+            120,
+            fn (): array => $this->query(['sort' => 'newest'])
+                ->limit($limit)
+                ->get()
+                ->map(fn (Ebook $ebook): array => $this->card($ebook))
+                ->values()
+                ->all(),
+        );
     }
 
     /**
@@ -146,16 +157,22 @@ class PublicLibraryCatalog
      */
     public function popular(int $limit): array
     {
-        return $this->query(['sort' => 'popular'])
-            ->whereHas(
-                'downloadStat',
-                fn (Builder $query): Builder => $query->where('downloads', '>', 0),
-            )
-            ->limit(max(1, min(24, $limit)))
-            ->get()
-            ->map(fn (Ebook $ebook): array => $this->card($ebook))
-            ->values()
-            ->all();
+        $limit = max(1, min(24, $limit));
+
+        return $this->cache->remember(
+            'catalog:popular:'.$limit,
+            120,
+            fn (): array => $this->query(['sort' => 'popular'])
+                ->whereHas(
+                    'downloadStat',
+                    fn (Builder $query): Builder => $query->where('downloads', '>', 0),
+                )
+                ->limit($limit)
+                ->get()
+                ->map(fn (Ebook $ebook): array => $this->card($ebook))
+                ->values()
+                ->all(),
+        );
     }
 
     /**
@@ -164,6 +181,19 @@ class PublicLibraryCatalog
     public function recommended(int $limit): array
     {
         $limit = max(1, min(24, $limit));
+
+        return $this->cache->remember(
+            'catalog:recommended:'.$limit,
+            120,
+            fn (): array => $this->buildRecommended($limit),
+        );
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function buildRecommended(int $limit): array
+    {
         $candidateLimit = min(96, max(24, $limit * 8));
 
         /** @var SupportCollection<int, Ebook> $candidates */
@@ -220,7 +250,7 @@ class PublicLibraryCatalog
 
     public function findBook(string $slug): Ebook
     {
-        return $this->query()
+        return $this->query([], true)
             ->where('slug', $slug)
             ->firstOrFail();
     }
@@ -273,7 +303,7 @@ class PublicLibraryCatalog
             || $ebook->collection_id !== null
             || $ebook->language_id !== null;
 
-        $query = $this->query()
+        $query = $this->query([], true)
             ->whereKeyNot($ebook->getKey());
 
         if ($hasSignals) {
@@ -372,14 +402,18 @@ class PublicLibraryCatalog
      */
     public function filterOptions(): array
     {
-        return [
-            'categories' => $this->directoryCategories(),
-            'authors' => $this->directoryAuthors(),
-            'publishers' => $this->directoryPublishers(),
-            'collections' => $this->directoryCollections(),
-            'tags' => $this->directoryTags(),
-            'languages' => $this->directoryLanguages(),
-        ];
+        return $this->cache->remember(
+            'directory:filter-options',
+            300,
+            fn (): array => [
+                'categories' => $this->directoryCategories(),
+                'authors' => $this->directoryAuthors(),
+                'publishers' => $this->directoryPublishers(),
+                'collections' => $this->directoryCollections(),
+                'tags' => $this->directoryTags(),
+                'languages' => $this->directoryLanguages(),
+            ],
+        );
     }
 
     /**
@@ -387,29 +421,34 @@ class PublicLibraryCatalog
      */
     public function directoryCategories(): array
     {
-        return Category::query()
-            ->where('is_active', true)
-            ->whereHas('ebooks', fn (Builder $query): Builder => $query->publiclyVisible())
-            ->with('parent:id,name,slug')
-            ->withCount([
-                'ebooks as ebooks_count' => fn (Builder $query): Builder => $query->publiclyVisible(),
-            ])
-            ->orderByRaw('parent_id IS NOT NULL')
-            ->orderBy('sort_order')
-            ->orderBy('name')
-            ->get()
-            ->map(fn (Category $category): array => [
-                'name' => $category->name,
-                'slug' => $category->slug,
-                'description' => $category->description,
-                'count' => $category->ebooks_count,
-                'parent' => $category->parent ? [
-                    'name' => $category->parent->name,
-                    'slug' => $category->parent->slug,
-                ] : null,
-            ])
-            ->values()
-            ->all();
+        return $this->cache->remember(
+            'directory:categories',
+            300,
+            fn (): array => Category::query()
+                ->select(['id', 'parent_id', 'name', 'slug', 'description', 'is_active', 'sort_order'])
+                ->where('is_active', true)
+                ->whereHas('ebooks', fn (Builder $query): Builder => $query->publiclyVisible())
+                ->with('parent:id,name,slug')
+                ->withCount([
+                    'ebooks as ebooks_count' => fn (Builder $query): Builder => $query->publiclyVisible(),
+                ])
+                ->orderByRaw('parent_id IS NOT NULL')
+                ->orderBy('sort_order')
+                ->orderBy('name')
+                ->get()
+                ->map(fn (Category $category): array => [
+                    'name' => $category->name,
+                    'slug' => $category->slug,
+                    'description' => $category->description,
+                    'count' => $category->ebooks_count,
+                    'parent' => $category->parent ? [
+                        'name' => $category->parent->name,
+                        'slug' => $category->parent->slug,
+                    ] : null,
+                ])
+                ->values()
+                ->all(),
+        );
     }
 
     /**
@@ -417,7 +456,11 @@ class PublicLibraryCatalog
      */
     public function directoryAuthors(): array
     {
-        return $this->directoryBelongsToMany(Author::query(), 'bio');
+        return $this->cache->remember(
+            'directory:authors',
+            300,
+            fn (): array => $this->directoryBelongsToMany(Author::query(), 'bio'),
+        );
     }
 
     /**
@@ -425,7 +468,11 @@ class PublicLibraryCatalog
      */
     public function directoryPublishers(): array
     {
-        return $this->directoryHasMany(Publisher::query(), 'description');
+        return $this->cache->remember(
+            'directory:publishers',
+            300,
+            fn (): array => $this->directoryHasMany(Publisher::query(), 'description'),
+        );
     }
 
     /**
@@ -433,7 +480,11 @@ class PublicLibraryCatalog
      */
     public function directoryCollections(): array
     {
-        return $this->directoryHasMany(Collection::query(), 'description');
+        return $this->cache->remember(
+            'directory:collections',
+            300,
+            fn (): array => $this->directoryHasMany(Collection::query(), 'description'),
+        );
     }
 
     /**
@@ -441,23 +492,28 @@ class PublicLibraryCatalog
      */
     public function directoryTags(): array
     {
-        return Tag::query()
-            ->where('is_active', true)
-            ->whereHas('ebooks', fn (Builder $query): Builder => $query->publiclyVisible())
-            ->withCount([
-                'ebooks as ebooks_count' => fn (Builder $query): Builder => $query->publiclyVisible(),
-            ])
-            ->orderByDesc('ebooks_count')
-            ->orderBy('name')
-            ->get()
-            ->map(fn (Tag $tag): array => [
-                'name' => $tag->name,
-                'slug' => $tag->slug,
-                'description' => null,
-                'count' => $tag->ebooks_count,
-            ])
-            ->values()
-            ->all();
+        return $this->cache->remember(
+            'directory:tags',
+            300,
+            fn (): array => Tag::query()
+                ->select(['id', 'name', 'slug', 'is_active'])
+                ->where('is_active', true)
+                ->whereHas('ebooks', fn (Builder $query): Builder => $query->publiclyVisible())
+                ->withCount([
+                    'ebooks as ebooks_count' => fn (Builder $query): Builder => $query->publiclyVisible(),
+                ])
+                ->orderByDesc('ebooks_count')
+                ->orderBy('name')
+                ->get()
+                ->map(fn (Tag $tag): array => [
+                    'name' => $tag->name,
+                    'slug' => $tag->slug,
+                    'description' => null,
+                    'count' => $tag->ebooks_count,
+                ])
+                ->values()
+                ->all(),
+        );
     }
 
     /**
@@ -465,23 +521,28 @@ class PublicLibraryCatalog
      */
     public function directoryLanguages(): array
     {
-        return Language::query()
-            ->where('is_active', true)
-            ->whereHas('ebooks', fn (Builder $query): Builder => $query->publiclyVisible())
-            ->withCount([
-                'ebooks as ebooks_count' => fn (Builder $query): Builder => $query->publiclyVisible(),
-            ])
-            ->orderBy('sort_order')
-            ->orderBy('name')
-            ->get()
-            ->map(fn (Language $language): array => [
-                'name' => $language->name,
-                'slug' => $language->code,
-                'description' => $language->native_name,
-                'count' => $language->ebooks_count,
-            ])
-            ->values()
-            ->all();
+        return $this->cache->remember(
+            'directory:languages',
+            300,
+            fn (): array => Language::query()
+                ->select(['id', 'code', 'name', 'native_name', 'is_active', 'sort_order'])
+                ->where('is_active', true)
+                ->whereHas('ebooks', fn (Builder $query): Builder => $query->publiclyVisible())
+                ->withCount([
+                    'ebooks as ebooks_count' => fn (Builder $query): Builder => $query->publiclyVisible(),
+                ])
+                ->orderBy('sort_order')
+                ->orderBy('name')
+                ->get()
+                ->map(fn (Language $language): array => [
+                    'name' => $language->name,
+                    'slug' => $language->code,
+                    'description' => $language->native_name,
+                    'count' => $language->ebooks_count,
+                ])
+                ->values()
+                ->all(),
+        );
     }
 
     /**
@@ -489,13 +550,17 @@ class PublicLibraryCatalog
      */
     public function taxonomy(string $type, string $slug): array
     {
-        return match ($type) {
-            'category' => $this->taxonomyCategory($slug),
-            'author' => $this->taxonomyModel(Author::class, $slug, 'bio'),
-            'publisher' => $this->taxonomyModel(Publisher::class, $slug, 'description'),
-            'collection' => $this->taxonomyModel(Collection::class, $slug, 'description'),
-            default => abort(404),
-        };
+        return $this->cache->remember(
+            'taxonomy:'.$type.':'.$slug,
+            300,
+            fn (): array => match ($type) {
+                'category' => $this->taxonomyCategory($slug),
+                'author' => $this->taxonomyModel(Author::class, $slug, 'bio'),
+                'publisher' => $this->taxonomyModel(Publisher::class, $slug, 'description'),
+                'collection' => $this->taxonomyModel(Collection::class, $slug, 'description'),
+                default => abort(404),
+            },
+        );
     }
 
     /**
@@ -810,6 +875,7 @@ class PublicLibraryCatalog
     private function directoryBelongsToMany(Builder $query, string $descriptionField): array
     {
         return $query
+            ->select(['id', 'name', 'slug', $descriptionField, 'is_active'])
             ->where('is_active', true)
             ->whereHas('ebooks', fn (Builder $books): Builder => $books->publiclyVisible())
             ->withCount([

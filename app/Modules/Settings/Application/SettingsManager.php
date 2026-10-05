@@ -2,6 +2,7 @@
 
 namespace App\Modules\Settings\Application;
 
+use App\Modules\Library\Application\PublicLibrary\PublicLibraryCache;
 use App\Modules\Settings\Domain\Models\Setting;
 use App\Modules\Settings\Support\SettingsRegistry;
 use Illuminate\Database\QueryException;
@@ -18,6 +19,7 @@ class SettingsManager
 
     public function __construct(
         private readonly SettingsRegistry $registry,
+        private readonly PublicLibraryCache $publicCache,
     ) {}
 
     public function get(string $group, string $key): mixed
@@ -117,6 +119,7 @@ class SettingsManager
     public function flush(): void
     {
         Cache::forget(self::CACHE_KEY);
+        $this->publicCache->flush();
     }
 
     public function mediaUrl(string $path): ?string

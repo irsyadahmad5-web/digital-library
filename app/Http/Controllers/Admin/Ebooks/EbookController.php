@@ -8,6 +8,7 @@ use App\Http\Requests\Admin\Ebooks\EbookRequest;
 use App\Modules\Audit\Application\AuditLogger;
 use App\Modules\Library\Application\EbookCoverManager;
 use App\Modules\Library\Application\Pdf\PdfToolchain;
+use App\Modules\Library\Application\PublicLibrary\PublicLibraryCache;
 use App\Modules\Library\Application\Storage\EbookFileManager;
 use App\Modules\Library\Application\Storage\UploadPolicy;
 use App\Modules\Library\Domain\Models\Author;
@@ -37,6 +38,7 @@ class EbookController extends Controller
         private readonly EbookFileManager $files,
         private readonly UploadPolicy $uploadPolicy,
         private readonly PdfToolchain $pdfToolchain,
+        private readonly PublicLibraryCache $publicCache,
     ) {}
 
     public function index(Request $request): Response
@@ -508,6 +510,8 @@ class EbookController extends Controller
         $ebook->authors()->sync($authors);
         $ebook->categories()->sync(array_values($validated['categories'] ?? []));
         $ebook->tags()->sync(array_values($validated['tags'] ?? []));
+
+        $this->publicCache->flush();
     }
 
     private function publishedAtForUpdate(Ebook $ebook, string $status): mixed

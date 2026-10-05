@@ -81,8 +81,44 @@ class PdfSourceStreamer
             abort(404);
         }
 
+        $headers = $this->baseHeaders(
+            $this->etag($file, $absolutePath),
+            $disposition,
+            $filename,
+        );
+        $mtime = filemtime($absolutePath);
+
+        if ($mtime !== false) {
+            $headers['Last-Modified'] = gmdate('D, d M Y H:i:s', $mtime).' GMT';
+        }
+
+        $rangeHeader = $request->header('Range');
+
+        if (
+            is_string($rangeHeader)
+            && trim($rangeHeader) !== ''
+            && ! $this->ifRangeMatches(
+                $request,
+                $headers['ETag'] ?? null,
+                $mtime === false ? null : $mtime,
+            )
+        ) {
+            $rangeHeader = null;
+        }
+
+        if (
+            (! is_string($rangeHeader) || trim($rangeHeader) === '')
+            && $this->isNotModified(
+                $request,
+                $headers['ETag'] ?? null,
+                $mtime === false ? null : $mtime,
+            )
+        ) {
+            return new Response('', 304, $headers);
+        }
+
         try {
-            $range = $this->parseRange($request->header('Range'), $size);
+            $range = $this->parseRange($rangeHeader, $size);
         } catch (DomainException) {
             return $this->rangeNotSatisfiable($size);
         }
@@ -91,11 +127,6 @@ class PdfSourceStreamer
         $end = $range['end'] ?? ($size - 1);
         $length = ($end - $start) + 1;
         $status = $range === null ? 200 : 206;
-        $headers = $this->baseHeaders(
-            $this->etag($file, $absolutePath),
-            $disposition,
-            $filename,
-        );
         $headers['Content-Length'] = (string) $length;
 
         if ($range !== null) {
@@ -478,6 +509,73 @@ class PdfSourceStreamer
         return $mtime !== false && $size !== false
             ? sha1($absolutePath.'|'.$mtime.'|'.$size)
             : null;
+    }
+
+    private function isNotModified(
+        Request $request,
+        ?string $etag,
+        ?int $mtime,
+    ): bool {
+        $ifNoneMatch = trim((string) $request->header('If-None-Match'));
+
+        if ($ifNoneMatch !== '') {
+            if ($ifNoneMatch === '*') {
+                return true;
+            }
+
+            if ($etag === null || $etag === '') {
+                return false;
+            }
+
+            $normalized = preg_replace('/^W\//i', '', trim($etag));
+
+            foreach (explode(',', $ifNoneMatch) as $candidate) {
+                $candidate = preg_replace('/^W\//i', '', trim($candidate));
+
+                if ($candidate !== '' && hash_equals($normalized, $candidate)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        $ifModifiedSince = trim((string) $request->header('If-Modified-Since'));
+
+        if ($mtime === null || $ifModifiedSince === '') {
+            return false;
+        }
+
+        $since = strtotime($ifModifiedSince);
+
+        return $since !== false && $mtime <= $since;
+    }
+
+    private function ifRangeMatches(
+        Request $request,
+        ?string $etag,
+        ?int $mtime,
+    ): bool {
+        $ifRange = trim((string) $request->header('If-Range'));
+
+        if ($ifRange === '') {
+            return true;
+        }
+
+        if (str_starts_with($ifRange, '"') || str_starts_with($ifRange, 'W/')) {
+            return $etag !== null
+                && ! str_starts_with($ifRange, 'W/')
+                && ! str_starts_with($etag, 'W/')
+                && hash_equals(trim($etag), $ifRange);
+        }
+
+        if ($mtime === null) {
+            return false;
+        }
+
+        $since = strtotime($ifRange);
+
+        return $since !== false && $mtime <= $since;
     }
 
     private function rangeNotSatisfiable(?int $size): Response

@@ -86,6 +86,9 @@ onMounted(() => {
                             :src="book.cover_url"
                             :alt="book.title"
                             class="size-full object-cover"
+                            loading="eager"
+                            decoding="async"
+                            fetchpriority="high"
                         >
                         <div v-else class="flex size-full items-center justify-center">
                             <BookOpen class="size-12 text-muted-foreground/70" />

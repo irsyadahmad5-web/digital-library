@@ -10,7 +10,7 @@ defineProps<{
 
 <template>
     <article class="group min-w-0">
-        <Link :href="`/book/${book.slug}`" class="block">
+        <Link :href="`/book/${book.slug}`" class="block" prefetch="hover">
             <div class="relative aspect-[3/4] overflow-hidden rounded-2xl border border-border bg-muted">
                 <img
                     v-if="book.cover_url"
@@ -18,6 +18,8 @@ defineProps<{
                     :alt="book.title"
                     class="size-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
                     loading="lazy"
+                    decoding="async"
+                    fetchpriority="low"
                 >
                 <div v-else class="flex size-full items-center justify-center">
                     <BookOpen class="size-9 text-muted-foreground/70" />

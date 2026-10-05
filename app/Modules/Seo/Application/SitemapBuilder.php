@@ -2,6 +2,7 @@
 
 namespace App\Modules\Seo\Application;
 
+use App\Modules\Library\Application\PublicLibrary\PublicLibraryCache;
 use App\Modules\Library\Domain\Models\Author;
 use App\Modules\Library\Domain\Models\Category;
 use App\Modules\Library\Domain\Models\Collection;
@@ -16,6 +17,7 @@ class SitemapBuilder
     public function __construct(
         private readonly SeoManager $seo,
         private readonly SettingsManager $settings,
+        private readonly PublicLibraryCache $cache,
     ) {}
 
     public function xml(Request $request): string
@@ -82,6 +84,18 @@ class SitemapBuilder
      * @return array<int, array{loc: string, lastmod: ?string, changefreq: ?string, priority: ?string}>
      */
     public function entries(Request $request): array
+    {
+        return $this->cache->remember(
+            'seo:sitemap:entries:'.$this->seo->baseUrl($request),
+            300,
+            fn (): array => $this->buildEntries($request),
+        );
+    }
+
+    /**
+     * @return array<int, array{loc: string, lastmod: ?string, changefreq: ?string, priority: ?string}>
+     */
+    private function buildEntries(Request $request): array
     {
         $entries = [];
 
