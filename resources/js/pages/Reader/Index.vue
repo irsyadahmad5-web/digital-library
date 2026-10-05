@@ -1220,7 +1220,7 @@ onBeforeUnmount(async () => {
 <template>
     <Head>
         <title>{{ book.title }}</title>
-        <meta name="robots" content="noindex,nofollow">
+        <meta head-key="robots" name="robots" content="noindex,nofollow">
     </Head>
 
     <ReaderLayout

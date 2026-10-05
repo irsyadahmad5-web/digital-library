@@ -417,6 +417,7 @@ class PdfSourceStreamer
             'Accept-Ranges' => 'bytes',
             'Cache-Control' => 'private, max-age=0, must-revalidate',
             'X-Content-Type-Options' => 'nosniff',
+            'X-Robots-Tag' => 'noindex, nofollow',
             'Cross-Origin-Resource-Policy' => 'same-origin',
         ];
 
@@ -485,6 +486,7 @@ class PdfSourceStreamer
             'Accept-Ranges' => 'bytes',
             'Content-Type' => 'application/pdf',
             'X-Content-Type-Options' => 'nosniff',
+            'X-Robots-Tag' => 'noindex, nofollow',
         ];
 
         if ($size !== null && $size >= 0) {

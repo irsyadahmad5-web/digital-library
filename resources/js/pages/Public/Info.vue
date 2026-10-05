@@ -1,13 +1,15 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
 import { Building2, Mail, MapPin, Phone } from '@lucide/vue';
+import SeoHead from '@/components/public/SeoHead.vue';
 import PublicLayout from '@/layouts/PublicLayout.vue';
+import type { SeoPayload } from '@/types/seo';
 
 defineProps<{
     kind: 'about' | 'contact';
     title: string;
     description: string;
     organization: string;
+    seo: SeoPayload;
     contact: {
         address: string;
         phone: string;
@@ -17,7 +19,7 @@ defineProps<{
 </script>
 
 <template>
-    <Head :title="title" />
+    <SeoHead :seo="seo" />
 
     <PublicLayout>
         <section class="mx-auto px-5 py-12 sm:px-8 sm:py-16" style="max-width: var(--content-max-width)">

@@ -1,14 +1,17 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { Head, Link } from '@inertiajs/vue3';
+import { Link } from '@inertiajs/vue3';
 import { ArrowRight, BookOpen } from '@lucide/vue';
+import SeoHead from '@/components/public/SeoHead.vue';
 import PublicLayout from '@/layouts/PublicLayout.vue';
 import type { DirectoryItem } from '@/types/public-library';
+import type { SeoPayload } from '@/types/seo';
 
 const props = defineProps<{
     title: string;
     type: 'category' | 'author' | 'publisher' | 'collection';
     items: DirectoryItem[];
+    seo: SeoPayload;
 }>();
 
 const description = computed(() => ({
@@ -24,7 +27,7 @@ function href(slug: string) {
 </script>
 
 <template>
-    <Head :title="title" />
+    <SeoHead :seo="seo" />
 
     <PublicLayout>
         <section class="mx-auto px-5 py-10 sm:px-8 sm:py-14" style="max-width: var(--content-max-width)">

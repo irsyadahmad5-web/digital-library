@@ -1,20 +1,23 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
 import { ArrowLeft, BookOpen } from '@lucide/vue';
 import PublicBookCard from '@/components/public/PublicBookCard.vue';
 import PublicPagination from '@/components/public/PublicPagination.vue';
+import SeoHead from '@/components/public/SeoHead.vue';
 import PublicLayout from '@/layouts/PublicLayout.vue';
 import type {
     PublicBookCard as PublicBook,
     PublicPaginator,
     TaxonomyInfo,
 } from '@/types/public-library';
+import type { SeoPayload } from '@/types/seo';
 
 const props = defineProps<{
     type: 'category' | 'author' | 'publisher' | 'collection';
     taxonomy: TaxonomyInfo;
     books: PublicPaginator<PublicBook>;
+    seo: SeoPayload;
     filters: {
         sort: string;
         per_page: number;
@@ -57,7 +60,7 @@ function apply() {
 </script>
 
 <template>
-    <Head :title="taxonomy.name" />
+    <SeoHead :seo="seo" />
 
     <PublicLayout>
         <section class="mx-auto px-5 py-10 sm:px-8 sm:py-14" style="max-width: var(--content-max-width)">

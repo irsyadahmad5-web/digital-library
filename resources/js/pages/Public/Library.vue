@@ -1,15 +1,17 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { Head, router } from '@inertiajs/vue3';
+import { router } from '@inertiajs/vue3';
 import { BookOpen, Filter, RotateCcw, Search } from '@lucide/vue';
 import PublicBookCard from '@/components/public/PublicBookCard.vue';
 import PublicPagination from '@/components/public/PublicPagination.vue';
+import SeoHead from '@/components/public/SeoHead.vue';
 import PublicLayout from '@/layouts/PublicLayout.vue';
 import type {
     DirectoryItem,
     PublicBookCard as PublicBook,
     PublicPaginator,
 } from '@/types/public-library';
+import type { SeoPayload } from '@/types/seo';
 
 interface Filters {
     q: string;
@@ -27,6 +29,7 @@ interface Filters {
 const props = defineProps<{
     books: PublicPaginator<PublicBook>;
     filters: Filters;
+    seo: SeoPayload;
     filterOptions: {
         categories: DirectoryItem[];
         authors: DirectoryItem[];
@@ -112,7 +115,7 @@ function clearFilters() {
 </script>
 
 <template>
-    <Head title="Katalog Ebook" />
+    <SeoHead :seo="seo" />
 
     <PublicLayout>
         <section class="mx-auto px-5 py-10 sm:px-8 sm:py-14" style="max-width: var(--content-max-width)">

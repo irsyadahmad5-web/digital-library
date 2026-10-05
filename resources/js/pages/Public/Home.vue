@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { Head, Link, usePage } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 import { ArrowRight, BookOpen, LibraryBig, Search } from '@lucide/vue';
 import PublicBookCard from '@/components/public/PublicBookCard.vue';
+import SeoHead from '@/components/public/SeoHead.vue';
 import PublicSearchForm from '@/components/public/PublicSearchForm.vue';
 import PublicLayout from '@/layouts/PublicLayout.vue';
 import type { SharedPageProps } from '@/types';
@@ -11,14 +12,15 @@ import type {
     HomepageStatistic,
     PublicBookCard as PublicBook,
 } from '@/types/public-library';
+import type { SeoPayload } from '@/types/seo';
 
 defineProps<{
     sections: HomepageSectionPayload[];
+    seo: SeoPayload;
 }>();
 
 const page = usePage<SharedPageProps>();
 const general = page.props.site.general;
-const seo = page.props.site.seo;
 
 function configString(section: HomepageSectionPayload, key: string, fallback = '') {
     const value = section.config[key];
@@ -67,14 +69,7 @@ function bookSectionHref(section: HomepageSectionPayload) {
 </script>
 
 <template>
-    <Head>
-        <title>{{ String(seo.title_suffix || general.site_name || 'Digital Library') }}</title>
-        <meta name="description" :content="String(seo.meta_description || general.description || '')">
-        <meta v-if="seo.robots_index === false" name="robots" content="noindex,nofollow">
-        <link v-if="seo.canonical_url" rel="canonical" :href="String(seo.canonical_url)">
-        <meta property="og:title" :content="String(seo.og_title || general.site_name || '')">
-        <meta property="og:description" :content="String(seo.og_description || general.description || '')">
-    </Head>
+    <SeoHead :seo="seo" />
 
     <PublicLayout>
         <template v-for="section in sections" :key="section.id">

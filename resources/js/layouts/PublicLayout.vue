@@ -67,7 +67,7 @@ function toggleSearch() {
 <template>
     <div class="min-h-screen bg-background text-foreground" :style="themeStyle">
         <Head>
-            <link v-if="faviconUrl" rel="icon" :href="faviconUrl">
+            <link v-if="faviconUrl" head-key="favicon" rel="icon" :href="faviconUrl">
         </Head>
 
         <header class="sticky top-0 z-40 border-b border-border/70 bg-surface/95 backdrop-blur">
