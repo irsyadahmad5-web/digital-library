@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Analytics\Application\AnalyticsTracker;
 use App\Modules\Library\Application\PublicLibrary\PublicLibraryCatalog;
 use App\Modules\Settings\Application\HomepageBuilderManager;
 use App\Modules\Settings\Application\SettingsManager;
@@ -17,10 +18,13 @@ class PublicLibraryController extends Controller
         private readonly PublicLibraryCatalog $catalog,
         private readonly SettingsManager $settings,
         private readonly HomepageBuilderManager $homepageBuilder,
+        private readonly AnalyticsTracker $analytics,
     ) {}
 
-    public function home(): InertiaResponse
+    public function home(Request $request): InertiaResponse
     {
+        $this->analytics->recordPageView($request, 'home');
+
         return Inertia::render('Public/Home', [
             'sections' => $this->homepageBuilder->publicPayload(),
         ]);
@@ -45,6 +49,8 @@ class PublicLibraryController extends Controller
         $defaultSort = $search !== '' ? 'relevance' : 'newest';
         $filters['sort'] = (string) ($filters['sort'] ?? $defaultSort);
 
+        $this->analytics->recordPageView($request, 'catalog');
+
         return Inertia::render('Public/Library', [
             'books' => $this->catalog->paginate(
                 $filters,
@@ -66,9 +72,10 @@ class PublicLibraryController extends Controller
         ]);
     }
 
-    public function book(string $slug): InertiaResponse
+    public function book(Request $request, string $slug): InertiaResponse
     {
         $ebook = $this->catalog->findBook($slug);
+        $this->analytics->recordPageView($request, 'book', $ebook);
 
         return Inertia::render('Public/Book', [
             'book' => $this->catalog->detail($ebook),
@@ -76,23 +83,31 @@ class PublicLibraryController extends Controller
         ]);
     }
 
-    public function categories(): InertiaResponse
+    public function categories(Request $request): InertiaResponse
     {
+        $this->analytics->recordPageView($request, 'directory');
+
         return $this->directory('categories');
     }
 
-    public function authors(): InertiaResponse
+    public function authors(Request $request): InertiaResponse
     {
+        $this->analytics->recordPageView($request, 'directory');
+
         return $this->directory('authors');
     }
 
-    public function publishers(): InertiaResponse
+    public function publishers(Request $request): InertiaResponse
     {
+        $this->analytics->recordPageView($request, 'directory');
+
         return $this->directory('publishers');
     }
 
-    public function collections(): InertiaResponse
+    public function collections(Request $request): InertiaResponse
     {
+        $this->analytics->recordPageView($request, 'directory');
+
         return $this->directory('collections');
     }
 
@@ -159,6 +174,7 @@ class PublicLibraryController extends Controller
         ]);
 
         $filters[$type] = $slug;
+        $this->analytics->recordPageView($request, 'directory');
 
         return Inertia::render('Public/Taxonomy', [
             'type' => $type,
@@ -174,8 +190,9 @@ class PublicLibraryController extends Controller
         ]);
     }
 
-    public function about(): InertiaResponse
+    public function about(Request $request): InertiaResponse
     {
+        $this->analytics->recordPageView($request, 'info');
         $general = $this->settings->public()['general'] ?? [];
 
         return Inertia::render('Public/Info', [
@@ -187,8 +204,9 @@ class PublicLibraryController extends Controller
         ]);
     }
 
-    public function contact(): InertiaResponse
+    public function contact(Request $request): InertiaResponse
     {
+        $this->analytics->recordPageView($request, 'info');
         $general = $this->settings->public()['general'] ?? [];
 
         return Inertia::render('Public/Info', [

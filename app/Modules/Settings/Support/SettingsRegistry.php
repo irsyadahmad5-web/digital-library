@@ -88,6 +88,15 @@ class SettingsRegistry
                     'show_download_button' => $this->makeField('Tampilkan tombol download', 'boolean', true, true, ['required', 'boolean']),
                 ],
             ],
+            'analytics' => [
+                'label' => 'Analytics',
+                'description' => 'Statistik agregat tanpa menyimpan identitas, IP, user-agent, atau kata kunci pencarian pengunjung.',
+                'fields' => [
+                    'enabled' => $this->makeField('Aktifkan analytics agregat', 'boolean', true, false, ['required', 'boolean']),
+                    'track_page_views' => $this->makeField('Catat kunjungan halaman', 'boolean', true, false, ['required', 'boolean']),
+                    'track_reader_opens' => $this->makeField('Catat pembukaan reader', 'boolean', true, false, ['required', 'boolean']),
+                ],
+            ],
             'seo' => [
                 'label' => 'SEO',
                 'description' => 'Metadata pencarian dan social sharing.',

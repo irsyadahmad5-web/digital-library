@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Analytics\Application\AnalyticsTracker;
 use App\Modules\Library\Application\PublicLibrary\PublicLibraryCatalog;
 use App\Modules\Library\Application\Reader\PdfSourceStreamer;
 use App\Modules\Library\Domain\Models\Ebook;
@@ -16,11 +17,13 @@ class PublicReaderController extends Controller
     public function __construct(
         private readonly PublicLibraryCatalog $catalog,
         private readonly PdfSourceStreamer $streamer,
+        private readonly AnalyticsTracker $analytics,
     ) {}
 
-    public function show(string $slug): InertiaResponse
+    public function show(Request $request, string $slug): InertiaResponse
     {
         $ebook = $this->readableBook($slug);
+        $this->analytics->recordReaderOpen($request, $ebook);
 
         return Inertia::render('Reader/Index', [
             'book' => [

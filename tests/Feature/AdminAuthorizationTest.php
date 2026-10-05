@@ -7,6 +7,7 @@ use App\Modules\Identity\Domain\Models\Permission;
 use App\Modules\Identity\Domain\Models\Role;
 use Database\Seeders\AccessControlSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class AdminAuthorizationTest extends TestCase
@@ -28,6 +29,23 @@ class AdminAuthorizationTest extends TestCase
 
         $this->actingAs($user)->get('/admin')->assertOk();
         $this->actingAs($user)->get('/admin/audit-log')->assertForbidden();
+    }
+
+    public function test_analytics_requires_its_own_permission(): void
+    {
+        $withoutAnalytics = $this->createUserWithPermissions(['admin.access']);
+        $withAnalytics = $this->createUserWithPermissions([
+            'admin.access',
+            'admin.view-analytics',
+        ]);
+
+        $this->actingAs($withoutAnalytics)
+            ->get('/admin/analytics')
+            ->assertForbidden();
+
+        $this->actingAs($withAnalytics)
+            ->get('/admin/analytics')
+            ->assertOk();
     }
 
     public function test_admin_security_headers_are_applied(): void
@@ -52,7 +70,7 @@ class AdminAuthorizationTest extends TestCase
 
         $role = Role::query()->create([
             'name' => 'Test Role',
-            'slug' => 'test-role',
+            'slug' => 'test-role-'.Str::lower(Str::random(6)),
             'is_system' => false,
         ]);
 

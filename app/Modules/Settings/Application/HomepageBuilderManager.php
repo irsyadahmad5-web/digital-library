@@ -2,6 +2,7 @@
 
 namespace App\Modules\Settings\Application;
 
+use App\Modules\Analytics\Application\AnalyticsReport;
 use App\Modules\Library\Application\PublicLibrary\PublicLibraryCatalog;
 use App\Modules\Settings\Domain\Models\HomepageSection;
 use App\Modules\Settings\Support\HomepageSectionRegistry;
@@ -16,6 +17,7 @@ class HomepageBuilderManager
         private readonly HomepageSectionRegistry $registry,
         private readonly SettingsManager $settings,
         private readonly PublicLibraryCatalog $catalog,
+        private readonly AnalyticsReport $analytics,
     ) {}
 
     public function ensureDefaults(): void
@@ -255,13 +257,14 @@ class HomepageBuilderManager
                 0,
                 (int) ($config['limit'] ?? 8),
             ),
+            'statistics' => $this->analytics->publicStatistics(),
             default => null,
         };
 
         if (
             in_array(
                 $section->type,
-                ['latest_books', 'popular_books', 'recommendations', 'categories', 'collections'],
+                ['latest_books', 'popular_books', 'recommendations', 'categories', 'collections', 'statistics'],
                 true,
             )
             && $data === []

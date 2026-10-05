@@ -109,9 +109,9 @@ class HomepageSectionRegistry
             ],
             'statistics' => [
                 'label' => 'Statistik',
-                'description' => 'Ringkasan angka perpustakaan berdasarkan data analytics.',
-                'provider_available' => false,
-                'provider_note' => 'Menunggu Stage 18 — Statistics & Analytics.',
+                'description' => 'Ringkasan angka publik perpustakaan dari data agregat tanpa identitas pengunjung.',
+                'provider_available' => true,
+                'provider_note' => 'Provider Stage 18 menampilkan statistik agregat yang aman untuk publik.',
                 'default_enabled' => false,
                 'default_title' => 'Statistik',
                 'fields' => [

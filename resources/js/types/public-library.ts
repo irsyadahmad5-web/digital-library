@@ -66,10 +66,16 @@ export interface TaxonomyInfo {
     parent: PublicNamedLink | null;
 }
 
+export interface HomepageStatistic {
+    key: string;
+    label: string;
+    value: number;
+}
+
 export interface HomepageSectionPayload {
     id: number;
-    type: 'hero' | 'search' | 'latest_books' | 'popular_books' | 'recommendations' | 'categories' | 'collections';
+    type: 'hero' | 'search' | 'latest_books' | 'popular_books' | 'recommendations' | 'categories' | 'collections' | 'statistics';
     title: string;
     config: Record<string, unknown>;
-    data: PublicBookCard[] | DirectoryItem[] | null;
+    data: PublicBookCard[] | DirectoryItem[] | HomepageStatistic[] | null;
 }

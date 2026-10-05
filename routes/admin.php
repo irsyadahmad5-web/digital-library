@@ -1,9 +1,11 @@
 <?php
 
+use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Admin\Auth\NewPasswordController;
 use App\Http\Controllers\Admin\Auth\PasswordResetLinkController;
+use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\Ebooks\EbookController;
 use App\Http\Controllers\Admin\Ebooks\Storage\EbookPdfProcessingController;
 use App\Http\Controllers\Admin\Ebooks\Storage\EbookStorageController;
@@ -15,7 +17,6 @@ use App\Http\Controllers\Admin\SessionController;
 use App\Http\Controllers\Admin\Settings\HomepageBuilderController;
 use App\Http\Controllers\Admin\Settings\SettingsController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
 Route::prefix('admin')
     ->middleware('admin.headers')
@@ -43,8 +44,12 @@ Route::prefix('admin')
         });
 
         Route::middleware(['auth', 'active', 'permission:admin.access'])->group(function (): void {
-            Route::get('/', fn () => Inertia::render('Admin/Dashboard'))
+            Route::get('/', [DashboardController::class, 'index'])
                 ->name('admin.dashboard');
+
+            Route::get('/analytics', [AnalyticsController::class, 'index'])
+                ->middleware('permission:admin.view-analytics')
+                ->name('admin.analytics.index');
 
             Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
                 ->name('admin.logout');
