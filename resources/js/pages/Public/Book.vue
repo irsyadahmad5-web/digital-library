@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import {
+    ArrowRight,
     BookOpen,
     Building2,
     CalendarDays,
@@ -81,6 +82,17 @@ defineProps<{
                             </Link>
                             <span v-if="index < book.authors.length - 1" class="text-muted-foreground">•</span>
                         </template>
+                    </div>
+
+                    <div v-if="book.read_enabled" class="mt-7">
+                        <Link
+                            :href="`/read/${book.slug}`"
+                            class="inline-flex min-h-12 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
+                        >
+                            <BookOpen class="size-4" />
+                            Baca Ebook
+                            <ArrowRight class="size-4" />
+                        </Link>
                     </div>
 
                     <div class="mt-7 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
