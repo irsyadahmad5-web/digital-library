@@ -38,6 +38,27 @@ function bookData(section: HomepageSectionPayload) {
 function directoryData(section: HomepageSectionPayload) {
     return (section.data ?? []) as DirectoryItem[];
 }
+
+function bookSectionEyebrow(section: HomepageSectionPayload) {
+    if (section.type === 'popular_books') return 'Paling banyak diunduh';
+    if (section.type === 'recommendations') return 'Untuk dijelajahi';
+
+    return 'Koleksi terbaru';
+}
+
+function bookSectionTitle(section: HomepageSectionPayload) {
+    if (section.type === 'popular_books') return 'Ebook populer';
+    if (section.type === 'recommendations') return 'Rekomendasi';
+
+    return 'Ebook terbaru';
+}
+
+function bookSectionHref(section: HomepageSectionPayload) {
+    if (section.type === 'popular_books') return '/library?sort=popular';
+    if (section.type === 'latest_books') return '/library';
+
+    return null;
+}
 </script>
 
 <template>
@@ -138,22 +159,22 @@ function directoryData(section: HomepageSectionPayload) {
             </section>
 
             <section
-                v-else-if="section.type === 'latest_books' && bookData(section).length"
+                v-else-if="['latest_books', 'popular_books', 'recommendations'].includes(section.type) && bookData(section).length"
                 class="mx-auto px-5 py-8 sm:px-8"
                 style="max-width: var(--content-max-width)"
             >
                 <div class="flex items-end justify-between gap-4">
                     <div>
                         <p class="text-sm font-medium text-primary">
-                            {{ configString(section, 'eyebrow', 'Koleksi terbaru') }}
+                            {{ configString(section, 'eyebrow', bookSectionEyebrow(section)) }}
                         </p>
                         <h2 class="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
-                            {{ configString(section, 'title', 'Ebook terbaru') }}
+                            {{ configString(section, 'title', bookSectionTitle(section)) }}
                         </h2>
                     </div>
                     <Link
-                        v-if="configBoolean(section, 'show_view_all')"
-                        href="/library"
+                        v-if="bookSectionHref(section) && (section.type !== 'latest_books' || configBoolean(section, 'show_view_all'))"
+                        :href="bookSectionHref(section)!"
                         class="hidden items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground sm:inline-flex"
                     >
                         Lihat semua

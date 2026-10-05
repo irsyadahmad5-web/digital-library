@@ -10,7 +10,7 @@ const props = withDefaults(defineProps<{
     compact?: boolean;
 }>(), {
     initialQuery: '',
-    placeholder: 'Cari judul, penulis, kategori, penerbit, atau ISBN...',
+    placeholder: 'Cari judul, penulis, kategori, tag, penerbit, koleksi, atau ISBN...',
     compact: false,
 });
 

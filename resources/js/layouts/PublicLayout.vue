@@ -10,11 +10,13 @@ import {
     Search,
     X,
 } from '@lucide/vue';
+import PublicSearchForm from '@/components/public/PublicSearchForm.vue';
 import type { SharedPageProps } from '@/types';
 
 const page = usePage<SharedPageProps>();
 const site = page.props.site;
 const mobileOpen = ref(false);
+const searchOpen = ref(false);
 
 const siteName = computed(() => String(site.general.site_name || 'Digital Library'));
 const logoUrl = computed(() => site.general.logo_url ? String(site.general.logo_url) : null);
@@ -23,6 +25,12 @@ const tagline = computed(() => String(site.general.tagline || ''));
 const address = computed(() => String(site.general.address || ''));
 const phone = computed(() => String(site.general.phone || ''));
 const email = computed(() => String(site.general.email || ''));
+
+const currentSearch = computed(() => {
+    const queryString = page.url.split('?')[1] ?? '';
+
+    return new URLSearchParams(queryString).get('q') ?? '';
+});
 
 const themeStyle = computed(() => ({
     '--primary': String(site.appearance.primary_color || '#2563EB'),
@@ -45,6 +53,14 @@ function isActive(prefixes: string[]) {
 
 function closeMobile() {
     mobileOpen.value = false;
+}
+
+function toggleSearch() {
+    searchOpen.value = !searchOpen.value;
+
+    if (searchOpen.value) {
+        mobileOpen.value = false;
+    }
 }
 </script>
 
@@ -80,13 +96,16 @@ function closeMobile() {
                 </nav>
 
                 <div class="flex items-center gap-2">
-                    <Link
-                        href="/library"
-                        class="hidden size-10 items-center justify-center rounded-xl border border-border bg-surface text-muted-foreground hover:bg-muted hover:text-foreground sm:flex"
+                    <button
+                        type="button"
+                        class="flex size-10 items-center justify-center rounded-xl border border-border bg-surface text-muted-foreground hover:bg-muted hover:text-foreground"
+                        :aria-expanded="searchOpen"
                         aria-label="Cari ebook"
+                        @click="toggleSearch"
                     >
-                        <Search class="size-4" />
-                    </Link>
+                        <X v-if="searchOpen" class="size-4" />
+                        <Search v-else class="size-4" />
+                    </button>
 
                     <button
                         type="button"
@@ -98,6 +117,19 @@ function closeMobile() {
                         <X v-if="mobileOpen" class="size-5" />
                         <Menu v-else class="size-5" />
                     </button>
+                </div>
+            </div>
+
+            <div v-if="searchOpen" class="border-t border-border bg-surface">
+                <div
+                    class="mx-auto px-5 py-4 sm:px-8"
+                    style="max-width: var(--content-max-width)"
+                >
+                    <PublicSearchForm
+                        :initial-query="currentSearch"
+                        placeholder="Cari judul, penulis, kategori, tag, penerbit, koleksi, atau ISBN..."
+                        compact
+                    />
                 </div>
             </div>
 

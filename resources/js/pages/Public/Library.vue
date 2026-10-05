@@ -17,6 +17,7 @@ interface Filters {
     author: string;
     publisher: string;
     collection: string;
+    tag: string;
     language: string;
     year: number | null;
     sort: string;
@@ -31,6 +32,7 @@ const props = defineProps<{
         authors: DirectoryItem[];
         publishers: DirectoryItem[];
         collections: DirectoryItem[];
+        tags: DirectoryItem[];
         languages: DirectoryItem[];
     };
 }>();
@@ -40,6 +42,7 @@ const category = ref(props.filters.category);
 const author = ref(props.filters.author);
 const publisher = ref(props.filters.publisher);
 const collection = ref(props.filters.collection);
+const tag = ref(props.filters.tag);
 const language = ref(props.filters.language);
 const year = ref<number | null>(props.filters.year);
 const sort = ref(props.filters.sort);
@@ -51,6 +54,7 @@ const activeFilterCount = computed(() => [
     author.value,
     publisher.value,
     collection.value,
+    tag.value,
     language.value,
     year.value,
 ].filter((value) => value !== '' && value !== null).length);
@@ -63,9 +67,21 @@ function applyFilters() {
     if (author.value) params.author = author.value;
     if (publisher.value) params.publisher = publisher.value;
     if (collection.value) params.collection = collection.value;
+    if (tag.value) params.tag = tag.value;
     if (language.value) params.language = language.value;
     if (year.value) params.year = year.value;
-    if (sort.value !== 'newest') params.sort = sort.value;
+    const normalizedQuery = q.value.trim();
+    const queryChanged = normalizedQuery !== props.filters.q.trim();
+    let effectiveSort = sort.value;
+
+    if (queryChanged) {
+        effectiveSort = normalizedQuery ? 'relevance' : 'newest';
+        sort.value = effectiveSort;
+    }
+
+    const defaultSort = normalizedQuery ? 'relevance' : 'newest';
+
+    if (effectiveSort !== defaultSort) params.sort = effectiveSort;
     if (perPage.value !== 12) params.per_page = perPage.value;
 
     router.get('/library', params, {
@@ -81,6 +97,7 @@ function clearFilters() {
     author.value = '';
     publisher.value = '';
     collection.value = '';
+    tag.value = '';
     language.value = '';
     year.value = null;
     sort.value = 'newest';
@@ -120,7 +137,7 @@ function clearFilters() {
                         v-model="q"
                         type="search"
                         class="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-                        placeholder="Cari judul, penulis, kategori, penerbit, tag, atau ISBN..."
+                        placeholder="Cari judul, penulis, kategori, tag, penerbit, koleksi, bahasa, atau ISBN..."
                         aria-label="Cari katalog ebook"
                     >
                     <button
@@ -152,6 +169,8 @@ function clearFilters() {
                         aria-label="Urutkan ebook"
                         @change="applyFilters"
                     >
+                        <option v-if="q.trim()" value="relevance">Paling relevan</option>
+                        <option value="popular">Paling populer</option>
                         <option value="newest">Terbaru</option>
                         <option value="title">Judul A–Z</option>
                         <option value="year_desc">Tahun terbaru</option>
@@ -230,6 +249,16 @@ function clearFilters() {
                         </label>
 
                         <label class="grid gap-1.5 text-sm">
+                            <span class="text-xs font-medium text-muted-foreground">Tag</span>
+                            <select v-model="tag" class="min-h-10 rounded-xl border border-border bg-background px-3" @change="applyFilters">
+                                <option value="">Semua tag</option>
+                                <option v-for="item in filterOptions.tags" :key="item.slug" :value="item.slug">
+                                    {{ item.name }} ({{ item.count }})
+                                </option>
+                            </select>
+                        </label>
+
+                        <label class="grid gap-1.5 text-sm">
                             <span class="text-xs font-medium text-muted-foreground">Bahasa</span>
                             <select v-model="language" class="min-h-10 rounded-xl border border-border bg-background px-3" @change="applyFilters">
                                 <option value="">Semua bahasa</option>
@@ -255,6 +284,17 @@ function clearFilters() {
                 </aside>
 
                 <div class="min-w-0">
+                    <div
+                        v-if="filters.q"
+                        class="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-surface px-4 py-3 text-sm"
+                    >
+                        <p>
+                            Hasil untuk
+                            <span class="font-semibold text-foreground">“{{ filters.q }}”</span>
+                        </p>
+                        <span class="text-muted-foreground">{{ books.total }} ebook ditemukan</span>
+                    </div>
+
                     <div v-if="books.data.length" class="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 xl:grid-cols-4">
                         <PublicBookCard
                             v-for="book in books.data"

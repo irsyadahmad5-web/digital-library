@@ -66,8 +66,8 @@ class HomepageBuilderTest extends TestCase
                     ->has('sections', 8)
                     ->where('schemas.hero.provider_available', true)
                     ->where('schemas.latest_books.provider_available', true)
-                    ->where('schemas.popular_books.provider_available', false)
-                    ->where('schemas.recommendations.provider_available', false)
+                    ->where('schemas.popular_books.provider_available', true)
+                    ->where('schemas.recommendations.provider_available', true)
                     ->where('schemas.statistics.provider_available', false),
             );
     }
@@ -233,20 +233,16 @@ class HomepageBuilderTest extends TestCase
             );
     }
 
-    public function test_unavailable_provider_is_never_rendered_even_when_enabled(): void
+    public function test_statistics_provider_remains_unavailable_until_stage_18(): void
     {
-        foreach (['popular_books', 'recommendations', 'statistics'] as $type) {
-            HomepageSection::query()
-                ->where('type', $type)
-                ->update(['is_enabled' => true]);
-        }
+        HomepageSection::query()
+            ->where('type', 'statistics')
+            ->update(['is_enabled' => true]);
 
         $publicTypes = collect(app(HomepageBuilderManager::class)->publicPayload())
             ->pluck('type')
             ->all();
 
-        $this->assertNotContains('popular_books', $publicTypes);
-        $this->assertNotContains('recommendations', $publicTypes);
         $this->assertNotContains('statistics', $publicTypes);
     }
 
