@@ -180,6 +180,9 @@ class AdminSettingsCoreTest extends TestCase
         $this->assertArrayHasKey('general', $public);
         $this->assertArrayHasKey('reader', $public);
         $this->assertArrayHasKey('downloads', $public);
+        $this->assertArrayHasKey('public_enabled', $public['downloads']);
+        $this->assertArrayHasKey('show_download_button', $public['downloads']);
+        $this->assertArrayNotHasKey('track_downloads', $public['downloads']);
         $this->assertArrayNotHasKey('uploads', $public);
         $this->assertArrayNotHasKey('storage', $public);
         $this->assertArrayNotHasKey('enabled', $public['maintenance']);

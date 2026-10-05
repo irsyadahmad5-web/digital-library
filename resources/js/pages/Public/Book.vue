@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, usePage } from '@inertiajs/vue3';
 import {
     ArrowRight,
     BookOpen,
     Building2,
     CalendarDays,
+    Download,
     FileText,
     Globe2,
     Hash,
@@ -18,6 +19,7 @@ import {
     readBookProgress,
     type ReaderProgressV1,
 } from '@/composables/readerLocalState';
+import type { SharedPageProps } from '@/types';
 import type {
     PublicBookCard as PublicBook,
     PublicBookDetail,
@@ -28,7 +30,14 @@ const props = defineProps<{
     relatedBooks: PublicBook[];
 }>();
 
+const page = usePage<SharedPageProps>();
 const readingProgress = ref<ReaderProgressV1 | null>(null);
+
+const downloadVisible = computed(() =>
+    props.book.download_enabled
+    && page.props.site.downloads.public_enabled !== false
+    && page.props.site.downloads.show_download_button !== false,
+);
 
 const hasReadingProgress = computed(() =>
     Boolean(
@@ -117,8 +126,12 @@ onMounted(() => {
                         </template>
                     </div>
 
-                    <div v-if="book.read_enabled" class="mt-7">
+                    <div
+                        v-if="book.read_enabled || downloadVisible"
+                        class="mt-7 flex flex-wrap items-center gap-3"
+                    >
                         <Link
+                            v-if="book.read_enabled"
                             :href="`/read/${book.slug}`"
                             class="inline-flex min-h-12 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
                         >
@@ -126,6 +139,15 @@ onMounted(() => {
                             {{ readButtonLabel }}
                             <ArrowRight class="size-4" />
                         </Link>
+
+                        <a
+                            v-if="downloadVisible"
+                            :href="`/book/${book.slug}/download`"
+                            class="inline-flex min-h-12 items-center gap-2 rounded-xl border border-border bg-surface px-5 text-sm font-semibold text-foreground hover:bg-muted"
+                        >
+                            <Download class="size-4" />
+                            Unduh PDF
+                        </a>
                     </div>
 
                     <div class="mt-7 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">

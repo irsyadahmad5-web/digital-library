@@ -11,6 +11,8 @@ use Illuminate\Http\Client\Response as HttpResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
@@ -27,15 +29,36 @@ class PdfSourceStreamer
 
     public function stream(EbookFile $file, Request $request): Response
     {
+        return $this->streamSource($file, $request, 'inline', 'ebook.pdf');
+    }
+
+    public function download(
+        EbookFile $file,
+        Request $request,
+        string $filename,
+    ): Response {
+        return $this->streamSource($file, $request, 'attachment', $filename);
+    }
+
+    private function streamSource(
+        EbookFile $file,
+        Request $request,
+        string $disposition,
+        string $filename,
+    ): Response {
         return match ($file->source_type) {
-            'local' => $this->streamLocal($file, $request),
-            'external_url' => $this->streamExternal($file, $request),
+            'local' => $this->streamLocal($file, $request, $disposition, $filename),
+            'external_url' => $this->streamExternal($file, $request, $disposition, $filename),
             default => abort(404),
         };
     }
 
-    private function streamLocal(EbookFile $file, Request $request): Response
-    {
+    private function streamLocal(
+        EbookFile $file,
+        Request $request,
+        string $disposition,
+        string $filename,
+    ): Response {
         if ($file->disk !== 'local' || ! is_string($file->path) || $file->path === '') {
             abort(404);
         }
@@ -68,7 +91,11 @@ class PdfSourceStreamer
         $end = $range['end'] ?? ($size - 1);
         $length = ($end - $start) + 1;
         $status = $range === null ? 200 : 206;
-        $headers = $this->baseHeaders($this->etag($file, $absolutePath));
+        $headers = $this->baseHeaders(
+            $this->etag($file, $absolutePath),
+            $disposition,
+            $filename,
+        );
         $headers['Content-Length'] = (string) $length;
 
         if ($range !== null) {
@@ -118,8 +145,12 @@ class PdfSourceStreamer
         );
     }
 
-    private function streamExternal(EbookFile $file, Request $request): Response
-    {
+    private function streamExternal(
+        EbookFile $file,
+        Request $request,
+        string $disposition,
+        string $filename,
+    ): Response {
         $url = trim((string) $file->external_url);
 
         if ($url === '') {
@@ -198,6 +229,8 @@ class PdfSourceStreamer
 
         $headers = $this->baseHeaders(
             $upstream->header('ETag') ?: $file->etag,
+            $disposition,
+            $filename,
         );
 
         foreach (['Content-Length', 'Content-Range', 'Last-Modified'] as $header) {
@@ -373,11 +406,14 @@ class PdfSourceStreamer
     /**
      * @return array<string, string>
      */
-    private function baseHeaders(?string $etag): array
-    {
+    private function baseHeaders(
+        ?string $etag,
+        string $disposition,
+        string $filename,
+    ): array {
         $headers = [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'inline; filename="ebook.pdf"',
+            'Content-Disposition' => $this->contentDisposition($disposition, $filename),
             'Accept-Ranges' => 'bytes',
             'Cache-Control' => 'private, max-age=0, must-revalidate',
             'X-Content-Type-Options' => 'nosniff',
@@ -399,6 +435,34 @@ class PdfSourceStreamer
         }
 
         return $headers;
+    }
+
+    private function contentDisposition(string $disposition, string $filename): string
+    {
+        $disposition = $disposition === 'attachment' ? 'attachment' : 'inline';
+        $filename = trim(str_replace(
+            ["\r", "\n", '\\'],
+            ['', '', '-'],
+            basename($filename),
+        ));
+
+        if ($filename === '') {
+            $filename = 'ebook.pdf';
+        }
+
+        if (! str_ends_with(strtolower($filename), '.pdf')) {
+            $filename .= '.pdf';
+        }
+
+        $fallback = Str::ascii($filename);
+        $fallback = preg_replace('/[^\x20-\x7E]/', '', $fallback) ?: 'ebook.pdf';
+        $fallback = str_replace(['%', '/', '\\'], '-', $fallback);
+
+        return HeaderUtils::makeDisposition(
+            $disposition,
+            $filename,
+            $fallback,
+        );
     }
 
     private function etag(EbookFile $file, string $absolutePath): ?string
