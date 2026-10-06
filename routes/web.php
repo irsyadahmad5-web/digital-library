@@ -5,6 +5,7 @@ use App\Http\Controllers\Operations\HealthController;
 use App\Http\Controllers\Public\PublicDownloadController;
 use App\Http\Controllers\Public\PublicLibraryController;
 use App\Http\Controllers\Public\PublicReaderController;
+use App\Http\Controllers\Public\PwaController;
 use App\Http\Controllers\Public\SeoController;
 use Illuminate\Support\Facades\Route;
 
@@ -33,6 +34,9 @@ Route::prefix('install')
 Route::get('/health/ready', [HealthController::class, 'ready'])
     ->middleware('throttle:120,1')
     ->name('health.ready');
+
+Route::get('/manifest.webmanifest', [PwaController::class, 'manifest'])
+    ->name('pwa.manifest');
 
 Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])
     ->name('seo.sitemap');

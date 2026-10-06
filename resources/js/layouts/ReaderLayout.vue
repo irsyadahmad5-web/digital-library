@@ -36,7 +36,7 @@ const readerBackground = computed(() => {
         <slot />
 
         <div
-            class="pointer-events-none absolute inset-x-0 top-0 z-50 flex justify-center p-2 transition duration-200 sm:p-4"
+            class="reader-controls-safe pointer-events-none absolute inset-x-0 top-0 z-50 flex justify-center transition duration-200"
             :class="controlsVisible
                 ? 'translate-y-0 opacity-100'
                 : '-translate-y-3 opacity-0'"

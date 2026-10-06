@@ -74,6 +74,16 @@ Before a restore, run `operations:restore:check` and keep the site in maintenanc
 
 Backup behavior is controlled with `BACKUP_ENABLED`, `BACKUP_RETENTION_DAYS`, `BACKUP_RETENTION_COUNT`, `BACKUP_MAX_AGE_HOURS`, and `BACKUP_DAILY_AT`. Health thresholds are controlled with `HEALTH_SCHEDULER_MAX_AGE_SECONDS`, `HEALTH_DISK_WARNING_PERCENT`, and `HEALTH_DISK_CRITICAL_PERCENT`.
 
+## PWA & Mobile
+
+Stage 24 makes the public library installable as a Progressive Web App. The manifest uses the current library name and theme colors, includes 192 px / 512 px / maskable icons, and supports shortcuts to the catalog and search. Android/Chromium receives the native install prompt when available; iOS users receive the Safari **Add to Home Screen** guidance.
+
+The service worker intentionally uses a conservative cache policy. Hashed frontend build assets and public images can be cached, while `/admin`, `/install`, `/health`, reader/PDF routes, and ebook downloads are excluded. Navigations remain network-first and fall back to a self-contained offline page, so the PWA does not present stale ebook metadata or silently persist private PDF responses. A waiting service-worker update is applied only after the user chooses **Perbarui**.
+
+Mobile layouts include safe-area handling for notched devices, 44 px primary touch targets, scroll-locked mobile navigation, larger reader controls on coarse-pointer devices, safe reader drawers, and viewport-aware reader spacing. Reader progress and preferences continue to remain local to the browser as designed in Stage 15.
+
+Production PWA installation requires HTTPS (localhost remains supported for development). After deployment, verify `/manifest.webmanifest`, `/sw.js`, `/offline.html`, and the files under `/pwa/` are reachable directly from the public document root.
+
 ## Project tracking
 
 The implementation roadmap is tracked in Linear. Architecture and UX decisions are documented in Notion and Figma.

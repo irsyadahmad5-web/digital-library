@@ -2,6 +2,7 @@ import '../css/app.css';
 
 import { createInertiaApp } from '@inertiajs/vue3';
 import { createApp, h, type DefineComponent } from 'vue';
+import { initializePwa } from '@/composables/pwa';
 
 const pages = import.meta.glob<DefineComponent>('./pages/**/*.vue');
 
@@ -20,6 +21,8 @@ createInertiaApp({
         createApp({ render: () => h(App, props) })
             .use(plugin)
             .mount(el);
+
+        void initializePwa();
     },
     progress: {
         color: '#2563EB',
