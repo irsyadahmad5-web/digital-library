@@ -84,6 +84,14 @@ Mobile layouts include safe-area handling for notched devices, 44 px primary tou
 
 Production PWA installation requires HTTPS (localhost remains supported for development). After deployment, verify `/manifest.webmanifest`, `/sw.js`, `/offline.html`, and the files under `/pwa/` are reachable directly from the public document root.
 
+## Testing & QA
+
+Stage 25 provides a repeatable release gate. Run `composer qa` before every production candidate. The script validates Composer metadata, PHP formatting, the complete PHPUnit suite, release artifacts/toolchains, Laravel cache compilation, Composer/npm security advisories, TypeScript, the Vite production build, service-worker syntax, tracked secret patterns, and whitespace integrity. When Chrome/Chromium is available, `composer qa:browser` creates a disposable SQLite database, boots an isolated local server, checks critical HTTP endpoints, and runs desktop/mobile headless-browser smoke journeys without touching the configured application database.
+
+`php artisan quality:verify` checks the runtime database connection, Vite/PWA release artifacts, icon dimensions, writable runtime paths, PDF tools, and database dump/restore tools. On an actual production candidate, use `php artisan quality:verify --production`; this additionally requires production environment mode, debug disabled, HTTPS APP_URL, a valid APP_KEY, completed installer lock, host validation, CSP, and HSTS.
+
+The full browser/device acceptance checklist and release blockers are documented in `docs/RELEASE_QA_CHECKLIST.md`. Stage 25 also disables Laravel's framework-served route for the private `local` storage disk; private ebook files remain accessible only through the application's guarded reader/download controllers.
+
 ## Project tracking
 
 The implementation roadmap is tracked in Linear. Architecture and UX decisions are documented in Notion and Figma.

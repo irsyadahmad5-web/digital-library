@@ -7,6 +7,7 @@ use App\Modules\Operations\Application\BackupManager;
 use App\Modules\Operations\Application\OperationsHealth;
 use App\Modules\Operations\Application\RestoreReadiness;
 use App\Modules\Operations\Application\SchedulerHeartbeat;
+use App\Modules\Quality\Application\ReleaseQualityGate;
 use App\Modules\Settings\Application\SettingsManager;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -191,6 +192,35 @@ Artisan::command('operations:health {--json} {--snapshot}', function () {
 
     return $report['counts']['critical'] > 0 ? 1 : 0;
 })->purpose('Run operational readiness checks and optionally save a snapshot');
+
+Artisan::command('quality:verify {--production} {--json}', function () {
+    $result = app(ReleaseQualityGate::class)->verify(
+        (bool) $this->option('production'),
+    );
+
+    if ((bool) $this->option('json')) {
+        $this->line(json_encode(
+            $result,
+            JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES,
+        ));
+
+        return $result['passed'] ? 0 : 1;
+    }
+
+    $this->info(
+        'Release quality gate: '
+        .($result['passed'] ? 'PASS' : 'FAIL'),
+    );
+
+    foreach ($result['checks'] as $check) {
+        $this->line(
+            ($check['passed'] ? '[PASS] ' : '[FAIL] ')
+            .$check['key'].': '.$check['message'],
+        );
+    }
+
+    return $result['passed'] ? 0 : 1;
+})->purpose('Verify release artifacts, toolchain, storage, and production safety');
 
 Artisan::command(
     'site:maintenance {state=status} {--message=}',
