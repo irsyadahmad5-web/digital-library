@@ -2,6 +2,8 @@
 
 use App\Http\Middleware\AdminSecurityHeaders;
 use App\Http\Middleware\EnsureActiveUser;
+use App\Http\Middleware\EnsureInstalled;
+use App\Http\Middleware\EnsureInstallerOpen;
 use App\Http\Middleware\EnsurePasswordChanged;
 use App\Http\Middleware\EnsurePermission;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -29,6 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->web(
             prepend: [
+                EnsureInstalled::class,
                 ValidateHost::class,
             ],
             append: [
@@ -41,6 +44,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'active' => EnsureActiveUser::class,
             'permission' => EnsurePermission::class,
             'password.changed' => EnsurePasswordChanged::class,
+            'install.open' => EnsureInstallerOpen::class,
             'admin.headers' => AdminSecurityHeaders::class,
             'site.maintenance' => PublicMaintenanceMode::class,
         ]);

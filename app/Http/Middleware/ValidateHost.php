@@ -2,15 +2,23 @@
 
 namespace App\Http\Middleware;
 
+use App\Modules\Installer\Application\InstallerState;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class ValidateHost
 {
+    public function __construct(
+        private readonly InstallerState $installer,
+    ) {}
+
     public function handle(Request $request, Closure $next): Response
     {
-        if (! (bool) config('security.enforce_host', false)) {
+        if (
+            ! $this->installer->isInstalled()
+            || ! (bool) config('security.enforce_host', false)
+        ) {
             return $next($request);
         }
 

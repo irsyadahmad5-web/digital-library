@@ -33,6 +33,16 @@ npm run build
 php artisan test
 ```
 
+## Web Installer
+
+For a fresh production deployment, point the web server document root to the project's `public/` directory, install Composer dependencies, and ensure the frontend production build exists. Keep `APP_KEY` empty in the initial `.env` (or let Composer copy `.env.example`), then open `/install` in the browser.
+
+The installer checks PHP 8.3+, required extensions/functions, writable paths, the Vite build, and Poppler (`pdfinfo` / `pdftocairo`). It only accepts MySQL or MariaDB and refuses to install into a database that already contains tables. The database user must be able to create, alter, index, and drop tables.
+
+After the database test succeeds, the installer writes a production-safe `.env` atomically, generates the permanent `APP_KEY`, and keeps only non-secret database metadata in its pending-state file. The final step runs migrations and seeders, creates `public/storage`, creates the first Super Admin, updates the library name, writes `storage/app/installed.lock`, removes the temporary installer key, and closes the installer. Database passwords and the admin password are never written to the installer state file.
+
+If the site is behind a reverse proxy or tunnel, enter only the real proxy IP/CIDR values in the trusted-proxy field. Do not use wildcard trust. HTTPS should be configured before installation so the installer can enable secure cookies and HSTS correctly.
+
 ## Project tracking
 
 The implementation roadmap is tracked in Linear. Architecture and UX decisions are documented in Notion and Figma.
