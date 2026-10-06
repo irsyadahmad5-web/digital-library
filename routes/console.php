@@ -8,6 +8,7 @@ use App\Modules\Operations\Application\OperationsHealth;
 use App\Modules\Operations\Application\RestoreReadiness;
 use App\Modules\Operations\Application\SchedulerHeartbeat;
 use App\Modules\Quality\Application\ReleaseQualityGate;
+use App\Modules\Release\Application\ProductionReleaseVerifier;
 use App\Modules\Settings\Application\SettingsManager;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -221,6 +222,58 @@ Artisan::command('quality:verify {--production} {--json}', function () {
 
     return $result['passed'] ? 0 : 1;
 })->purpose('Verify release artifacts, toolchain, storage, and production safety');
+
+Artisan::command('release:info {--json}', function () {
+    $version = (string) config('release.version', '0.0.0-dev');
+    $channel = (string) config('release.channel', 'stable');
+    $payload = [
+        'version' => $version,
+        'channel' => $channel,
+    ];
+
+    if ((bool) $this->option('json')) {
+        $this->line(json_encode(
+            $payload,
+            JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES,
+        ));
+
+        return 0;
+    }
+
+    $this->info("Digital Library {$version} ({$channel})");
+
+    return 0;
+})->purpose('Show the application release version and channel');
+
+Artisan::command('release:verify {--fresh-install} {--json}', function () {
+    $result = app(ProductionReleaseVerifier::class)->verify(
+        (bool) $this->option('fresh-install'),
+    );
+
+    if ((bool) $this->option('json')) {
+        $this->line(json_encode(
+            $result,
+            JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES,
+        ));
+
+        return $result['passed'] ? 0 : 1;
+    }
+
+    $this->info(
+        'Production release '
+        .$result['version'].' verification: '
+        .($result['passed'] ? 'PASS' : 'FAIL'),
+    );
+
+    foreach ($result['checks'] as $check) {
+        $this->line(
+            ($check['passed'] ? '[PASS] ' : '[FAIL] ')
+            .$check['key'].': '.$check['message'],
+        );
+    }
+
+    return $result['passed'] ? 0 : 1;
+})->purpose('Run final production release, operations, and restore-readiness gates');
 
 Artisan::command(
     'site:maintenance {state=status} {--message=}',

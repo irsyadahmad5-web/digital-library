@@ -54,6 +54,7 @@
         ],
         "qa": "bash tools/qa.sh",
         "qa:browser": "bash tools/browser-smoke.sh",
+        "release:package": "bash tools/release-package.sh",
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi"

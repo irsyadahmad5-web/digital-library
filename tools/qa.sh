@@ -44,7 +44,7 @@ step "Service worker syntax"
 node --check public/sw.js
 
 step "Tracked secret-pattern scan"
-if git grep -nE     'APP_KEY=base64:|BEGIN (RSA|OPENSSH|EC|DSA) PRIVATE KEY|AWS_SECRET_ACCESS_KEY=[^$]'     -- . ':!README.md' ':!.env.example'
+if git grep -nE     'APP_KEY=base64:|BEGIN (RSA|OPENSSH|EC|DSA) PRIVATE KEY|AWS_SECRET_ACCESS_KEY=[^$]'     -- . ':!README.md' ':!.env.example' ':!tools/qa.sh'
 then
     echo "Potential tracked secret pattern found." >&2
     exit 1
