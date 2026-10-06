@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Models\User;
+use App\Modules\Installer\Application\InstallerRuntime;
+use App\Modules\Installer\Application\InstallerState;
 use App\Modules\Library\Application\PublicLibrary\Observers\PublicContentCacheObserver;
 use App\Modules\Library\Application\PublicLibrary\PublicLibraryCache;
 use App\Modules\Library\Domain\Models\Author;
@@ -24,9 +26,13 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        $this->app->singleton(InstallerState::class);
+        $this->app->singleton(InstallerRuntime::class);
         $this->app->singleton(SettingsRegistry::class);
         $this->app->singleton(PublicLibraryCache::class);
         $this->app->singleton(SettingsManager::class);
+
+        $this->app->make(InstallerRuntime::class)->bootstrap();
     }
 
     public function boot(): void

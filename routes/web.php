@@ -1,10 +1,33 @@
 <?php
 
+use App\Http\Controllers\Installer\InstallerController;
 use App\Http\Controllers\Public\PublicDownloadController;
 use App\Http\Controllers\Public\PublicLibraryController;
 use App\Http\Controllers\Public\PublicReaderController;
 use App\Http\Controllers\Public\SeoController;
 use Illuminate\Support\Facades\Route;
+
+Route::prefix('install')
+    ->middleware(['install.open', 'throttle:60,1'])
+    ->group(function (): void {
+        Route::get('/', [InstallerController::class, 'index'])
+            ->name('install.index');
+
+        Route::post('/database', [InstallerController::class, 'database'])
+            ->middleware('throttle:10,1')
+            ->name('install.database');
+
+        Route::get('/admin', [InstallerController::class, 'admin'])
+            ->name('install.admin');
+
+        Route::post('/reconfigure', [InstallerController::class, 'reconfigure'])
+            ->middleware('throttle:10,1')
+            ->name('install.reconfigure');
+
+        Route::post('/complete', [InstallerController::class, 'complete'])
+            ->middleware('throttle:5,1')
+            ->name('install.complete');
+    });
 
 Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])
     ->name('seo.sitemap');
