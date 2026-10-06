@@ -14,6 +14,7 @@ class EbookFileManager
 {
     public function __construct(
         private readonly ExternalPdfVerifier $externalVerifier,
+        private readonly PrivateEbookPathGuard $pathGuard,
         private readonly SettingsManager $settings,
     ) {}
 
@@ -25,6 +26,20 @@ class EbookFileManager
             ? $existing->path
             : null;
         $oldPreviewPath = $existing?->preview_path;
+
+        if (is_string($oldLocalPath) && $oldLocalPath !== '') {
+            $oldLocalPath = $this->pathGuard->assertAllowed(
+                $ebook->getKey(),
+                $oldLocalPath,
+            );
+        }
+
+        if (is_string($oldPreviewPath) && $oldPreviewPath !== '') {
+            $oldPreviewPath = $this->pathGuard->assertPreviewAllowed(
+                $ebook->getKey(),
+                $oldPreviewPath,
+            );
+        }
 
         $file = DB::transaction(function () use ($ebook, $verified, $userId, $existing): EbookFile {
             $file = $existing ?? new EbookFile([
@@ -83,11 +98,29 @@ class EbookFileManager
      */
     public function attachLocal(Ebook $ebook, array $metadata, ?int $userId): EbookFile
     {
+        $metadata['path'] = $this->pathGuard->assertAllowed(
+            $ebook->getKey(),
+            $metadata['path'],
+        );
         $existing = EbookFile::query()->where('ebook_id', $ebook->getKey())->first();
         $oldLocalPath = $existing?->source_type === 'local'
             ? $existing->path
             : null;
         $oldPreviewPath = $existing?->preview_path;
+
+        if (is_string($oldLocalPath) && $oldLocalPath !== '') {
+            $oldLocalPath = $this->pathGuard->assertAllowed(
+                $ebook->getKey(),
+                $oldLocalPath,
+            );
+        }
+
+        if (is_string($oldPreviewPath) && $oldPreviewPath !== '') {
+            $oldPreviewPath = $this->pathGuard->assertPreviewAllowed(
+                $ebook->getKey(),
+                $oldPreviewPath,
+            );
+        }
 
         $file = DB::transaction(function () use ($ebook, $metadata, $userId, $existing): EbookFile {
             $file = $existing ?? new EbookFile([
@@ -227,6 +260,20 @@ class EbookFileManager
         $localPath = $file->source_type === 'local' ? $file->path : null;
         $previewPath = $file->preview_path;
 
+        if (is_string($localPath) && $localPath !== '') {
+            $localPath = $this->pathGuard->assertAllowed(
+                $ebook->getKey(),
+                $localPath,
+            );
+        }
+
+        if (is_string($previewPath) && $previewPath !== '') {
+            $previewPath = $this->pathGuard->assertPreviewAllowed(
+                $ebook->getKey(),
+                $previewPath,
+            );
+        }
+
         DB::transaction(fn () => $file->delete());
 
         if ($localPath) {
@@ -244,7 +291,16 @@ class EbookFileManager
             return null;
         }
 
-        return Storage::disk('public')->url($file->preview_path);
+        try {
+            $path = $this->pathGuard->assertPreviewAllowed(
+                $file->ebook_id,
+                $file->preview_path,
+            );
+        } catch (\DomainException) {
+            return null;
+        }
+
+        return Storage::disk('public')->url($path);
     }
 
     /**

@@ -17,7 +17,7 @@ class OtherSessionsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'current_password' => ['required', 'current_password'],
+            'current_password' => ['required', 'string', 'max:255', 'current_password'],
         ];
     }
 }

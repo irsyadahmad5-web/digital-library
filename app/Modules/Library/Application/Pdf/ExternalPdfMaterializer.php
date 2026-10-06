@@ -111,12 +111,12 @@ class ExternalPdfMaterializer
         $maxBytes = $this->policy->maxPdfBytes();
 
         for ($redirects = 0; $redirects <= 3; $redirects++) {
-            $url = $this->guard->assertAllowed($url, $httpsOnly);
-            $headers = [];
+            $target = $this->guard->requestOptions($url, $httpsOnly);
+            $url = $target['url'];
 
             $response = Http::timeout($timeout)
                 ->connectTimeout(min(10, $timeout))
-                ->withOptions([
+                ->withOptions(array_replace_recursive([
                     'allow_redirects' => false,
                     'stream' => true,
                     'sink' => $absolutePath,
@@ -133,7 +133,7 @@ class ExternalPdfMaterializer
                             );
                         }
                     },
-                ])
+                ], $target['options']))
                 ->withHeaders([
                     'Accept' => 'application/pdf',
                 ])

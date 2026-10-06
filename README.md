@@ -40,3 +40,7 @@ The implementation roadmap is tracked in Linear. Architecture and UX decisions a
 ## Security
 
 Never commit `.env`, credentials, API keys, storage secrets, private ebook files, or runtime uploads.
+
+Production hardening is enabled automatically when `APP_ENV=production`: debug output is forced off, secure session cookies are required, host validation and HSTS default to enabled, and public/admin HTML receives CSP and browser security headers. Keep `APP_URL` on the canonical HTTPS origin. Use `SECURITY_ALLOWED_HOSTS` only for additional legitimate hosts.
+
+When the application is behind a reverse proxy or tunnel, set `SECURITY_TRUSTED_PROXIES` only to the actual proxy IP/CIDR values so forwarded HTTPS/client-IP headers cannot be spoofed by arbitrary clients. Do not use `*` unless every request is guaranteed to arrive through a trusted proxy. `SECURITY_HSTS_INCLUDE_SUBDOMAINS` and `SECURITY_HSTS_PRELOAD` should remain disabled until every affected subdomain is permanently HTTPS-capable.

@@ -107,14 +107,15 @@ class ExternalPdfVerifier
         $httpsOnly = (bool) $this->settings->get('storage', 'https_only_external');
 
         for ($redirects = 0; $redirects <= 3; $redirects++) {
-            $url = $this->guard->assertAllowed($url, $httpsOnly);
+            $target = $this->guard->requestOptions($url, $httpsOnly);
+            $url = $target['url'];
 
             $pending = Http::timeout($timeout)
                 ->connectTimeout(min(5, $timeout))
-                ->withOptions([
+                ->withOptions(array_replace_recursive([
                     'allow_redirects' => false,
                     'stream' => true,
-                ])
+                ], $target['options']))
                 ->withHeaders($headers);
 
             $response = strtoupper($method) === 'HEAD'

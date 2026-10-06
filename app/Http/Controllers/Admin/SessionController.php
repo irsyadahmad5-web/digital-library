@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\OtherSessionsRequest;
 use App\Modules\Audit\Application\AuditLogger;
+use App\Modules\Identity\Application\SessionRevoker;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class SessionController extends Controller
@@ -14,16 +14,13 @@ class SessionController extends Controller
     public function destroyOthers(
         OtherSessionsRequest $request,
         AuditLogger $audit,
+        SessionRevoker $sessions,
     ): RedirectResponse {
         $user = $request->user();
-        $deleted = 0;
-
-        if (config('session.driver') === 'database') {
-            $deleted = DB::table(config('session.table', 'sessions'))
-                ->where('user_id', $user->getKey())
-                ->where('id', '!=', $request->session()->getId())
-                ->delete();
-        }
+        $deleted = $sessions->revokeOther(
+            $user,
+            $request->session()->getId(),
+        );
 
         $user->forceFill([
             'remember_token' => Str::random(60),

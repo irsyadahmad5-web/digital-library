@@ -2,6 +2,7 @@
 
 namespace App\Modules\Library\Application\Pdf;
 
+use App\Modules\Library\Application\Storage\PrivateEbookPathGuard;
 use App\Modules\Library\Application\Storage\UploadPolicy;
 use App\Modules\Library\Domain\Models\EbookFile;
 use DomainException;
@@ -15,6 +16,7 @@ class PdfProcessingManager
     public function __construct(
         private readonly PdfToolchain $toolchain,
         private readonly ExternalPdfMaterializer $externalMaterializer,
+        private readonly PrivateEbookPathGuard $pathGuard,
         private readonly UploadPolicy $policy,
     ) {}
 
@@ -51,6 +53,13 @@ class PdfProcessingManager
             $preview = $this->renderPreview($file, $absolutePdf);
             $newPreviewPath = $preview['path'];
             $oldPreviewPath = $file->preview_path;
+
+            if (is_string($oldPreviewPath) && $oldPreviewPath !== '') {
+                $oldPreviewPath = $this->pathGuard->assertPreviewAllowed(
+                    $file->ebook_id,
+                    $oldPreviewPath,
+                );
+            }
 
             $updated = DB::transaction(function () use (
                 $file,
@@ -164,13 +173,17 @@ class PdfProcessingManager
             throw new DomainException('Private local source tidak memiliki path yang valid.');
         }
 
+        $path = $this->pathGuard->assertAllowed(
+            $file->ebook_id,
+            $file->path,
+        );
         $disk = Storage::disk('local');
 
-        if (! $disk->exists($file->path)) {
+        if (! $disk->exists($path)) {
             throw new DomainException('File PDF private tidak ditemukan pada storage.');
         }
 
-        $absolute = $disk->path($file->path);
+        $absolute = $disk->path($path);
         $size = (int) filesize($absolute);
 
         if ($size < 5 || $size > $this->policy->maxPdfBytes()) {
@@ -212,7 +225,7 @@ class PdfProcessingManager
         }
 
         return [
-            'path' => $file->path,
+            'path' => $path,
             'size_bytes' => $size,
             'sha256' => $sha256,
             'mime_type' => 'application/pdf',

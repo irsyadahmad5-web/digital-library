@@ -26,7 +26,7 @@ class ProfileUpdateRequest extends FormRequest
                 'max:255',
                 Rule::unique('users', 'email')->ignore($this->user()?->getKey()),
             ],
-            'current_password' => ['required', 'current_password'],
+            'current_password' => ['required', 'string', 'max:255', 'current_password'],
         ];
     }
 }
