@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\PasswordUpdateRequest;
 use App\Modules\Audit\Application\AuditLogger;
+use App\Modules\Identity\Application\SessionRevoker;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class PasswordController extends Controller
@@ -14,6 +14,7 @@ class PasswordController extends Controller
     public function update(
         PasswordUpdateRequest $request,
         AuditLogger $audit,
+        SessionRevoker $sessions,
     ): RedirectResponse {
         $user = $request->user();
 
@@ -24,12 +25,12 @@ class PasswordController extends Controller
             'remember_token' => Str::random(60),
         ])->save();
 
-        if (config('session.driver') === 'database') {
-            DB::table(config('session.table', 'sessions'))
-                ->where('user_id', $user->getKey())
-                ->where('id', '!=', $request->session()->getId())
-                ->delete();
-        }
+        $sessions->revokeOther(
+            $user,
+            $request->session()->getId(),
+        );
+        $request->session()->regenerate(true);
+        $request->session()->regenerateToken();
 
         $audit->log('admin.password.updated', actor: $user, subjectType: 'user', subjectId: $user->getKey(), request: $request);
 

@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ProfileUpdateRequest;
 use App\Modules\Audit\Application\AuditLogger;
+use App\Modules\Identity\Application\SessionRevoker;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -49,6 +51,7 @@ class ProfileController extends Controller
     public function update(
         ProfileUpdateRequest $request,
         AuditLogger $audit,
+        SessionRevoker $sessions,
     ): RedirectResponse {
         $user = $request->user();
         $validated = $request->safe()->only(['name', 'email']);
@@ -59,11 +62,28 @@ class ProfileController extends Controller
 
         if ($emailChanged) {
             $user->email_verified_at = null;
+            $user->remember_token = Str::random(60);
         }
 
         $user->save();
 
-        $audit->log('admin.profile.updated', actor: $user, subjectType: 'user', subjectId: $user->getKey(), request: $request);
+        if ($emailChanged) {
+            $sessions->revokeOther(
+                $user,
+                $request->session()->getId(),
+            );
+            $request->session()->regenerate(true);
+            $request->session()->regenerateToken();
+        }
+
+        $audit->log(
+            'admin.profile.updated',
+            actor: $user,
+            subjectType: 'user',
+            subjectId: $user->getKey(),
+            metadata: ['email_changed' => $emailChanged],
+            request: $request,
+        );
 
         return back()->with('status', 'Profil berhasil diperbarui.');
     }

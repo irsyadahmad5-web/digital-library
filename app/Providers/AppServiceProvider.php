@@ -31,6 +31,10 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        if ($this->app->environment('production')) {
+            config(['app.debug' => false]);
+        }
+
         Gate::before(
             fn (User $user): ?bool => $user->hasRole('super-admin') ? true : null,
         );
@@ -55,6 +59,7 @@ class AppServiceProvider extends ServiceProvider
             'admin.manage-users',
             'admin.manage-settings',
             'admin.view-audit',
+            'admin.view-analytics',
             'library.manage-master-data',
             'library.manage-ebooks',
         ] as $permission) {

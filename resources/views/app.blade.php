@@ -60,7 +60,7 @@
         @endif
 
         @foreach (($serverSeo['json_ld'] ?? []) as $node)
-            <script data-inertia="jsonld-{{ $loop->index }}" type="application/ld+json">{!! json_encode(
+            <script nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}" data-inertia="jsonld-{{ $loop->index }}" type="application/ld+json">{!! json_encode(
                 $node,
                 JSON_UNESCAPED_UNICODE
                 | JSON_UNESCAPED_SLASHES

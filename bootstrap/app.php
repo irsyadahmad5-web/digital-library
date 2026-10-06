@@ -2,9 +2,12 @@
 
 use App\Http\Middleware\AdminSecurityHeaders;
 use App\Http\Middleware\EnsureActiveUser;
+use App\Http\Middleware\EnsurePasswordChanged;
 use App\Http\Middleware\EnsurePermission;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\PublicMaintenanceMode;
+use App\Http\Middleware\SecurityHeaders;
+use App\Http\Middleware\ValidateHost;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -17,13 +20,27 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->web(append: [
-            HandleInertiaRequests::class,
-        ]);
+        $middleware->trustProxies(
+            headers: Request::HEADER_X_FORWARDED_FOR
+                | Request::HEADER_X_FORWARDED_PROTO
+                | Request::HEADER_X_FORWARDED_PORT
+                | Request::HEADER_X_FORWARDED_PREFIX,
+        );
+
+        $middleware->web(
+            prepend: [
+                ValidateHost::class,
+            ],
+            append: [
+                SecurityHeaders::class,
+                HandleInertiaRequests::class,
+            ],
+        );
 
         $middleware->alias([
             'active' => EnsureActiveUser::class,
             'permission' => EnsurePermission::class,
+            'password.changed' => EnsurePasswordChanged::class,
             'admin.headers' => AdminSecurityHeaders::class,
             'site.maintenance' => PublicMaintenanceMode::class,
         ]);

@@ -26,6 +26,7 @@ Route::prefix('admin')
                 ->name('login');
 
             Route::post('/login', [AuthenticatedSessionController::class, 'store'])
+                ->middleware('throttle:20,1')
                 ->name('admin.login.store');
 
             Route::get('/forgot-password', [PasswordResetLinkController::class, 'create'])
@@ -36,6 +37,7 @@ Route::prefix('admin')
                 ->name('password.email');
 
             Route::get('/reset-password/{token}', [NewPasswordController::class, 'create'])
+                ->where('token', '[A-Za-z0-9]+')
                 ->name('password.reset');
 
             Route::post('/reset-password', [NewPasswordController::class, 'store'])
@@ -43,7 +45,12 @@ Route::prefix('admin')
                 ->name('password.store');
         });
 
-        Route::middleware(['auth', 'active', 'permission:admin.access'])->group(function (): void {
+        Route::middleware([
+            'auth',
+            'active',
+            'permission:admin.access',
+            'password.changed',
+        ])->group(function (): void {
             Route::get('/', [DashboardController::class, 'index'])
                 ->name('admin.dashboard');
 
@@ -58,12 +65,15 @@ Route::prefix('admin')
                 ->name('admin.profile.edit');
 
             Route::patch('/profile', [ProfileController::class, 'update'])
+                ->middleware('throttle:10,1')
                 ->name('admin.profile.update');
 
             Route::put('/password', [PasswordController::class, 'update'])
+                ->middleware('throttle:10,1')
                 ->name('admin.password.update');
 
             Route::delete('/sessions/others', [SessionController::class, 'destroyOthers'])
+                ->middleware('throttle:10,1')
                 ->name('admin.sessions.destroy-others');
 
             Route::get('/audit-log', [AuditLogController::class, 'index'])
@@ -87,6 +97,7 @@ Route::prefix('admin')
 
                     Route::post('/{id}/storage/external', [EbookStorageController::class, 'external'])
                         ->whereNumber('id')
+                        ->middleware('throttle:30,1')
                         ->name('admin.ebooks.storage.external');
 
                     Route::delete('/{id}/storage', [EbookStorageController::class, 'destroy'])
@@ -95,31 +106,37 @@ Route::prefix('admin')
 
                     Route::post('/{id}/processing', [EbookPdfProcessingController::class, 'store'])
                         ->whereNumber('id')
+                        ->middleware('throttle:30,1')
                         ->name('admin.ebooks.processing.store');
 
                     Route::post('/{id}/uploads', [EbookUploadController::class, 'start'])
                         ->whereNumber('id')
+                        ->middleware('throttle:30,1')
                         ->name('admin.ebooks.uploads.start');
 
                     Route::get('/{id}/uploads/{session}', [EbookUploadController::class, 'status'])
                         ->whereNumber('id')
                         ->whereUuid('session')
+                        ->middleware('throttle:240,1')
                         ->name('admin.ebooks.uploads.status');
 
                     Route::post('/{id}/uploads/{session}/chunks/{index}', [EbookUploadController::class, 'chunk'])
                         ->whereNumber('id')
                         ->whereUuid('session')
                         ->whereNumber('index')
+                        ->middleware('throttle:240,1')
                         ->name('admin.ebooks.uploads.chunk');
 
                     Route::post('/{id}/uploads/{session}/complete', [EbookUploadController::class, 'complete'])
                         ->whereNumber('id')
                         ->whereUuid('session')
+                        ->middleware('throttle:30,1')
                         ->name('admin.ebooks.uploads.complete');
 
                     Route::delete('/{id}/uploads/{session}', [EbookUploadController::class, 'destroy'])
                         ->whereNumber('id')
                         ->whereUuid('session')
+                        ->middleware('throttle:30,1')
                         ->name('admin.ebooks.uploads.destroy');
 
                     Route::get('/{id}/edit', [EbookController::class, 'edit'])
@@ -174,7 +191,7 @@ Route::prefix('admin')
                 ->name('admin.settings.index');
 
             Route::post('/settings/{group}', [SettingsController::class, 'update'])
-                ->middleware('permission:admin.manage-settings')
+                ->middleware(['permission:admin.manage-settings', 'throttle:30,1'])
                 ->name('admin.settings.update');
         });
     });

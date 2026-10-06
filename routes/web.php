@@ -12,14 +12,18 @@ Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])
 Route::get('/robots.txt', [SeoController::class, 'robots'])
     ->name('seo.robots');
 
-Route::middleware('site.maintenance')->group(function (): void {
+$slugPattern = '[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*';
+
+Route::middleware('site.maintenance')->group(function () use ($slugPattern): void {
     Route::get('/', [PublicLibraryController::class, 'home'])
         ->name('home');
 
     Route::get('/library', [PublicLibraryController::class, 'library'])
+        ->middleware('throttle:120,1')
         ->name('library.index');
 
     Route::get('/search', [PublicLibraryController::class, 'library'])
+        ->middleware('throttle:120,1')
         ->name('library.search');
 
     Route::get('/categories', [PublicLibraryController::class, 'categories'])
@@ -35,27 +39,35 @@ Route::middleware('site.maintenance')->group(function (): void {
         ->name('collections.index');
 
     Route::get('/category/{slug}', [PublicLibraryController::class, 'category'])
+        ->where('slug', $slugPattern)
         ->name('categories.show');
 
     Route::get('/author/{slug}', [PublicLibraryController::class, 'author'])
+        ->where('slug', $slugPattern)
         ->name('authors.show');
 
     Route::get('/publisher/{slug}', [PublicLibraryController::class, 'publisher'])
+        ->where('slug', $slugPattern)
         ->name('publishers.show');
 
     Route::get('/collection/{slug}', [PublicLibraryController::class, 'collection'])
+        ->where('slug', $slugPattern)
         ->name('collections.show');
 
     Route::get('/book/{slug}', [PublicLibraryController::class, 'book'])
+        ->where('slug', $slugPattern)
         ->name('books.show');
 
     Route::match(['GET', 'HEAD'], '/book/{slug}/download', [PublicDownloadController::class, 'download'])
+        ->where('slug', $slugPattern)
         ->name('books.download');
 
     Route::get('/read/{slug}', [PublicReaderController::class, 'show'])
+        ->where('slug', $slugPattern)
         ->name('reader.show');
 
     Route::match(['GET', 'HEAD'], '/read/{slug}/file', [PublicReaderController::class, 'source'])
+        ->where('slug', $slugPattern)
         ->name('reader.source');
 
     Route::get('/about', [PublicLibraryController::class, 'about'])

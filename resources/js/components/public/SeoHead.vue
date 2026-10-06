@@ -1,15 +1,10 @@
 <script setup lang="ts">
-import { computed } from 'vue';
 import { Head } from '@inertiajs/vue3';
 import type { SeoPayload } from '@/types/seo';
 
-const props = defineProps<{
+defineProps<{
     seo: SeoPayload;
 }>();
-
-const jsonLd = computed(() =>
-    props.seo.json_ld.map((item) => JSON.stringify(item)),
-);
 </script>
 
 <template>
@@ -76,12 +71,5 @@ const jsonLd = computed(() =>
             :content="seo.twitter.image_alt"
         >
 
-        <script
-            v-for="(item, index) in jsonLd"
-            :key="index"
-            :head-key="`jsonld-${index}`"
-            type="application/ld+json"
-            v-text="item"
-        />
     </Head>
 </template>

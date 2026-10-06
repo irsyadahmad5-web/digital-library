@@ -3,6 +3,7 @@
 namespace App\Modules\Library\Application\Reader;
 
 use App\Modules\Library\Application\Storage\ExternalUrlGuard;
+use App\Modules\Library\Application\Storage\PrivateEbookPathGuard;
 use App\Modules\Library\Application\Storage\UploadPolicy;
 use App\Modules\Library\Domain\Models\EbookFile;
 use App\Modules\Settings\Application\SettingsManager;
@@ -23,6 +24,7 @@ class PdfSourceStreamer
 
     public function __construct(
         private readonly ExternalUrlGuard $guard,
+        private readonly PrivateEbookPathGuard $pathGuard,
         private readonly SettingsManager $settings,
         private readonly UploadPolicy $policy,
     ) {}
@@ -63,13 +65,22 @@ class PdfSourceStreamer
             abort(404);
         }
 
-        $disk = Storage::disk('local');
-
-        if (! $disk->exists($file->path)) {
+        try {
+            $path = $this->pathGuard->assertAllowed(
+                $file->ebook_id,
+                $file->path,
+            );
+        } catch (DomainException) {
             abort(404);
         }
 
-        $absolutePath = $disk->path($file->path);
+        $disk = Storage::disk('local');
+
+        if (! $disk->exists($path)) {
+            abort(404);
+        }
+
+        $absolutePath = $disk->path($path);
 
         if (! is_file($absolutePath) || ! is_readable($absolutePath)) {
             abort(404);
@@ -338,7 +349,8 @@ class PdfSourceStreamer
         $httpsOnly = (bool) $this->settings->get('storage', 'https_only_external');
 
         for ($redirects = 0; $redirects <= 3; $redirects++) {
-            $url = $this->guard->assertAllowed($url, $httpsOnly);
+            $target = $this->guard->requestOptions($url, $httpsOnly);
+            $url = $target['url'];
             $headers = ['Accept' => 'application/pdf'];
 
             if ($rangeHeader !== null) {
@@ -347,10 +359,10 @@ class PdfSourceStreamer
 
             $pending = Http::timeout($timeout)
                 ->connectTimeout(min(5, $timeout))
-                ->withOptions([
+                ->withOptions(array_replace_recursive([
                     'allow_redirects' => false,
                     'stream' => true,
-                ])
+                ], $target['options']))
                 ->withHeaders($headers);
 
             $response = strtoupper($method) === 'HEAD'
