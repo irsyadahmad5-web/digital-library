@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import { Head, Link, usePage } from '@inertiajs/vue3';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import {
     BookOpen,
     Mail,
@@ -11,6 +11,7 @@ import {
     X,
 } from '@lucide/vue';
 import PublicSearchForm from '@/components/public/PublicSearchForm.vue';
+import PwaStatus from '@/components/public/PwaStatus.vue';
 import type { SharedPageProps } from '@/types';
 
 const page = usePage<SharedPageProps>();
@@ -55,6 +56,19 @@ function closeMobile() {
     mobileOpen.value = false;
 }
 
+function closeOverlays() {
+    mobileOpen.value = false;
+    searchOpen.value = false;
+}
+
+function toggleMobile() {
+    mobileOpen.value = !mobileOpen.value;
+
+    if (mobileOpen.value) {
+        searchOpen.value = false;
+    }
+}
+
 function toggleSearch() {
     searchOpen.value = !searchOpen.value;
 
@@ -62,15 +76,26 @@ function toggleSearch() {
         mobileOpen.value = false;
     }
 }
+
+const removeNavigateListener = router.on('navigate', closeOverlays);
+
+watch(mobileOpen, (open) => {
+    document.documentElement.classList.toggle('overflow-hidden', open);
+});
+
+onBeforeUnmount(() => {
+    removeNavigateListener();
+    document.documentElement.classList.remove('overflow-hidden');
+});
 </script>
 
 <template>
-    <div class="min-h-screen bg-background text-foreground" :style="themeStyle">
+    <div class="safe-x min-h-screen bg-background text-foreground" :style="themeStyle">
         <Head>
             <link v-if="faviconUrl" head-key="favicon" rel="icon" :href="faviconUrl">
         </Head>
 
-        <header class="sticky top-0 z-40 border-b border-border/70 bg-surface/95 backdrop-blur">
+        <header class="safe-top sticky top-0 z-40 border-b border-border/70 bg-surface/95 backdrop-blur">
             <div
                 class="mx-auto flex min-h-20 items-center justify-between gap-4 px-5 sm:px-8"
                 style="max-width: var(--content-max-width)"
@@ -98,7 +123,7 @@ function toggleSearch() {
                 <div class="flex items-center gap-2">
                     <button
                         type="button"
-                        class="flex size-10 items-center justify-center rounded-xl border border-border bg-surface text-muted-foreground hover:bg-muted hover:text-foreground"
+                        class="flex size-11 items-center justify-center rounded-xl border border-border bg-surface text-muted-foreground hover:bg-muted hover:text-foreground sm:size-10"
                         :aria-expanded="searchOpen"
                         aria-label="Cari ebook"
                         @click="toggleSearch"
@@ -109,10 +134,11 @@ function toggleSearch() {
 
                     <button
                         type="button"
-                        class="flex size-10 items-center justify-center rounded-xl border border-border bg-surface lg:hidden"
+                        class="flex size-11 items-center justify-center rounded-xl border border-border bg-surface lg:hidden sm:size-10"
                         :aria-expanded="mobileOpen"
+                        aria-controls="public-mobile-navigation"
                         aria-label="Buka navigasi"
-                        @click="mobileOpen = !mobileOpen"
+                        @click="toggleMobile"
                     >
                         <X v-if="mobileOpen" class="size-5" />
                         <Menu v-else class="size-5" />
@@ -133,16 +159,20 @@ function toggleSearch() {
                 </div>
             </div>
 
-            <div v-if="mobileOpen" class="border-t border-border bg-surface lg:hidden">
+            <div
+                v-if="mobileOpen"
+                id="public-mobile-navigation"
+                class="max-h-[calc(100dvh-5rem)] overflow-y-auto overscroll-contain border-t border-border bg-surface lg:hidden"
+            >
                 <nav
-                    class="mx-auto grid gap-1 px-5 py-4 sm:px-8"
+                    class="safe-bottom mx-auto grid gap-1 px-5 py-4 sm:px-8"
                     style="max-width: var(--content-max-width)"
                 >
                     <Link
                         v-for="item in navigation"
                         :key="item.href"
                         :href="item.href"
-                        class="rounded-xl px-3 py-3 text-sm"
+                        class="flex min-h-11 items-center rounded-xl px-3 py-2 text-sm"
                         :class="isActive(item.prefixes) ? 'bg-muted font-medium text-foreground' : 'text-muted-foreground'"
                         @click="closeMobile"
                     >
@@ -150,7 +180,7 @@ function toggleSearch() {
                     </Link>
                     <Link
                         href="/contact"
-                        class="rounded-xl px-3 py-3 text-sm"
+                        class="flex min-h-11 items-center rounded-xl px-3 py-2 text-sm"
                         :class="isActive(['/contact']) ? 'bg-muted font-medium text-foreground' : 'text-muted-foreground'"
                         @click="closeMobile"
                     >
@@ -164,7 +194,7 @@ function toggleSearch() {
             <slot />
         </main>
 
-        <footer class="mt-16 border-t border-border bg-surface">
+        <footer class="safe-bottom mt-16 border-t border-border bg-surface">
             <div
                 class="mx-auto grid gap-10 px-5 py-10 sm:px-8 md:grid-cols-[1.4fr_1fr_1fr]"
                 style="max-width: var(--content-max-width)"
@@ -224,5 +254,7 @@ function toggleSearch() {
                 </div>
             </div>
         </footer>
+
+        <PwaStatus />
     </div>
 </template>

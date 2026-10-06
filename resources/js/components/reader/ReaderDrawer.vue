@@ -38,7 +38,7 @@ const emit = defineEmits<{
             />
 
             <section
-                class="absolute inset-x-0 bottom-0 flex max-h-[78dvh] flex-col overflow-hidden rounded-t-3xl border border-white/10 bg-slate-950/96 text-slate-100 shadow-2xl md:inset-y-0 md:max-h-none md:w-[380px] md:rounded-none"
+                class="reader-drawer-safe absolute inset-x-0 bottom-0 flex max-h-[82dvh] flex-col overflow-hidden rounded-t-3xl border border-white/10 bg-slate-950/96 text-slate-100 shadow-2xl md:inset-y-0 md:max-h-none md:w-[380px] md:rounded-none md:pb-0"
                 :class="side === 'left' ? 'md:left-0 md:right-auto md:border-r' : 'md:left-auto md:right-0 md:border-l'"
                 role="dialog"
                 aria-modal="true"
@@ -52,7 +52,7 @@ const emit = defineEmits<{
                     </h2>
                     <button
                         type="button"
-                        class="flex size-9 items-center justify-center rounded-xl text-slate-300 hover:bg-white/10 hover:text-white"
+                        class="flex size-11 items-center justify-center rounded-xl text-slate-300 hover:bg-white/10 hover:text-white md:size-9"
                         aria-label="Tutup"
                         @click="emit('close')"
                     >

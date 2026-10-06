@@ -96,3 +96,64 @@
         animation: none;
     }
 }
+
+/* Stage 24 — PWA & mobile ergonomics */
+.safe-top {
+    padding-top: env(safe-area-inset-top);
+}
+
+.safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+.safe-x {
+    padding-right: env(safe-area-inset-right);
+    padding-left: env(safe-area-inset-left);
+}
+
+.pwa-floating-safe {
+    padding-right: max(0.75rem, env(safe-area-inset-right));
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+    padding-left: max(0.75rem, env(safe-area-inset-left));
+}
+
+.reader-controls-safe {
+    padding-top: calc(0.5rem + env(safe-area-inset-top));
+    padding-right: calc(0.5rem + env(safe-area-inset-right));
+    padding-left: calc(0.5rem + env(safe-area-inset-left));
+    padding-bottom: 0.5rem;
+}
+
+.reader-scroller {
+    padding-top: calc(6rem + env(safe-area-inset-top));
+    padding-bottom: env(safe-area-inset-bottom);
+    overscroll-behavior-x: none;
+    -webkit-overflow-scrolling: touch;
+}
+
+.reader-drawer-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+@media (min-width: 640px) {
+    .reader-controls-safe {
+        padding-top: calc(1rem + env(safe-area-inset-top));
+        padding-right: calc(1rem + env(safe-area-inset-right));
+        padding-left: calc(1rem + env(safe-area-inset-left));
+        padding-bottom: 1rem;
+    }
+
+    .reader-scroller {
+        padding-top: calc(7rem + env(safe-area-inset-top));
+    }
+}
+
+@media (pointer: coarse) {
+    button,
+    a,
+    input,
+    select,
+    textarea {
+        touch-action: manipulation;
+    }
+}

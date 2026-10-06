@@ -1230,7 +1230,7 @@ onBeforeUnmount(async () => {
     >
         <div
             ref="scroller"
-            class="h-dvh overflow-auto overscroll-contain pt-24 sm:pt-28"
+            class="reader-scroller h-dvh overflow-auto overscroll-contain"
             @click.self="handleActivity"
         >
             <div
@@ -1333,7 +1333,7 @@ onBeforeUnmount(async () => {
             <div class="flex min-h-16 items-center gap-1.5 px-2 py-2 sm:gap-2 sm:px-3">
                 <Link
                     :href="backUrl"
-                    class="inline-flex size-10 shrink-0 items-center justify-center rounded-xl text-slate-200 hover:bg-white/10 hover:text-white"
+                    class="inline-flex size-11 shrink-0 items-center justify-center rounded-xl text-slate-200 hover:bg-white/10 hover:text-white sm:size-10"
                     aria-label="Kembali ke detail ebook"
                 >
                     <ArrowLeft class="size-5" />
@@ -1369,7 +1369,7 @@ onBeforeUnmount(async () => {
 
                     <button
                         type="button"
-                        class="flex size-9 items-center justify-center rounded-lg hover:bg-white/10 disabled:opacity-40"
+                        class="flex size-11 items-center justify-center rounded-lg hover:bg-white/10 disabled:opacity-40 sm:size-9"
                         :disabled="currentPage <= 1 || isLoading"
                         aria-label="Halaman sebelumnya"
                         @click="changePage(-1)"
@@ -1377,7 +1377,7 @@ onBeforeUnmount(async () => {
                         <ChevronLeft class="size-4" />
                     </button>
 
-                    <div class="flex h-9 items-center rounded-lg bg-white/10 px-1.5 text-xs sm:px-2">
+                    <div class="flex h-11 items-center rounded-lg bg-white/10 px-1.5 text-xs sm:h-9 sm:px-2">
                         <input
                             v-model="pageInput"
                             inputmode="numeric"
@@ -1391,7 +1391,7 @@ onBeforeUnmount(async () => {
 
                     <button
                         type="button"
-                        class="flex size-9 items-center justify-center rounded-lg hover:bg-white/10 disabled:opacity-40"
+                        class="flex size-11 items-center justify-center rounded-lg hover:bg-white/10 disabled:opacity-40 sm:size-9"
                         :disabled="currentPage >= totalPages || isLoading"
                         aria-label="Halaman berikutnya"
                         @click="changePage(1)"
@@ -1463,7 +1463,7 @@ onBeforeUnmount(async () => {
 
                     <button
                         type="button"
-                        class="flex size-9 items-center justify-center rounded-lg text-slate-200 hover:bg-white/10 hover:text-white"
+                        class="flex size-11 items-center justify-center rounded-lg text-slate-200 hover:bg-white/10 hover:text-white sm:size-9"
                         aria-label="Pengaturan reader"
                         title="Pengaturan (,)"
                         @click="openDrawer('settings')"

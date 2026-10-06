@@ -3,15 +3,32 @@
 <head>
     <meta charset="utf-8">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="color-scheme" content="light dark">
 
     @php
+        $siteProps = $page['props']['site'] ?? [];
+        $appearanceProps = is_array($siteProps) ? ($siteProps['appearance'] ?? []) : [];
+        $generalProps = is_array($siteProps) ? ($siteProps['general'] ?? []) : [];
+        $pwaThemeColor = is_array($appearanceProps)
+            ? ($appearanceProps['primary_color'] ?? '#2563EB')
+            : '#2563EB';
+        $pwaName = is_array($generalProps)
+            ? ($generalProps['short_name'] ?? $generalProps['site_name'] ?? config('app.name', 'Digital Library'))
+            : config('app.name', 'Digital Library');
         $serverSeo = $page['props']['seo'] ?? null;
         $serverTitle = is_array($serverSeo)
             ? ($serverSeo['title'] ?? config('app.name', 'Digital Library'))
             : config('app.name', 'Digital Library');
     @endphp
+
+    <meta name="theme-color" content="{{ $pwaThemeColor }}">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="{{ $pwaName }}">
+    <link rel="manifest" href="{{ route('pwa.manifest') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="/pwa/apple-touch-icon.png">
 
     <title data-inertia="">{{ $serverTitle }}</title>
 
