@@ -26,6 +26,7 @@ For a deployed production candidate, also run:
 php artisan quality:verify --production
 php artisan operations:health
 php artisan operations:restore:check
+php artisan release:verify
 ```
 
 The production quality gate intentionally fails unless the runtime is actually production, debug is off, APP_URL uses HTTPS, APP_KEY is valid, the installer is locked, host validation/CSP/HSTS are enabled, every database migration is applied, `public/storage` is linked, required build/PWA assets exist, writable runtime paths are ready, the database responds, and PDF/database toolchains are available.
@@ -44,6 +45,6 @@ Before the final production release, verify these journeys on at least one curre
 
 ## Release blockers
 
-Do not release while any automated gate is failing, while a production quality check is red, while a security/dependency audit reports an unresolved vulnerability, while migrations are pending, while scheduler/backup health is critical, or while an essential browser journey above is broken.
+Do not release while any automated gate is failing, while `release:verify` is red, while a production quality check is red, while a security/dependency audit reports an unresolved vulnerability, while migrations are pending, while scheduler/backup health is critical, or while an essential browser journey above is broken.
 
 The local filesystem backup is only one recovery layer. Keep an independent off-server backup and a separate secure copy of runtime secrets such as `.env`/APP_KEY/database credentials.
