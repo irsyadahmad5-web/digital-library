@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Installer\InstallerController;
+use App\Http\Controllers\Operations\HealthController;
 use App\Http\Controllers\Public\PublicDownloadController;
 use App\Http\Controllers\Public\PublicLibraryController;
 use App\Http\Controllers\Public\PublicReaderController;
@@ -28,6 +29,10 @@ Route::prefix('install')
             ->middleware('throttle:5,1')
             ->name('install.complete');
     });
+
+Route::get('/health/ready', [HealthController::class, 'ready'])
+    ->middleware('throttle:120,1')
+    ->name('health.ready');
 
 Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])
     ->name('seo.sitemap');
