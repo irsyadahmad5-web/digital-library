@@ -37,11 +37,42 @@ php artisan test
 
 For a fresh production deployment, point the web server document root to the project's `public/` directory, install Composer dependencies, and ensure the frontend production build exists. Keep `APP_KEY` empty in the initial `.env` (or let Composer copy `.env.example`), then open `/install` in the browser.
 
-The installer checks PHP 8.3+, required extensions/functions, writable paths, the Vite build, and Poppler (`pdfinfo` / `pdftocairo`). It only accepts MySQL or MariaDB and refuses to install into a database that already contains tables. The database user must be able to create, alter, index, and drop tables.
+The installer checks PHP 8.3+, required extensions/functions, writable paths, the Vite build, Poppler (`pdfinfo` / `pdftocairo`), and the database backup/restore clients (`mariadb-dump` or `mysqldump`, plus `mariadb` or `mysql`). It only accepts MySQL or MariaDB and refuses to install into a database that already contains tables. The database user must be able to create, alter, index, and drop tables.
 
 After the database test succeeds, the installer writes a production-safe `.env` atomically, generates the permanent `APP_KEY`, and keeps only non-secret database metadata in its pending-state file. The final step runs migrations and seeders, creates `public/storage`, creates the first Super Admin, updates the library name, writes `storage/app/installed.lock`, removes the temporary installer key, and closes the installer. Database passwords and the admin password are never written to the installer state file.
 
 If the site is behind a reverse proxy or tunnel, enter only the real proxy IP/CIDR values in the trusted-proxy field. Do not use wildcard trust. HTTPS should be configured before installation so the installer can enable secure cookies and HSTS correctly.
+
+## Backup, Maintenance & Health
+
+Stage 23 adds an operational safety layer for production. Local backup snapshots are stored outside the public web root under `storage/app/backups`. Each snapshot contains the database dump plus private ebook PDFs, public ebook media, and branding assets. A SHA-256 manifest is written for every included file so restore media can be verified before use. Backup credential files are temporary, permission-restricted, and removed immediately after the database dump. The application deliberately does **not** copy `.env`, `APP_KEY`, database credentials, or other runtime secrets into these snapshots; keep those secrets in a separate secure recovery store.
+
+The default scheduler runs a backup daily at `02:30`, verifies the newest backup at `04:00`, prunes retention at `04:30`, records a scheduler heartbeat every minute, and writes an operational health snapshot every five minutes. Configure the scheduler once on the server:
+
+```cron
+* * * * * cd /path/to/digital-library && php artisan schedule:run >> /dev/null 2>&1
+```
+
+Useful operational commands:
+
+```bash
+php artisan operations:health
+php artisan operations:health --json --snapshot
+php artisan operations:backup
+php artisan operations:backup:list
+php artisan operations:backup:verify
+php artisan operations:restore:check
+php artisan operations:backup:prune
+php artisan site:maintenance status
+php artisan site:maintenance on --message="Pemeliharaan terjadwal."
+php artisan site:maintenance off
+```
+
+`/health/ready` exposes only a minimal readiness summary suitable for external monitoring; detailed database, disk, scheduler, backup, migration, and failed-job diagnostics remain available through the CLI command. A degraded state returns HTTP 200 with warnings, while a critical state returns HTTP 503.
+
+Before a restore, run `operations:restore:check` and keep the site in maintenance. The command verifies the newest (or specified) backup checksum manifest, confirms the database restore client is available, and checks that ebook storage targets are writable. Keep an independent off-server copy of important backups; local retention protects against application mistakes but does not protect against total server or disk loss.
+
+Backup behavior is controlled with `BACKUP_ENABLED`, `BACKUP_RETENTION_DAYS`, `BACKUP_RETENTION_COUNT`, `BACKUP_MAX_AGE_HOURS`, and `BACKUP_DAILY_AT`. Health thresholds are controlled with `HEALTH_SCHEDULER_MAX_AGE_SECONDS`, `HEALTH_DISK_WARNING_PERCENT`, and `HEALTH_DISK_CRITICAL_PERCENT`.
 
 ## Project tracking
 

@@ -3,6 +3,7 @@
 namespace App\Modules\Installer\Application;
 
 use App\Modules\Library\Application\Pdf\PdfToolchain;
+use Symfony\Component\Process\ExecutableFinder;
 
 class InstallerRequirementChecker
 {
@@ -116,6 +117,32 @@ class InstallerRequirementChecker
                     : 'Binary tidak ditemukan di PATH',
             );
         }
+
+        $finder = new ExecutableFinder;
+        $dumpBinary = $finder->find('mariadb-dump')
+            ?: $finder->find('mysqldump');
+        $restoreBinary = $finder->find('mariadb')
+            ?: $finder->find('mysql');
+
+        $checks[] = $this->row(
+            'binary-database-dump',
+            'Database backup tool',
+            is_string($dumpBinary) && $dumpBinary !== '',
+            true,
+            is_string($dumpBinary) && $dumpBinary !== ''
+                ? $dumpBinary
+                : 'mariadb-dump/mysqldump tidak ditemukan di PATH',
+        );
+
+        $checks[] = $this->row(
+            'binary-database-restore',
+            'Database restore tool',
+            is_string($restoreBinary) && $restoreBinary !== '',
+            true,
+            is_string($restoreBinary) && $restoreBinary !== ''
+                ? $restoreBinary
+                : 'mariadb/mysql client tidak ditemukan di PATH',
+        );
 
         $uploadLimit = $this->iniBytes(
             (string) ini_get('upload_max_filesize'),
