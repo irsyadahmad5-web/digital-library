@@ -7,6 +7,7 @@ use App\Modules\Operations\Application\RestoreReadiness;
 use App\Modules\Quality\Application\ReleaseQualityGate;
 use App\Modules\Release\Application\ProductionReleaseVerifier;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 class ProductionReleaseTest extends TestCase
@@ -132,7 +133,7 @@ class ProductionReleaseTest extends TestCase
     {
         $this->assertFileDoesNotExist(public_path('robots.txt'));
         $this->assertNotNull(
-            \Illuminate\Support\Facades\Route::getRoutes()->getByName('seo.robots'),
+            Route::getRoutes()->getByName('seo.robots'),
         );
     }
 
