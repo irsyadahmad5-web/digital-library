@@ -18,12 +18,12 @@ step "Composer metadata"
 step "PHP formatting"
 vendor/bin/pint --test
 
-step "PHP test suite"
-"$PHP_BIN" artisan test --stop-on-failure
-
 step "Frontend typecheck and production build"
 "$NPM_BIN" run typecheck
 "$NPM_BIN" run build
+
+step "PHP test suite"
+"$PHP_BIN" artisan test --stop-on-failure
 
 step "Release artifact/toolchain verification"
 "$PHP_BIN" artisan quality:verify
