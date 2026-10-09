@@ -21,6 +21,10 @@ vendor/bin/pint --test
 step "PHP test suite"
 "$PHP_BIN" artisan test --stop-on-failure
 
+step "Frontend typecheck and production build"
+"$NPM_BIN" run typecheck
+"$NPM_BIN" run build
+
 step "Release artifact/toolchain verification"
 "$PHP_BIN" artisan quality:verify
 
@@ -35,10 +39,6 @@ step "Laravel cache compilation"
 step "Dependency security audits"
 "$COMPOSER_BIN" audit --no-interaction
 "$NPM_BIN" audit --audit-level=low
-
-step "Frontend typecheck and production build"
-"$NPM_BIN" run typecheck
-"$NPM_BIN" run build
 
 step "Service worker syntax"
 node --check public/sw.js
