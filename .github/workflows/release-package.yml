@@ -1,0 +1,89 @@
+name: Release package
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-package-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  package:
+    name: Build verified release artifact
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: ctype,curl,dom,fileinfo,filter,gd,mbstring,openssl,pdo,pdo_mysql,pdo_sqlite,session,sodium,tokenizer,xml
+          coverage: none
+
+      - name: Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+
+      - name: System tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends poppler-utils mariadb-client rsync zip
+
+      - name: Verify tag matches VERSION
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        run: |
+          expected="v$(tr -d '[:space:]' < VERSION)"
+          if [[ "${GITHUB_REF_NAME}" != "${expected}" ]]; then
+            echo "Tag ${GITHUB_REF_NAME} does not match VERSION ${expected}" >&2
+            exit 1
+          fi
+
+      - name: PHP dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Frontend dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Test environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate --force
+
+      - name: Build release package
+        run: composer release:package
+
+      - name: Verify package checksum
+        shell: bash
+        run: |
+          cd dist
+          sha256sum -c digital-library-v*.zip.sha256
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: digital-library-release
+          path: |
+            dist/digital-library-v*.zip
+            dist/digital-library-v*.zip.sha256
+          if-no-files-found: error
+          retention-days: 30

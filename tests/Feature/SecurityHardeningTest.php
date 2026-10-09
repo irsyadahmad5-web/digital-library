@@ -169,11 +169,11 @@ class SecurityHardeningTest extends TestCase
             $login->gatherMiddleware(),
         );
         $this->assertContains(
-            'throttle:20,1',
+            'throttle:20,1,admin-login-',
             $login->gatherMiddleware(),
         );
         $this->assertContains(
-            'throttle:240,1',
+            'throttle:240,1,ebook-upload-chunk-',
             $chunk->gatherMiddleware(),
         );
         $this->assertContains(
@@ -181,7 +181,7 @@ class SecurityHardeningTest extends TestCase
             $dashboard->gatherMiddleware(),
         );
         $this->assertContains(
-            'throttle:120,1',
+            'throttle:120,1,public-search-',
             $search->gatherMiddleware(),
         );
     }

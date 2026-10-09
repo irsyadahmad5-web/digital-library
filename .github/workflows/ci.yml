@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  qa:
+    name: Full QA
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: ctype,curl,dom,fileinfo,filter,gd,mbstring,openssl,pdo,pdo_mysql,pdo_sqlite,session,sodium,tokenizer,xml
+          coverage: none
+
+      - name: Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+
+      - name: System tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends poppler-utils mariadb-client rsync zip
+
+      - name: PHP dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Frontend dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Test environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate --force
+
+      - name: Full QA gate
+        run: composer qa
+
+      - name: Browser smoke
+        run: composer qa:browser
