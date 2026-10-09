@@ -9,9 +9,6 @@ on:
 permissions:
   contents: read
 
-env:
-  APP_KEY: base64:MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
-
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -59,6 +56,7 @@ jobs:
         shell: bash
         run: |
           cp .env.example .env
+          sed -i 's#^APP_KEY=.*#APP_KEY=base64:MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=#' .env
           : > database/database.sqlite
           echo "DB_CONNECTION=sqlite" >> "$GITHUB_ENV"
           echo "DB_DATABASE=$GITHUB_WORKSPACE/database/database.sqlite" >> "$GITHUB_ENV"
