@@ -68,7 +68,8 @@ jobs:
         shell: bash
         run: |
           cp .env.example .env
-          sed -i 's#^APP_KEY=.*#APP_KEY=base64:MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=#' .env
+          TEST_APP_KEY="$(php -r 'echo "base64:".base64_encode(random_bytes(32));')"
+          sed -i "s#^APP_KEY=.*#APP_KEY=${TEST_APP_KEY}#" .env
           DB_FILE="$RUNNER_TEMP/digital-library-ci.sqlite"
           : > "$DB_FILE"
           echo "DB_CONNECTION=sqlite" >> "$GITHUB_ENV"
