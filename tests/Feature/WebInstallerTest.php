@@ -118,11 +118,11 @@ class WebInstallerTest extends TestCase
             $database->gatherMiddleware(),
         );
         $this->assertContains(
-            'throttle:10,1',
+            'throttle:20,1,install-database-',
             $database->gatherMiddleware(),
         );
         $this->assertContains(
-            'throttle:5,1',
+            'throttle:10,1,install-complete-',
             $complete->gatherMiddleware(),
         );
     }
@@ -154,6 +154,31 @@ class WebInstallerTest extends TestCase
                 'db_host',
                 'trusted_proxies',
             ]);
+    }
+
+    public function test_installer_rejects_non_loopback_http_app_url_before_connecting(): void
+    {
+        config(['installer.force_uninstalled' => true]);
+
+        $response = $this->from('/install')->post(
+            '/install/database',
+            [
+                'app_name' => 'Library Test',
+                'app_url' => 'http://library.example.test',
+                'timezone' => 'Asia/Jakarta',
+                'db_connection' => 'mariadb',
+                'db_host' => '127.0.0.1',
+                'db_port' => 3306,
+                'db_database' => 'library_test',
+                'db_username' => 'library',
+                'db_password' => 'secret',
+                'trusted_proxies' => '127.0.0.1',
+            ],
+        );
+
+        $response
+            ->assertRedirect('/install')
+            ->assertSessionHasErrors(['app_url']);
     }
 
     public function test_environment_writer_persists_production_safe_values_atomically(): void

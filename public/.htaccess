@@ -1,3 +1,9 @@
+<IfModule mod_authz_core.c>
+    <FilesMatch "^\.">
+        Require all denied
+    </FilesMatch>
+</IfModule>
+
 <IfModule mod_headers.c>
     <IfModule mod_setenvif.c>
         SetEnvIf Request_URI "^/build/assets/" DL_IMMUTABLE_ASSET=1

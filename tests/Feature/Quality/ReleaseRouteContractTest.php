@@ -100,6 +100,34 @@ class ReleaseRouteContractTest extends TestCase
         }
     }
 
+    public function test_numeric_route_throttles_use_explicit_non_empty_prefixes(): void
+    {
+        foreach (Route::getRoutes() as $route) {
+            foreach ($route->gatherMiddleware() as $middleware) {
+                if (! str_starts_with($middleware, 'throttle:')) {
+                    continue;
+                }
+
+                $arguments = explode(',', substr($middleware, strlen('throttle:')));
+
+                if (! isset($arguments[0]) || ! ctype_digit((string) $arguments[0])) {
+                    continue;
+                }
+
+                $this->assertGreaterThanOrEqual(
+                    3,
+                    count($arguments),
+                    "{$route->uri()} numeric throttle is missing a route-specific prefix.",
+                );
+                $this->assertNotSame(
+                    '',
+                    trim((string) ($arguments[2] ?? '')),
+                    "{$route->uri()} numeric throttle prefix must not be empty.",
+                );
+            }
+        }
+    }
+
     public function test_reader_and_download_routes_remain_read_only_and_maintenance_guarded(): void
     {
         foreach ([

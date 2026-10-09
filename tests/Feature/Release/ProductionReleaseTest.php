@@ -7,6 +7,7 @@ use App\Modules\Operations\Application\RestoreReadiness;
 use App\Modules\Quality\Application\ReleaseQualityGate;
 use App\Modules\Release\Application\ProductionReleaseVerifier;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 class ProductionReleaseTest extends TestCase
@@ -126,6 +127,30 @@ class ProductionReleaseTest extends TestCase
         );
 
         $this->assertStringContainsString('/dist', $ignore);
+    }
+
+    public function test_dynamic_robots_route_is_not_shadowed_by_static_file(): void
+    {
+        $this->assertFileDoesNotExist(public_path('robots.txt'));
+        $this->assertNotNull(
+            Route::getRoutes()->getByName('seo.robots'),
+        );
+    }
+
+    public function test_apache_public_root_denies_dotfiles(): void
+    {
+        $htaccess = (string) file_get_contents(
+            public_path('.htaccess'),
+        );
+
+        $this->assertStringContainsString(
+            '<FilesMatch "^\\.">',
+            $htaccess,
+        );
+        $this->assertStringContainsString(
+            'Require all denied',
+            $htaccess,
+        );
     }
 
     public function test_release_changelog_and_runbook_match_the_stable_version(): void

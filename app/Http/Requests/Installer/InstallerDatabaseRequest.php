@@ -98,6 +98,23 @@ class InstallerDatabaseRequest extends FormRequest
                     );
                 }
 
+                if (is_array($parts)) {
+                    $scheme = strtolower((string) ($parts['scheme'] ?? ''));
+                    $host = strtolower(rtrim((string) ($parts['host'] ?? ''), '.'));
+                    $loopback = in_array(
+                        $host,
+                        ['localhost', '127.0.0.1', '::1'],
+                        true,
+                    );
+
+                    if ($scheme !== 'https' && ! $loopback) {
+                        $validator->errors()->add(
+                            'app_url',
+                            'URL production wajib menggunakan HTTPS. HTTP hanya diizinkan untuk localhost/loopback.',
+                        );
+                    }
+                }
+
                 $value = trim(
                     (string) $this->input('trusted_proxies', ''),
                 );

@@ -10,29 +10,29 @@ use App\Http\Controllers\Public\SeoController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('install')
-    ->middleware(['install.open', 'throttle:60,1'])
+    ->middleware(['install.open', 'throttle:120,1,install-global-'])
     ->group(function (): void {
         Route::get('/', [InstallerController::class, 'index'])
             ->name('install.index');
 
         Route::post('/database', [InstallerController::class, 'database'])
-            ->middleware('throttle:10,1')
+            ->middleware('throttle:20,1,install-database-')
             ->name('install.database');
 
         Route::get('/admin', [InstallerController::class, 'admin'])
             ->name('install.admin');
 
         Route::post('/reconfigure', [InstallerController::class, 'reconfigure'])
-            ->middleware('throttle:10,1')
+            ->middleware('throttle:20,1,install-reconfigure-')
             ->name('install.reconfigure');
 
         Route::post('/complete', [InstallerController::class, 'complete'])
-            ->middleware('throttle:5,1')
+            ->middleware('throttle:10,1,install-complete-')
             ->name('install.complete');
     });
 
 Route::get('/health/ready', [HealthController::class, 'ready'])
-    ->middleware('throttle:120,1')
+    ->middleware('throttle:120,1,health-ready-')
     ->name('health.ready');
 
 Route::get('/manifest.webmanifest', [PwaController::class, 'manifest'])
@@ -51,11 +51,11 @@ Route::middleware('site.maintenance')->group(function () use ($slugPattern): voi
         ->name('home');
 
     Route::get('/library', [PublicLibraryController::class, 'library'])
-        ->middleware('throttle:120,1')
+        ->middleware('throttle:120,1,public-library-')
         ->name('library.index');
 
     Route::get('/search', [PublicLibraryController::class, 'library'])
-        ->middleware('throttle:120,1')
+        ->middleware('throttle:120,1,public-search-')
         ->name('library.search');
 
     Route::get('/categories', [PublicLibraryController::class, 'categories'])
