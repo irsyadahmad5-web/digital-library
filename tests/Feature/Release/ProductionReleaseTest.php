@@ -128,6 +128,14 @@ class ProductionReleaseTest extends TestCase
         $this->assertStringContainsString('/dist', $ignore);
     }
 
+    public function test_dynamic_robots_route_is_not_shadowed_by_static_file(): void
+    {
+        $this->assertFileDoesNotExist(public_path('robots.txt'));
+        $this->assertNotNull(
+            \Illuminate\Support\Facades\Route::getRoutes()->getByName('seo.robots'),
+        );
+    }
+
     public function test_apache_public_root_denies_dotfiles(): void
     {
         $htaccess = (string) file_get_contents(
