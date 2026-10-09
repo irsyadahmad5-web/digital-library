@@ -128,6 +128,22 @@ class ProductionReleaseTest extends TestCase
         $this->assertStringContainsString('/dist', $ignore);
     }
 
+    public function test_apache_public_root_denies_dotfiles(): void
+    {
+        $htaccess = (string) file_get_contents(
+            public_path('.htaccess'),
+        );
+
+        $this->assertStringContainsString(
+            '<FilesMatch "^\\.">',
+            $htaccess,
+        );
+        $this->assertStringContainsString(
+            'Require all denied',
+            $htaccess,
+        );
+    }
+
     public function test_release_changelog_and_runbook_match_the_stable_version(): void
     {
         $changelog = (string) file_get_contents(
