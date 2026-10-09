@@ -68,7 +68,15 @@ jobs:
         run: npm ci --ignore-scripts
 
       - name: Test environment
-        run: cp .env.example .env
+        shell: bash
+        run: |
+          cp .env.example .env
+          : > database/database.sqlite
+          echo "DB_CONNECTION=sqlite" >> "$GITHUB_ENV"
+          echo "DB_DATABASE=$GITHUB_WORKSPACE/database/database.sqlite" >> "$GITHUB_ENV"
+          echo "CACHE_STORE=file" >> "$GITHUB_ENV"
+          echo "SESSION_DRIVER=file" >> "$GITHUB_ENV"
+          echo "QUEUE_CONNECTION=sync" >> "$GITHUB_ENV"
 
       - name: Build release package
         run: composer release:package
