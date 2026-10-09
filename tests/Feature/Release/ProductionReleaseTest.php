@@ -18,7 +18,7 @@ class ProductionReleaseTest extends TestCase
             (string) file_get_contents(base_path('VERSION')),
         );
 
-        $this->assertSame('1.0.0', $version);
+        $this->assertSame('1.0.1', $version);
         $this->assertSame($version, config('release.version'));
         $this->assertSame('stable', config('release.channel'));
         $this->assertMatchesRegularExpression(
@@ -38,7 +38,7 @@ class ProductionReleaseTest extends TestCase
         $payload = json_decode(Artisan::output(), true);
 
         $this->assertIsArray($payload);
-        $this->assertSame('1.0.0', $payload['version']);
+        $this->assertSame('1.0.1', $payload['version']);
         $this->assertSame('stable', $payload['channel']);
     }
 
@@ -53,7 +53,7 @@ class ProductionReleaseTest extends TestCase
         $result = $verifier->verify();
 
         $this->assertTrue($result['passed']);
-        $this->assertSame('1.0.0', $result['version']);
+        $this->assertSame('1.0.1', $result['version']);
         $this->assertSame('stable', $result['channel']);
         $this->assertNotNull($result['restore']);
 
@@ -163,11 +163,11 @@ class ProductionReleaseTest extends TestCase
         );
 
         $this->assertStringContainsString(
-            '## [1.0.0] - 2026-10-06',
+            '## [1.0.1] - 2026-10-09',
             $changelog,
         );
         $this->assertStringContainsString(
-            '# Production Release 1.0.0',
+            '# Production Release 1.0.1',
             $runbook,
         );
         $this->assertStringContainsString(

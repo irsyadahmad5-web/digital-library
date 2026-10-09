@@ -2,6 +2,24 @@
 
 All notable changes to Digital Library are documented in this file.
 
+## [1.0.1] - 2026-10-09
+
+### Fixed
+
+- Isolated numeric route rate-limit counters so installer, admin, public search, health, and ebook operations no longer consume one another's request budgets.
+- Enforced HTTPS for non-loopback production URLs during web installation and corrected proxy-aware production URL handling.
+- Removed the static `public/robots.txt` file that could shadow the dynamic SEO robots route in Apache deployments.
+
+### Security
+
+- Denied direct HTTP access to dotfiles under the Apache public root, including `.user.ini` and backup-style dotfiles.
+- Added regression coverage for installer HTTPS policy, rate-limit namespace isolation, dynamic robots routing, and public-root dotfile protection.
+
+### Release
+
+- Added GitHub Actions full QA and release packaging so CPU-intensive verification and artifact builds run on hosted runners instead of production servers.
+- Made clean-checkout QA self-contained with an ephemeral SQLite runtime and generated test application key.
+
 ## [1.0.0] - 2026-10-06
 
 ### Added

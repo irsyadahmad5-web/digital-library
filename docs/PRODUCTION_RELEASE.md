@@ -1,6 +1,6 @@
-# Production Release 1.0.0
+# Production Release 1.0.1
 
-Digital Library 1.0.0 is the first stable production release.
+Digital Library 1.0.1 is the production hardening release following the first stable 1.0.0 release.
 
 ## Release artifact
 
@@ -13,8 +13,8 @@ composer release:package
 The packaging command runs the full QA gate and browser smoke test, rebuilds frontend assets, exports only tracked source files, installs optimized production Composer dependencies without dev packages, adds `RELEASE.json`, generates `RELEASE_FILES.sha256`, and creates:
 
 ```text
-dist/digital-library-v1.0.0.zip
-dist/digital-library-v1.0.0.zip.sha256
+dist/digital-library-v1.0.1.zip
+dist/digital-library-v1.0.1.zip.sha256
 ```
 
 The archive deliberately excludes `.env`, Git metadata, `node_modules`, runtime logs, backups, uploaded ebooks, and other server state. It includes the full application source, migrations, tests/documentation, production `vendor/`, and compiled `public/build/`.
@@ -23,7 +23,7 @@ Verify the ZIP before deployment:
 
 ```bash
 cd dist
-sha256sum -c digital-library-v1.0.0.zip.sha256
+sha256sum -c digital-library-v1.0.1.zip.sha256
 ```
 
 After extraction, `RELEASE_FILES.sha256` can be used to validate all packaged files.
