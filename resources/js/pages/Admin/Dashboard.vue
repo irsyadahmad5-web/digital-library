@@ -1,6 +1,18 @@
 <script setup lang="ts">
 import { Head, Link, usePage } from '@inertiajs/vue3';
-import { BarChart3, BookOpen, Database, Download, LibraryBig, ShieldCheck } from '@lucide/vue';
+import {
+    BarChart3,
+    BookOpen,
+    Database,
+    Download,
+    Eye,
+    LibraryBig,
+    ShieldCheck,
+} from '@lucide/vue';
+import { Alert } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/ui/page-header';
+import { Stat } from '@/components/ui/stat';
 import AdminLayout from '@/layouts/AdminLayout.vue';
 import type { SharedPageProps } from '@/types';
 
@@ -38,110 +50,86 @@ function formatBytes(bytes: number) {
     <Head title="Admin Dashboard" />
 
     <AdminLayout>
-        <div class="flex flex-col gap-6">
-            <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                <div>
-                    <p class="text-sm font-medium text-primary">Admin</p>
-                    <h1 class="mt-1 text-3xl font-semibold tracking-tight">
-                        Selamat datang, {{ page.props.auth.user?.name }}
-                    </h1>
-                    <p class="mt-2 text-sm text-muted-foreground">
-                        Ringkasan koleksi dan aktivitas agregat perpustakaan.
-                    </p>
+        <div class="grid gap-5">
+            <PageHeader
+                eyebrow="Overview"
+                title="Dashboard"
+                :description="'Selamat datang, ' + (page.props.auth.user?.name || 'Admin') + '. Ringkasan koleksi dan aktivitas perpustakaan.'"
+            >
+                <template #actions>
+                    <Button
+                        v-if="page.props.auth.user?.permissions.includes('admin.view-analytics')"
+                        as-child
+                        variant="secondary"
+                        size="small"
+                    >
+                        <Link href="/admin/analytics">
+                            <BarChart3 class="size-4" />
+                            Buka Analytics
+                        </Link>
+                    </Button>
+                </template>
+            </PageHeader>
+
+            <section class="overflow-hidden rounded-[var(--radius-lg)] border border-line bg-surface">
+                <div class="grid sm:grid-cols-2 xl:grid-cols-5">
+                    <div class="border-b border-line p-4 sm:border-r xl:border-b-0">
+                        <Stat label="Total Ebook" :value="summary.total_ebooks.toLocaleString('id-ID')">
+                            <template #icon><BookOpen class="size-4 text-brand" /></template>
+                        </Stat>
+                    </div>
+                    <div class="border-b border-line p-4 xl:border-b-0 xl:border-r">
+                        <Stat label="Ebook Publik" :value="summary.public_ebooks.toLocaleString('id-ID')">
+                            <template #icon><LibraryBig class="size-4 text-brand" /></template>
+                        </Stat>
+                    </div>
+                    <div class="border-b border-line p-4 sm:border-r xl:border-b-0">
+                        <Stat label="Pembukaan Reader" :value="summary.reader_opens.toLocaleString('id-ID')">
+                            <template #icon><Eye class="size-4 text-brand" /></template>
+                        </Stat>
+                    </div>
+                    <div class="border-b border-line p-4 xl:border-b-0 xl:border-r">
+                        <Stat label="Download" :value="summary.downloads.toLocaleString('id-ID')">
+                            <template #icon><Download class="size-4 text-brand" /></template>
+                        </Stat>
+                    </div>
+                    <div class="p-4">
+                        <Stat label="Storage Lokal" :value="formatBytes(summary.local_storage_bytes)">
+                            <template #icon><Database class="size-4 text-brand" /></template>
+                        </Stat>
+                    </div>
                 </div>
+            </section>
 
-                <Link
-                    v-if="page.props.auth.user?.permissions.includes('admin.view-analytics')"
-                    href="/admin/analytics"
-                    class="inline-flex min-h-10 items-center gap-2 rounded-xl border border-border bg-surface px-4 text-sm font-medium hover:bg-muted"
-                >
-                    <BarChart3 class="size-4" />
-                    Buka Analytics
-                </Link>
-            </div>
-
-            <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-                <article class="rounded-2xl border border-border bg-surface p-5">
-                    <div class="flex items-center justify-between gap-3">
-                        <p class="text-sm text-muted-foreground">Total Ebook</p>
-                        <BookOpen class="size-4 text-primary" />
-                    </div>
-                    <p class="mt-3 text-2xl font-semibold">{{ summary.total_ebooks.toLocaleString('id-ID') }}</p>
-                </article>
-
-                <article class="rounded-2xl border border-border bg-surface p-5">
-                    <div class="flex items-center justify-between gap-3">
-                        <p class="text-sm text-muted-foreground">Ebook Publik</p>
-                        <LibraryBig class="size-4 text-primary" />
-                    </div>
-                    <p class="mt-3 text-2xl font-semibold">{{ summary.public_ebooks.toLocaleString('id-ID') }}</p>
-                </article>
-
-                <article class="rounded-2xl border border-border bg-surface p-5">
-                    <div class="flex items-center justify-between gap-3">
-                        <p class="text-sm text-muted-foreground">Pembukaan Reader</p>
-                        <LibraryBig class="size-4 text-primary" />
-                    </div>
-                    <p class="mt-3 text-2xl font-semibold">{{ summary.reader_opens.toLocaleString('id-ID') }}</p>
-                </article>
-
-                <article class="rounded-2xl border border-border bg-surface p-5">
-                    <div class="flex items-center justify-between gap-3">
-                        <p class="text-sm text-muted-foreground">Download</p>
-                        <Download class="size-4 text-primary" />
-                    </div>
-                    <p class="mt-3 text-2xl font-semibold">{{ summary.downloads.toLocaleString('id-ID') }}</p>
-                </article>
-
-                <article class="rounded-2xl border border-border bg-surface p-5">
-                    <div class="flex items-center justify-between gap-3">
-                        <p class="text-sm text-muted-foreground">Storage Lokal</p>
-                        <Database class="size-4 text-primary" />
-                    </div>
-                    <p class="mt-3 text-2xl font-semibold">{{ formatBytes(summary.local_storage_bytes) }}</p>
-                </article>
-            </div>
-
-            <div class="grid gap-6 xl:grid-cols-[1fr_.8fr]">
-                <section class="rounded-2xl border border-border bg-surface p-6">
-                    <div class="flex items-start gap-4">
-                        <div class="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                            <BarChart3 class="size-5" />
-                        </div>
-                        <div class="min-w-0">
-                            <h2 class="font-semibold">Aktivitas 30 hari terakhir</h2>
-                            <div class="mt-4 grid gap-3 sm:grid-cols-3">
-                                <div class="rounded-xl bg-muted p-4">
-                                    <p class="text-xs text-muted-foreground">Page views</p>
-                                    <p class="mt-1 text-xl font-semibold">{{ summary.last_30_days.page_views.toLocaleString('id-ID') }}</p>
-                                </div>
-                                <div class="rounded-xl bg-muted p-4">
-                                    <p class="text-xs text-muted-foreground">Reader</p>
-                                    <p class="mt-1 text-xl font-semibold">{{ summary.last_30_days.reader_opens.toLocaleString('id-ID') }}</p>
-                                </div>
-                                <div class="rounded-xl bg-muted p-4">
-                                    <p class="text-xs text-muted-foreground">Download</p>
-                                    <p class="mt-1 text-xl font-semibold">{{ summary.last_30_days.downloads.toLocaleString('id-ID') }}</p>
-                                </div>
+            <div class="grid gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(300px,.75fr)]">
+                <section class="rounded-[var(--radius-lg)] border border-line bg-surface">
+                    <div class="border-b border-line px-4 py-3.5 sm:px-5">
+                        <div class="flex items-center justify-between gap-3">
+                            <div>
+                                <h2 class="text-sm font-semibold text-ink">Aktivitas 30 hari terakhir</h2>
+                                <p class="mt-1 text-xs text-ink-soft">Ringkasan trafik dan interaksi utama.</p>
                             </div>
+                            <BarChart3 class="size-4 text-ink-faint" />
+                        </div>
+                    </div>
+
+                    <div class="grid sm:grid-cols-3">
+                        <div class="border-b border-line p-4 sm:border-b-0 sm:border-r">
+                            <Stat label="Page views" :value="summary.last_30_days.page_views.toLocaleString('id-ID')" />
+                        </div>
+                        <div class="border-b border-line p-4 sm:border-b-0 sm:border-r">
+                            <Stat label="Reader" :value="summary.last_30_days.reader_opens.toLocaleString('id-ID')" />
+                        </div>
+                        <div class="p-4">
+                            <Stat label="Download" :value="summary.last_30_days.downloads.toLocaleString('id-ID')" />
                         </div>
                     </div>
                 </section>
 
-                <section class="rounded-2xl border border-border bg-surface p-6">
-                    <div class="flex items-start gap-4">
-                        <div class="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
-                            <ShieldCheck class="size-5" />
-                        </div>
-                        <div>
-                            <h2 class="font-semibold">Privacy-first analytics</h2>
-                            <p class="mt-1 text-sm leading-6 text-muted-foreground">
-                                Statistik disimpan sebagai angka agregat harian. Tidak ada IP, user-agent,
-                                identitas pembaca, kata kunci pencarian, atau progres membaca personal yang disimpan.
-                            </p>
-                        </div>
-                    </div>
-                </section>
+                <Alert tone="success" title="Privacy-first analytics" class="self-start">
+                    Statistik disimpan sebagai angka agregat harian. Tidak ada IP, user-agent,
+                    identitas pembaca, kata kunci pencarian, atau progres membaca personal yang disimpan.
+                </Alert>
             </div>
         </div>
     </AdminLayout>
