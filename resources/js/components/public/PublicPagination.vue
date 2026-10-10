@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { ArrowLeft, ArrowRight } from '@lucide/vue';
+import { ChevronLeft, ChevronRight } from '@lucide/vue';
 
 defineProps<{
     currentPage: number;
@@ -14,41 +14,42 @@ defineProps<{
 </script>
 
 <template>
-    <div
+    <nav
         v-if="lastPage > 1 || total > 0"
-        class="mt-10 flex flex-col gap-4 border-t border-border pt-5 text-sm sm:flex-row sm:items-center sm:justify-between"
+        aria-label="Pagination katalog"
+        class="mt-9 flex flex-col gap-3 border-t border-line pt-4 text-xs sm:flex-row sm:items-center sm:justify-between"
     >
-        <p class="text-muted-foreground">
+        <p class="text-ink-soft">
             <template v-if="total">
-                Menampilkan {{ from || 0 }}–{{ to || 0 }} dari {{ total }} ebook
+                {{ from || 0 }}–{{ to || 0 }} dari {{ total }} ebook
             </template>
             <template v-else>
                 Belum ada ebook
             </template>
         </p>
 
-        <div v-if="lastPage > 1" class="flex items-center gap-2">
+        <div v-if="lastPage > 1" class="flex items-center gap-1.5">
             <Link
                 v-if="prevUrl"
                 :href="prevUrl"
                 preserve-scroll
-                class="inline-flex min-h-10 items-center gap-2 rounded-xl border border-border bg-surface px-3 font-medium hover:bg-muted"
+                class="grid size-10 place-items-center rounded-[var(--radius-md)] border border-line bg-surface text-ink-soft transition-colors hover:border-line-strong hover:bg-surface-subtle hover:text-ink"
+                aria-label="Halaman sebelumnya"
             >
-                <ArrowLeft class="size-4" />
-                Sebelumnya
+                <ChevronLeft class="size-4" />
             </Link>
-            <span class="rounded-xl bg-muted px-3 py-2 text-muted-foreground">
+            <span class="min-w-20 rounded-[var(--radius-md)] px-3 py-2.5 text-center font-semibold tabular-nums text-ink-soft">
                 {{ currentPage }} / {{ lastPage }}
             </span>
             <Link
                 v-if="nextUrl"
                 :href="nextUrl"
                 preserve-scroll
-                class="inline-flex min-h-10 items-center gap-2 rounded-xl border border-border bg-surface px-3 font-medium hover:bg-muted"
+                class="grid size-10 place-items-center rounded-[var(--radius-md)] border border-line bg-surface text-ink-soft transition-colors hover:border-line-strong hover:bg-surface-subtle hover:text-ink"
+                aria-label="Halaman berikutnya"
             >
-                Berikutnya
-                <ArrowRight class="size-4" />
+                <ChevronRight class="size-4" />
             </Link>
         </div>
-    </div>
+    </nav>
 </template>
