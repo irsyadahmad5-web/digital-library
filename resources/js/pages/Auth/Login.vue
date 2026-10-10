@@ -1,12 +1,21 @@
 <script setup lang="ts">
+import { ref } from 'vue';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
-import { BookOpen, LockKeyhole, Mail } from '@lucide/vue';
+import {
+    Eye,
+    EyeOff,
+    LockKeyhole,
+    LogIn,
+    Mail,
+} from '@lucide/vue';
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import AuthLayout from '@/layouts/AuthLayout.vue';
 import type { SharedPageProps } from '@/types';
 
 const page = usePage<SharedPageProps>();
-const siteName = page.props.site.general.site_name || 'Digital Library';
-const logoUrl = page.props.site.general.logo_url;
+const showPassword = ref(false);
 
 const form = useForm({
     email: '',
@@ -24,90 +33,73 @@ function submit() {
 <template>
     <Head title="Login Admin" />
 
-    <main class="min-h-dvh bg-background px-5 py-10 text-foreground">
-        <div class="mx-auto grid min-h-[calc(100dvh-5rem)] max-w-6xl items-center gap-10 lg:grid-cols-[1.05fr_.95fr]">
-            <section class="hidden lg:block">
-                <div class="max-w-xl">
-                    <div class="mb-6 inline-flex size-12 items-center justify-center overflow-hidden rounded-2xl bg-primary text-primary-foreground">
-                        <img v-if="logoUrl" :src="String(logoUrl)" alt="" class="size-full object-cover">
-                        <BookOpen v-else class="size-6" />
-                    </div>
-                    <p class="text-sm font-semibold text-primary">{{ siteName }} Admin</p>
-                    <h1 class="mt-3 text-5xl font-semibold leading-tight tracking-tight">
-                        Kelola perpustakaan dengan tenang dan aman.
-                    </h1>
-                    <p class="mt-6 max-w-lg text-lg leading-8 text-muted-foreground">
-                        Area administrasi terpisah dari halaman publik. Pembaca tetap bisa membaca dan mengunduh ebook tanpa login.
-                    </p>
+    <AuthLayout
+        eyebrow="Administration"
+        title="Masuk ke Admin"
+        description="Gunakan akun administrator yang terdaftar untuk melanjutkan."
+    >
+        <Alert v-if="page.props.flash.status" tone="success" :title="page.props.flash.status" />
+
+        <form class="grid gap-4" :class="page.props.flash.status ? 'mt-4' : ''" @submit.prevent="submit">
+            <label class="grid gap-1.5">
+                <span class="text-xs font-semibold text-ink">Email</span>
+                <div class="ui-control ui-focus-ring flex min-h-11 items-center px-3">
+                    <Mail class="size-4 shrink-0 text-ink-faint" aria-hidden="true" />
+                    <input
+                        v-model="form.email"
+                        type="email"
+                        autocomplete="username"
+                        autofocus
+                        class="min-w-0 flex-1 bg-transparent px-2.5 text-sm text-ink outline-none placeholder:text-ink-faint"
+                        placeholder="admin@example.com"
+                    >
                 </div>
-            </section>
+                <p v-if="form.errors.email" class="text-xs leading-5 text-danger" role="alert">{{ form.errors.email }}</p>
+            </label>
 
-            <section class="mx-auto w-full max-w-md rounded-3xl border border-border bg-surface p-6 shadow-sm sm:p-8">
-                <div class="mb-8">
-                    <div class="mb-5 inline-flex size-11 items-center justify-center overflow-hidden rounded-2xl bg-primary/10 text-primary lg:hidden">
-                        <img v-if="logoUrl" :src="String(logoUrl)" alt="" class="size-full object-cover">
-                        <BookOpen v-else class="size-5" />
-                    </div>
-                    <h2 class="text-2xl font-semibold tracking-tight">Masuk ke Admin</h2>
-                    <p class="mt-2 text-sm leading-6 text-muted-foreground">
-                        Gunakan akun administrator yang terdaftar.
-                    </p>
+            <label class="grid gap-1.5">
+                <span class="text-xs font-semibold text-ink">Password</span>
+                <div class="ui-control ui-focus-ring flex min-h-11 items-center px-3">
+                    <LockKeyhole class="size-4 shrink-0 text-ink-faint" aria-hidden="true" />
+                    <input
+                        v-model="form.password"
+                        :type="showPassword ? 'text' : 'password'"
+                        autocomplete="current-password"
+                        class="min-w-0 flex-1 bg-transparent px-2.5 text-sm text-ink outline-none placeholder:text-ink-faint"
+                        placeholder="••••••••••"
+                    >
+                    <button
+                        type="button"
+                        class="grid size-9 shrink-0 place-items-center rounded-[var(--radius-md)] text-ink-faint hover:bg-surface-subtle hover:text-ink"
+                        :aria-label="showPassword ? 'Sembunyikan password' : 'Tampilkan password'"
+                        @click="showPassword = !showPassword"
+                    >
+                        <EyeOff v-if="showPassword" class="size-4" />
+                        <Eye v-else class="size-4" />
+                    </button>
                 </div>
+                <p v-if="form.errors.password" class="text-xs leading-5 text-danger" role="alert">{{ form.errors.password }}</p>
+            </label>
 
-                <form class="space-y-5" @submit.prevent="submit">
-                    <label class="block">
-                        <span class="mb-2 block text-sm font-medium">Email</span>
-                        <div class="flex min-h-12 items-center gap-3 rounded-xl border border-border bg-background px-4 focus-within:ring-2 focus-within:ring-primary/25">
-                            <Mail class="size-4 text-muted-foreground" />
-                            <input
-                                v-model="form.email"
-                                type="email"
-                                autocomplete="username"
-                                autofocus
-                                class="min-w-0 flex-1 bg-transparent text-sm outline-none"
-                                placeholder="admin@example.com"
-                            />
-                        </div>
-                        <p v-if="form.errors.email" class="mt-2 text-sm text-red-600">{{ form.errors.email }}</p>
-                    </label>
+            <div class="flex min-h-9 items-center justify-between gap-4">
+                <label class="inline-flex cursor-pointer items-center gap-2 text-xs text-ink-soft">
+                    <Checkbox v-model="form.remember" />
+                    Ingat saya
+                </label>
 
-                    <label class="block">
-                        <span class="mb-2 block text-sm font-medium">Password</span>
-                        <div class="flex min-h-12 items-center gap-3 rounded-xl border border-border bg-background px-4 focus-within:ring-2 focus-within:ring-primary/25">
-                            <LockKeyhole class="size-4 text-muted-foreground" />
-                            <input
-                                v-model="form.password"
-                                type="password"
-                                autocomplete="current-password"
-                                class="min-w-0 flex-1 bg-transparent text-sm outline-none"
-                                placeholder="••••••••••"
-                            />
-                        </div>
-                        <p v-if="form.errors.password" class="mt-2 text-sm text-red-600">{{ form.errors.password }}</p>
-                    </label>
+                <Link href="/admin/forgot-password" class="text-xs font-semibold text-brand hover:underline">
+                    Lupa password?
+                </Link>
+            </div>
 
-                    <div class="flex items-center justify-between gap-4 text-sm">
-                        <label class="inline-flex items-center gap-2 text-muted-foreground">
-                            <input v-model="form.remember" type="checkbox" class="size-4 rounded border-border">
-                            Ingat saya
-                        </label>
+            <Button class="mt-1 w-full" size="large" :disabled="form.processing">
+                <LogIn class="size-4" />
+                {{ form.processing ? 'Memproses…' : 'Masuk' }}
+            </Button>
+        </form>
 
-                        <Link href="/admin/forgot-password" class="font-medium text-primary hover:underline">
-                            Lupa password?
-                        </Link>
-                    </div>
-
-                    <Button class="w-full" size="large" :disabled="form.processing">
-                        {{ form.processing ? 'Memproses...' : 'Masuk' }}
-                    </Button>
-                </form>
-
-                <div class="mt-7 border-t border-border pt-5 text-center">
-                    <Link href="/" class="text-sm text-muted-foreground hover:text-foreground">
-                        ← Kembali ke perpustakaan
-                    </Link>
-                </div>
-            </section>
-        </div>
-    </main>
+        <template #footer>
+            Pembaca tidak memerlukan login untuk mengakses koleksi publik.
+        </template>
+    </AuthLayout>
 </template>
