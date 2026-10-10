@@ -4,15 +4,15 @@ import { cn } from '@/lib/utils';
 
 defineOptions({ inheritAttrs: false });
 const props = withDefaults(defineProps<{
-    modelValue?: string | number;
+    modelValue?: string | number | null;
     invalid?: boolean;
     class?: HTMLAttributes['class'];
 }>(), { modelValue: '', invalid: false });
-const emit = defineEmits<{ 'update:modelValue': [value: string | number] }>();
+const emit = defineEmits<{ 'update:modelValue': [value: string | number | null] }>();
 
 function updateValue(event: Event) {
     const select = event.target as HTMLSelectElement;
-    const option = select.options[select.selectedIndex] as (HTMLOptionElement & { _value?: string | number }) | undefined;
+    const option = select.options[select.selectedIndex] as (HTMLOptionElement & { _value?: string | number | null }) | undefined;
 
     emit('update:modelValue', option?._value ?? select.value);
 }

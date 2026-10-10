@@ -1,9 +1,24 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
-import { CheckCircle2, LibraryBig, Pencil, Plus, Search, Trash2, XCircle } from '@lucide/vue';
+import {
+    LibraryBig,
+    Pencil,
+    Plus,
+    RotateCcw,
+    Search,
+    Trash2,
+    XCircle,
+} from '@lucide/vue';
 import AdminLayout from '@/layouts/AdminLayout.vue';
+import { Alert } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { EmptyState } from '@/components/ui/empty-state';
+import { PageHeader } from '@/components/ui/page-header';
+import { Select } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import type { SharedPageProps } from '@/types';
 
 interface EntityMeta {
@@ -70,6 +85,9 @@ const selectedIds = ref<number[]>([]);
 const search = ref(props.filters.q);
 const status = ref(props.filters.status);
 const perPage = ref(props.filters.per_page);
+const pendingDelete = ref<MasterItem | null>(null);
+const deleteBusy = ref(false);
+const bulkDeleteConfirmOpen = ref(false);
 
 function initialValues() {
     return Object.fromEntries(
@@ -112,14 +130,14 @@ function edit(item: MasterItem) {
 
 function submit() {
     if (editingId.value) {
-        form.put(`/admin/master-data/${props.activeEntity}/${editingId.value}`, {
+        form.put('/admin/master-data/' + props.activeEntity + '/' + editingId.value, {
             preserveScroll: true,
             onSuccess: () => resetEditor(),
         });
         return;
     }
 
-    form.post(`/admin/master-data/${props.activeEntity}`, {
+    form.post('/admin/master-data/' + props.activeEntity, {
         preserveScroll: true,
         onSuccess: () => resetEditor(),
     });
@@ -127,7 +145,7 @@ function submit() {
 
 function applyFilters() {
     router.get(
-        `/admin/master-data/${props.activeEntity}`,
+        '/admin/master-data/' + props.activeEntity,
         {
             q: search.value || undefined,
             status: status.value,
@@ -161,30 +179,51 @@ function toggleAll() {
     );
 }
 
-function applyBulk() {
+function submitBulk() {
     if (!bulkForm.action || selectedIds.value.length === 0) return;
 
-    if (bulkForm.action === 'delete' && !window.confirm('Hapus data yang dipilih? Data akan masuk soft delete.')) {
-        return;
-    }
-
     bulkForm.ids = [...selectedIds.value];
-    bulkForm.post(`/admin/master-data/${props.activeEntity}/bulk`, {
+    bulkForm.post('/admin/master-data/' + props.activeEntity + '/bulk', {
         preserveScroll: true,
         onSuccess: () => {
             selectedIds.value = [];
             bulkForm.reset();
+            bulkDeleteConfirmOpen.value = false;
         },
     });
 }
 
-function remove(item: MasterItem) {
-    if (!window.confirm(`Hapus ${String(item.name || item.code || 'data ini')}?`)) {
+function applyBulk() {
+    if (!bulkForm.action || selectedIds.value.length === 0) return;
+
+    if (bulkForm.action === 'delete') {
+        bulkDeleteConfirmOpen.value = true;
         return;
     }
 
-    router.delete(`/admin/master-data/${props.activeEntity}/${item.id}`, {
+    submitBulk();
+}
+
+function itemName(item: MasterItem) {
+    return String(item.name || item.code || props.schema.singular);
+}
+
+function requestRemove(item: MasterItem) {
+    pendingDelete.value = item;
+}
+
+function confirmRemove() {
+    const item = pendingDelete.value;
+    if (!item || deleteBusy.value) return;
+
+    deleteBusy.value = true;
+
+    router.delete('/admin/master-data/' + props.activeEntity + '/' + item.id, {
         preserveScroll: true,
+        onFinish: () => {
+            deleteBusy.value = false;
+            pendingDelete.value = null;
+        },
     });
 }
 
@@ -200,194 +239,162 @@ function displayValue(item: MasterItem, column: ColumnMeta) {
 </script>
 
 <template>
-    <Head :title="`Master Data — ${schema.label}`" />
+    <Head :title="'Master Data — ' + schema.label" />
 
     <AdminLayout>
-        <div class="max-w-[1500px]">
-            <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-                <div class="flex items-start gap-4">
-                    <div class="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                        <LibraryBig class="size-5" />
-                    </div>
-                    <div>
-                        <p class="text-sm font-medium text-primary">Perpustakaan</p>
-                        <h1 class="mt-1 text-3xl font-semibold tracking-tight">Master Data</h1>
-                        <p class="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-                            Kelola data dasar yang akan dipakai katalog ebook secara konsisten.
-                        </p>
-                    </div>
-                </div>
+        <div class="grid gap-5">
+            <PageHeader
+                eyebrow="Library"
+                title="Master Data"
+                :description="'Kelola ' + schema.label.toLowerCase() + ' dan data referensi katalog secara konsisten. ' + items.total + ' data tersedia.'"
+            />
 
-                <div class="text-sm text-muted-foreground">
-                    {{ items.total }} data {{ schema.label.toLowerCase() }}
-                </div>
-            </div>
+            <Alert v-if="page.props.flash.status" tone="success" :title="page.props.flash.status" />
 
-            <div v-if="page.props.flash.status" class="mt-6 rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                {{ page.props.flash.status }}
-            </div>
-
-            <div class="mt-7 overflow-x-auto">
-                <nav class="flex min-w-max gap-2">
+            <div class="-mx-1 overflow-x-auto px-1 pb-1">
+                <nav class="flex min-w-max gap-1" aria-label="Jenis master data">
                     <Link
                         v-for="entity in entities"
                         :key="entity.key"
-                        :href="`/admin/master-data/${entity.key}`"
-                        class="rounded-xl border px-4 py-3 text-sm transition-colors"
+                        :href="'/admin/master-data/' + entity.key"
+                        class="min-h-9 rounded-[var(--radius-md)] px-3 py-2 text-xs font-semibold transition-colors"
                         :class="entity.key === activeEntity
-                            ? 'border-primary bg-primary text-primary-foreground'
-                            : 'border-border bg-surface hover:bg-muted'"
+                            ? 'bg-brand text-brand-foreground'
+                            : 'border border-line bg-surface text-ink-soft hover:bg-surface-subtle hover:text-ink'"
+                        :aria-current="entity.key === activeEntity ? 'page' : undefined"
                     >
                         {{ entity.label }}
                     </Link>
                 </nav>
             </div>
 
-            <div class="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
-                <section class="min-w-0 rounded-2xl border border-border bg-surface">
-                    <div class="border-b border-border p-4 sm:p-5">
-                        <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
+            <div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
+                <section class="min-w-0 overflow-hidden rounded-[var(--radius-lg)] border border-line bg-surface">
+                    <div class="border-b border-line p-3.5 sm:p-4">
+                        <div class="flex flex-col gap-2 lg:flex-row lg:items-center">
                             <form class="flex min-w-0 flex-1 gap-2" @submit.prevent="applyFilters">
-                                <div class="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-xl border border-border bg-background px-3">
-                                    <Search class="size-4 shrink-0 text-muted-foreground" />
+                                <div class="ui-control ui-focus-ring flex min-w-0 flex-1 items-center px-3">
+                                    <Search class="size-4 shrink-0 text-ink-faint" />
                                     <input
                                         v-model="search"
                                         type="search"
-                                        class="min-w-0 flex-1 bg-transparent text-sm outline-none"
-                                        :placeholder="`Cari ${schema.label.toLowerCase()}...`"
+                                        class="min-w-0 flex-1 bg-transparent px-2.5 text-sm text-ink outline-none placeholder:text-ink-faint"
+                                        :placeholder="'Cari ' + schema.label.toLowerCase() + '…'"
                                     >
                                 </div>
-                                <Button type="submit" variant="secondary">Cari</Button>
+                                <Button type="submit" size="small" variant="secondary">Cari</Button>
                             </form>
 
                             <div class="flex flex-wrap gap-2">
-                                <select
-                                    v-model="status"
-                                    class="min-h-11 rounded-xl border border-border bg-background px-3 text-sm"
-                                    @change="applyFilters"
-                                >
+                                <Select v-model="status" class="w-auto min-w-32" @change="applyFilters">
                                     <option value="all">Semua status</option>
                                     <option value="active">Aktif</option>
                                     <option value="inactive">Nonaktif</option>
-                                </select>
+                                </Select>
 
-                                <select
-                                    v-model="perPage"
-                                    class="min-h-11 rounded-xl border border-border bg-background px-3 text-sm"
-                                    @change="applyFilters"
-                                >
+                                <Select v-model="perPage" class="w-auto min-w-32" @change="applyFilters">
                                     <option :value="10">10 / halaman</option>
                                     <option :value="25">25 / halaman</option>
                                     <option :value="50">50 / halaman</option>
                                     <option :value="100">100 / halaman</option>
-                                </select>
+                                </Select>
 
-                                <button type="button" class="px-3 text-sm text-muted-foreground hover:text-foreground" @click="clearFilters">
+                                <Button type="button" size="small" variant="quiet" @click="clearFilters">
+                                    <RotateCcw class="size-3.5" />
                                     Reset
-                                </button>
+                                </Button>
                             </div>
                         </div>
 
-                        <div class="mt-4 flex flex-col gap-2 border-t border-border pt-4 sm:flex-row sm:items-center">
-                            <select
-                                v-model="bulkForm.action"
-                                class="min-h-10 rounded-xl border border-border bg-background px-3 text-sm"
-                            >
-                                <option value="">Bulk action...</option>
-                                <option value="activate">Aktifkan</option>
-                                <option value="deactivate">Nonaktifkan</option>
-                                <option value="delete">Hapus</option>
-                            </select>
-                            <Button
-                                type="button"
-                                variant="secondary"
-                                :disabled="!bulkForm.action || selectedIds.length === 0 || bulkForm.processing"
-                                @click="applyBulk"
-                            >
-                                Terapkan ke {{ selectedIds.length }} data
-                            </Button>
-                            <p v-if="bulkForm.errors.ids" class="text-sm text-red-600">{{ bulkForm.errors.ids }}</p>
+                        <div
+                            v-if="selectedIds.length"
+                            class="mt-3 flex flex-col gap-2 border-t border-line pt-3 sm:flex-row sm:items-center sm:justify-between"
+                        >
+                            <p class="text-xs font-semibold text-ink">{{ selectedIds.length }} data dipilih</p>
+                            <div class="flex flex-wrap gap-2">
+                                <Select v-model="bulkForm.action" class="w-auto min-w-40">
+                                    <option value="">Bulk action…</option>
+                                    <option value="activate">Aktifkan</option>
+                                    <option value="deactivate">Nonaktifkan</option>
+                                    <option value="delete">Hapus</option>
+                                </Select>
+                                <Button
+                                    type="button"
+                                    size="small"
+                                    variant="secondary"
+                                    :disabled="!bulkForm.action || bulkForm.processing"
+                                    @click="applyBulk"
+                                >
+                                    Terapkan
+                                </Button>
+                            </div>
+                            <p v-if="bulkForm.errors.ids" class="text-xs text-danger">{{ bulkForm.errors.ids }}</p>
                         </div>
                     </div>
 
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full text-left text-sm">
-                            <thead class="border-b border-border bg-muted/60 text-xs uppercase tracking-wide text-muted-foreground">
+                    <div v-if="items.data.length" class="hidden overflow-x-auto md:block">
+                        <table class="min-w-full text-left text-xs">
+                            <thead class="border-b border-line bg-surface-subtle text-[10px] uppercase tracking-[0.06em] text-ink-faint">
                                 <tr>
-                                    <th class="w-12 px-4 py-3">
+                                    <th class="w-10 px-3 py-3">
                                         <input
                                             type="checkbox"
                                             :checked="allCurrentSelected"
-                                            class="size-4 rounded border-border"
+                                            class="size-4 rounded border-line"
                                             aria-label="Pilih semua"
                                             @change="toggleAll"
                                         >
                                     </th>
-                                    <th v-for="column in schema.columns" :key="column.key" class="whitespace-nowrap px-4 py-3">
+                                    <th v-for="column in schema.columns" :key="column.key" class="whitespace-nowrap px-3 py-3 font-semibold">
                                         {{ column.label }}
                                     </th>
-                                    <th class="w-28 px-4 py-3 text-right">Aksi</th>
+                                    <th class="w-24 px-3 py-3 text-right font-semibold">Aksi</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-border">
-                                <tr v-for="item in items.data" :key="item.id" class="hover:bg-muted/30">
-                                    <td class="px-4 py-4">
+                            <tbody class="divide-y divide-line">
+                                <tr v-for="item in items.data" :key="item.id" class="transition-colors hover:bg-surface-subtle/60">
+                                    <td class="px-3 py-3">
                                         <input
                                             v-model="selectedIds"
                                             type="checkbox"
                                             :value="item.id"
-                                            class="size-4 rounded border-border"
-                                            :aria-label="`Pilih ${String(item.name || item.code || item.id)}`"
+                                            class="size-4 rounded border-line"
+                                            :aria-label="'Pilih ' + itemName(item)"
                                         >
                                     </td>
                                     <td
                                         v-for="column in schema.columns"
                                         :key="column.key"
-                                        class="max-w-[280px] px-4 py-4"
+                                        class="max-w-[280px] px-3 py-3"
                                     >
-                                        <span
+                                        <Badge
                                             v-if="column.key === 'is_active'"
-                                            class="inline-flex rounded-full px-2.5 py-1 text-xs font-medium"
-                                            :class="item.is_active
-                                                ? 'bg-emerald-50 text-emerald-700'
-                                                : 'bg-slate-100 text-slate-600'"
+                                            :tone="item.is_active ? 'success' : 'neutral'"
                                         >
                                             {{ displayValue(item, column) }}
-                                        </span>
-                                        <span v-else class="block truncate" :title="displayValue(item, column)">
+                                        </Badge>
+                                        <span v-else class="block truncate text-ink" :title="displayValue(item, column)">
                                             {{ displayValue(item, column) }}
                                         </span>
                                     </td>
-                                    <td class="px-4 py-4">
+                                    <td class="px-3 py-3">
                                         <div class="flex justify-end gap-1">
                                             <button
                                                 type="button"
-                                                class="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
-                                                title="Edit"
+                                                class="grid size-9 place-items-center rounded-[var(--radius-md)] text-ink-soft hover:bg-surface-subtle hover:text-ink"
+                                                :aria-label="'Edit ' + itemName(item)"
                                                 @click="edit(item)"
                                             >
                                                 <Pencil class="size-4" />
                                             </button>
                                             <button
                                                 type="button"
-                                                class="rounded-lg p-2 text-muted-foreground hover:bg-red-50 hover:text-red-600"
-                                                title="Hapus"
-                                                @click="remove(item)"
+                                                class="grid size-9 place-items-center rounded-[var(--radius-md)] text-ink-soft hover:bg-danger-soft hover:text-danger"
+                                                :aria-label="'Hapus ' + itemName(item)"
+                                                @click="requestRemove(item)"
                                             >
                                                 <Trash2 class="size-4" />
                                             </button>
-                                        </div>
-                                    </td>
-                                </tr>
-
-                                <tr v-if="!items.data.length">
-                                    <td :colspan="schema.columns.length + 2" class="px-4 py-14 text-center">
-                                        <div class="mx-auto max-w-sm">
-                                            <LibraryBig class="mx-auto size-7 text-muted-foreground" />
-                                            <p class="mt-3 font-medium">Belum ada data</p>
-                                            <p class="mt-1 text-sm text-muted-foreground">
-                                                Tambahkan {{ schema.singular.toLowerCase() }} pertama melalui form di samping.
-                                            </p>
                                         </div>
                                     </td>
                                 </tr>
@@ -395,88 +402,131 @@ function displayValue(item: MasterItem, column: ColumnMeta) {
                         </table>
                     </div>
 
-                    <div class="flex flex-col gap-3 border-t border-border px-4 py-4 text-sm sm:flex-row sm:items-center sm:justify-between">
-                        <span class="text-muted-foreground">
-                            Menampilkan {{ items.from || 0 }}–{{ items.to || 0 }} dari {{ items.total }}
-                        </span>
-                        <div class="flex gap-2">
-                            <Link
-                                v-if="items.prev_page_url"
-                                :href="items.prev_page_url"
-                                preserve-scroll
-                                class="rounded-lg border border-border px-3 py-2 hover:bg-muted"
-                            >
-                                Sebelumnya
-                            </Link>
-                            <span class="rounded-lg bg-muted px-3 py-2">
+                    <div v-if="items.data.length" class="divide-y divide-line md:hidden">
+                        <article v-for="item in items.data" :key="item.id" class="p-4">
+                            <div class="flex items-start gap-3">
+                                <input
+                                    v-model="selectedIds"
+                                    type="checkbox"
+                                    :value="item.id"
+                                    class="mt-1 size-4 shrink-0 rounded border-line"
+                                    :aria-label="'Pilih ' + itemName(item)"
+                                >
+
+                                <dl class="min-w-0 flex-1 grid gap-2">
+                                    <div
+                                        v-for="column in schema.columns"
+                                        :key="column.key"
+                                        class="grid grid-cols-[100px_minmax(0,1fr)] gap-3 text-xs"
+                                    >
+                                        <dt class="text-ink-faint">{{ column.label }}</dt>
+                                        <dd class="min-w-0 text-ink">
+                                            <Badge
+                                                v-if="column.key === 'is_active'"
+                                                :tone="item.is_active ? 'success' : 'neutral'"
+                                            >
+                                                {{ displayValue(item, column) }}
+                                            </Badge>
+                                            <span v-else class="block truncate">{{ displayValue(item, column) }}</span>
+                                        </dd>
+                                    </div>
+                                </dl>
+
+                                <div class="flex shrink-0 flex-col gap-1">
+                                    <button
+                                        type="button"
+                                        class="grid size-9 place-items-center rounded-[var(--radius-md)] text-ink-soft hover:bg-surface-subtle hover:text-ink"
+                                        :aria-label="'Edit ' + itemName(item)"
+                                        @click="edit(item)"
+                                    >
+                                        <Pencil class="size-4" />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="grid size-9 place-items-center rounded-[var(--radius-md)] text-ink-soft hover:bg-danger-soft hover:text-danger"
+                                        :aria-label="'Hapus ' + itemName(item)"
+                                        @click="requestRemove(item)"
+                                    >
+                                        <Trash2 class="size-4" />
+                                    </button>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+
+                    <EmptyState
+                        v-if="!items.data.length"
+                        title="Belum ada data"
+                        :description="'Tambahkan ' + schema.singular.toLowerCase() + ' pertama melalui form editor.'"
+                    >
+                        <template #icon><LibraryBig class="size-5" /></template>
+                    </EmptyState>
+
+                    <div class="flex flex-col gap-3 border-t border-line px-4 py-3 text-xs sm:flex-row sm:items-center sm:justify-between">
+                        <span class="text-ink-soft">{{ items.from || 0 }}–{{ items.to || 0 }} dari {{ items.total }}</span>
+                        <div v-if="items.last_page > 1" class="flex items-center gap-1.5">
+                            <Button v-if="items.prev_page_url" as-child size="small" variant="secondary">
+                                <Link :href="items.prev_page_url" preserve-scroll>Sebelumnya</Link>
+                            </Button>
+                            <span class="min-w-16 px-2 text-center font-semibold tabular-nums text-ink-soft">
                                 {{ items.current_page }} / {{ items.last_page }}
                             </span>
-                            <Link
-                                v-if="items.next_page_url"
-                                :href="items.next_page_url"
-                                preserve-scroll
-                                class="rounded-lg border border-border px-3 py-2 hover:bg-muted"
-                            >
-                                Berikutnya
-                            </Link>
+                            <Button v-if="items.next_page_url" as-child size="small" variant="secondary">
+                                <Link :href="items.next_page_url" preserve-scroll>Berikutnya</Link>
+                            </Button>
                         </div>
                     </div>
                 </section>
 
-                <aside class="h-fit rounded-2xl border border-border bg-surface xl:sticky xl:top-6">
-                    <div class="flex items-start justify-between gap-4 border-b border-border px-5 py-5">
+                <aside class="h-fit rounded-[var(--radius-lg)] border border-line bg-surface xl:sticky xl:top-20">
+                    <div class="flex items-start justify-between gap-4 border-b border-line px-4 py-3.5">
                         <div>
-                            <p class="text-xs font-medium uppercase tracking-wide text-primary">
+                            <p class="text-[10px] font-semibold uppercase tracking-[0.1em] text-brand">
                                 {{ editingId ? 'Edit data' : 'Tambah data' }}
                             </p>
-                            <h2 class="mt-1 text-xl font-semibold">
-                                {{ editingId ? `Edit ${schema.singular}` : `${schema.singular} baru` }}
+                            <h2 class="mt-1 text-base font-semibold text-ink">
+                                {{ editingId ? 'Edit ' + schema.singular : schema.singular + ' baru' }}
                             </h2>
-                            <p class="mt-1 text-sm leading-5 text-muted-foreground">{{ schema.description }}</p>
+                            <p class="mt-1 text-xs leading-5 text-ink-soft">{{ schema.description }}</p>
                         </div>
                         <button
                             v-if="editingId"
                             type="button"
-                            class="rounded-lg p-2 text-muted-foreground hover:bg-muted"
-                            title="Batal edit"
+                            class="grid size-9 shrink-0 place-items-center rounded-[var(--radius-md)] text-ink-soft hover:bg-surface-subtle hover:text-ink"
+                            aria-label="Batal edit"
                             @click="resetEditor"
                         >
-                            <XCircle class="size-5" />
+                            <XCircle class="size-4" />
                         </button>
                     </div>
 
-                    <form class="space-y-5 p-5" @submit.prevent="submit">
-                        <div v-for="(field, key) in schema.fields" :key="key">
-                            <label :for="String(key)" class="mb-2 block text-sm font-medium">
+                    <form class="grid gap-4 p-4" @submit.prevent="submit">
+                        <div v-for="(field, key) in schema.fields" :key="key" class="grid gap-1.5">
+                            <label :for="String(key)" class="text-xs font-semibold text-ink">
                                 {{ field.label }}
-                                <span v-if="field.required" class="text-red-500">*</span>
+                                <span v-if="field.required" class="text-danger">*</span>
                             </label>
 
-                            <label
+                            <div
                                 v-if="field.type === 'boolean'"
-                                class="flex min-h-11 items-center gap-3 rounded-xl border border-border bg-background px-4 text-sm"
+                                class="flex items-center justify-between gap-4 rounded-[var(--radius-md)] border border-line px-3 py-3"
                             >
-                                <input v-model="form[String(key)]" type="checkbox" class="size-4 rounded border-border">
-                                <span class="inline-flex items-center gap-2">
-                                    <CheckCircle2 v-if="form[String(key)]" class="size-4 text-emerald-600" />
-                                    <XCircle v-else class="size-4 text-muted-foreground" />
-                                    {{ form[String(key)] ? 'Aktif' : 'Nonaktif' }}
-                                </span>
-                            </label>
+                                <span class="text-xs text-ink-soft">{{ form[String(key)] ? 'Aktif' : 'Nonaktif' }}</span>
+                                <Switch v-model="form[String(key)]" />
+                            </div>
 
                             <textarea
                                 v-else-if="field.type === 'textarea'"
                                 :id="String(key)"
                                 v-model="form[String(key)]"
                                 rows="4"
-                                class="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+                                class="ui-control ui-focus-ring w-full px-3 py-2.5 text-sm leading-6"
                             />
 
-                            <select
+                            <Select
                                 v-else-if="field.type === 'select'"
                                 :id="String(key)"
                                 v-model="form[String(key)]"
-                                class="min-h-11 w-full rounded-xl border border-border bg-background px-4 text-sm outline-none focus:ring-2 focus:ring-primary/20"
                             >
                                 <option :value="null">— Tidak ada —</option>
                                 <option
@@ -486,7 +536,7 @@ function displayValue(item: MasterItem, column: ColumnMeta) {
                                 >
                                     {{ option.label }}
                                 </option>
-                            </select>
+                            </Select>
 
                             <input
                                 v-else
@@ -495,22 +545,22 @@ function displayValue(item: MasterItem, column: ColumnMeta) {
                                 :type="field.type"
                                 :min="field.type === 'number' ? Number(field.meta.min) : undefined"
                                 :max="field.type === 'number' ? Number(field.meta.max) : undefined"
-                                class="min-h-11 w-full rounded-xl border border-border bg-background px-4 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+                                class="ui-control ui-focus-ring w-full px-3 text-sm"
                             >
 
-                            <p v-if="field.description" class="mt-1.5 text-xs leading-5 text-muted-foreground">
+                            <p v-if="field.description" class="text-[11px] leading-5 text-ink-faint">
                                 {{ field.description }}
                             </p>
-                            <p v-if="form.errors[String(key)]" class="mt-2 text-sm text-red-600">
+                            <p v-if="form.errors[String(key)]" class="text-xs text-danger">
                                 {{ form.errors[String(key)] }}
                             </p>
                         </div>
 
-                        <div class="flex gap-2 border-t border-border pt-5">
+                        <div class="flex gap-2 border-t border-line pt-4">
                             <Button class="flex-1" :disabled="form.processing">
                                 <Pencil v-if="editingId" class="size-4" />
                                 <Plus v-else class="size-4" />
-                                {{ form.processing ? 'Menyimpan...' : (editingId ? 'Simpan perubahan' : 'Tambah data') }}
+                                {{ form.processing ? 'Menyimpan…' : (editingId ? 'Simpan perubahan' : 'Tambah data') }}
                             </Button>
                             <Button v-if="editingId" type="button" variant="secondary" @click="resetEditor">
                                 Batal
@@ -520,5 +570,27 @@ function displayValue(item: MasterItem, column: ColumnMeta) {
                 </aside>
             </div>
         </div>
+
+        <ConfirmDialog
+            :open="Boolean(pendingDelete)"
+            :title="'Hapus ' + schema.singular.toLowerCase() + '?'"
+            :description="pendingDelete ? '“' + itemName(pendingDelete) + '” akan masuk soft delete.' : ''"
+            confirm-label="Hapus"
+            destructive
+            :busy="deleteBusy"
+            @update:open="pendingDelete = $event ? pendingDelete : null"
+            @confirm="confirmRemove"
+        />
+
+        <ConfirmDialog
+            :open="bulkDeleteConfirmOpen"
+            title="Hapus data terpilih?"
+            :description="selectedIds.length + ' data akan masuk soft delete.'"
+            confirm-label="Hapus yang dipilih"
+            destructive
+            :busy="bulkForm.processing"
+            @update:open="bulkDeleteConfirmOpen = $event"
+            @confirm="submitBulk"
+        />
     </AdminLayout>
 </template>

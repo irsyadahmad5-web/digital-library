@@ -407,7 +407,7 @@ function processingClass(status: string) {
         processing: 'bg-blue-50 text-blue-700',
         processed: 'bg-emerald-50 text-emerald-700',
         failed: 'bg-red-50 text-red-700',
-    }[status] ?? 'bg-muted text-muted-foreground';
+    }[status] ?? 'bg-surface-subtle text-ink-soft';
 }
 
 function metadataText(key: string) {
@@ -459,14 +459,14 @@ function verificationLabel(source: FileSource) {
 </script>
 
 <template>
-    <section class="rounded-2xl border border-border bg-surface">
-        <div class="flex flex-col gap-4 border-b border-border px-5 py-5 sm:flex-row sm:items-start sm:justify-between sm:px-7">
+    <section class="rounded-[var(--radius-lg)] border border-line bg-surface">
+        <div class="flex flex-col gap-4 border-b border-line px-5 py-5 sm:flex-row sm:items-start sm:justify-between sm:px-7">
             <div>
                 <div class="flex items-center gap-2">
-                    <FileText class="size-5 text-primary" />
+                    <FileText class="size-5 text-brand" />
                     <h2 class="text-lg font-semibold">File PDF</h2>
                 </div>
-                <p class="mt-1 text-sm leading-6 text-muted-foreground">
+                <p class="mt-1 text-sm leading-6 text-ink-soft">
                     Upload private storage atau hubungkan PDF langsung dari cloud/URL eksternal.
                 </p>
             </div>
@@ -483,7 +483,7 @@ function verificationLabel(source: FileSource) {
             </button>
         </div>
 
-        <div v-if="source" class="border-b border-border bg-muted/35 px-5 py-4 sm:px-7">
+        <div v-if="source" class="border-b border-line bg-surface-subtle/70 px-5 py-4 sm:px-7">
             <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <div class="min-w-0">
                     <div class="flex flex-wrap items-center gap-2">
@@ -491,10 +491,10 @@ function verificationLabel(source: FileSource) {
                             <ShieldCheck class="size-3.5" />
                             {{ verificationLabel(source) }}
                         </span>
-                        <span class="rounded-full bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                        <span class="rounded-full bg-canvas px-2.5 py-1 text-xs font-medium text-ink-soft">
                             {{ source.source_type === 'local' ? 'Private Local' : 'External URL' }}
                         </span>
-                        <span v-if="source.size_bytes !== null" class="text-xs text-muted-foreground">
+                        <span v-if="source.size_bytes !== null" class="text-xs text-ink-soft">
                             {{ formatBytes(source.size_bytes) }}
                         </span>
                     </div>
@@ -506,7 +506,7 @@ function verificationLabel(source: FileSource) {
                         {{ source.external_url }}
                     </p>
 
-                    <p v-if="source.sha256" class="mt-2 break-all font-mono text-[11px] leading-5 text-muted-foreground">
+                    <p v-if="source.sha256" class="mt-2 break-all font-mono text-[11px] leading-5 text-ink-soft">
                         SHA-256 {{ source.sha256 }}
                     </p>
                 </div>
@@ -515,7 +515,7 @@ function verificationLabel(source: FileSource) {
             </div>
         </div>
 
-        <div v-if="source" class="border-b border-border px-5 py-5 sm:px-7">
+        <div v-if="source" class="border-b border-line px-5 py-5 sm:px-7">
             <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div>
                     <div class="flex flex-wrap items-center gap-2">
@@ -527,7 +527,7 @@ function verificationLabel(source: FileSource) {
                             {{ processingLabel(source.processing_status) }}
                         </span>
                     </div>
-                    <p class="mt-2 max-w-2xl text-xs leading-5 text-muted-foreground">
+                    <p class="mt-2 max-w-2xl text-xs leading-5 text-ink-soft">
                         Metadata dan thumbnail diproses dengan pdfinfo + pdftocairo. Source pending juga diproses otomatis oleh scheduler.
                     </p>
                 </div>
@@ -546,7 +546,7 @@ function verificationLabel(source: FileSource) {
 
             <div
                 v-if="!processingConfig.available"
-                class="mt-4 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800"
+                class="mt-4 rounded-[var(--radius-md)] bg-amber-50 px-4 py-3 text-sm text-amber-800"
             >
                 Toolchain PDF server belum lengkap.
                 pdfinfo: {{ processingConfig.pdfinfo_available ? 'tersedia' : 'tidak tersedia' }},
@@ -555,66 +555,66 @@ function verificationLabel(source: FileSource) {
 
             <p
                 v-if="processingError || source.processing_error"
-                class="mt-4 flex items-start gap-2 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700"
+                class="mt-4 flex items-start gap-2 rounded-[var(--radius-md)] bg-red-50 px-4 py-3 text-sm text-red-700"
             >
                 <XCircle class="mt-0.5 size-4 shrink-0" />
                 {{ processingError || source.processing_error }}
             </p>
 
             <div v-if="source.processing_status === 'processed'" class="mt-5 grid gap-5 lg:grid-cols-[180px_minmax(0,1fr)]">
-                <div class="overflow-hidden rounded-xl border border-border bg-muted">
+                <div class="overflow-hidden rounded-[var(--radius-md)] border border-line bg-surface-subtle">
                     <img
                         v-if="source.preview_url"
                         :src="source.preview_url"
                         alt="Preview halaman pertama PDF"
                         class="aspect-[3/4] w-full object-cover"
                     >
-                    <div v-else class="flex aspect-[3/4] items-center justify-center text-muted-foreground">
+                    <div v-else class="flex aspect-[3/4] items-center justify-center text-ink-soft">
                         <FileText class="size-8" />
                     </div>
                 </div>
 
                 <div>
                     <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                        <div class="rounded-xl bg-muted/60 px-4 py-3">
-                            <p class="text-xs text-muted-foreground">Jumlah halaman</p>
+                        <div class="rounded-[var(--radius-md)] bg-surface-subtle px-4 py-3">
+                            <p class="text-xs text-ink-soft">Jumlah halaman</p>
                             <p class="mt-1 text-sm font-semibold">{{ source.page_count ?? '—' }}</p>
                         </div>
-                        <div class="rounded-xl bg-muted/60 px-4 py-3">
-                            <p class="text-xs text-muted-foreground">PDF version</p>
+                        <div class="rounded-[var(--radius-md)] bg-surface-subtle px-4 py-3">
+                            <p class="text-xs text-ink-soft">PDF version</p>
                             <p class="mt-1 text-sm font-semibold">{{ metadataText('pdf_version') }}</p>
                         </div>
-                        <div class="rounded-xl bg-muted/60 px-4 py-3">
-                            <p class="text-xs text-muted-foreground">Page size</p>
+                        <div class="rounded-[var(--radius-md)] bg-surface-subtle px-4 py-3">
+                            <p class="text-xs text-ink-soft">Page size</p>
                             <p class="mt-1 truncate text-sm font-semibold" :title="metadataText('page_size')">
                                 {{ metadataText('page_size') }}
                             </p>
                         </div>
-                        <div class="rounded-xl bg-muted/60 px-4 py-3">
-                            <p class="text-xs text-muted-foreground">Title metadata</p>
+                        <div class="rounded-[var(--radius-md)] bg-surface-subtle px-4 py-3">
+                            <p class="text-xs text-ink-soft">Title metadata</p>
                             <p class="mt-1 truncate text-sm font-semibold" :title="metadataText('title')">
                                 {{ metadataText('title') }}
                             </p>
                         </div>
-                        <div class="rounded-xl bg-muted/60 px-4 py-3">
-                            <p class="text-xs text-muted-foreground">Author metadata</p>
+                        <div class="rounded-[var(--radius-md)] bg-surface-subtle px-4 py-3">
+                            <p class="text-xs text-ink-soft">Author metadata</p>
                             <p class="mt-1 truncate text-sm font-semibold" :title="metadataText('author')">
                                 {{ metadataText('author') }}
                             </p>
                         </div>
-                        <div class="rounded-xl bg-muted/60 px-4 py-3">
-                            <p class="text-xs text-muted-foreground">Optimized</p>
+                        <div class="rounded-[var(--radius-md)] bg-surface-subtle px-4 py-3">
+                            <p class="text-xs text-ink-soft">Optimized</p>
                             <p class="mt-1 text-sm font-semibold">{{ metadataText('optimized') }}</p>
                         </div>
                     </div>
 
                     <div class="mt-3 grid gap-3 sm:grid-cols-2">
-                        <div class="rounded-xl border border-border px-4 py-3">
-                            <p class="text-xs text-muted-foreground">Creator</p>
+                        <div class="rounded-[var(--radius-md)] border border-line px-4 py-3">
+                            <p class="text-xs text-ink-soft">Creator</p>
                             <p class="mt-1 truncate text-sm" :title="metadataText('creator')">{{ metadataText('creator') }}</p>
                         </div>
-                        <div class="rounded-xl border border-border px-4 py-3">
-                            <p class="text-xs text-muted-foreground">Producer</p>
+                        <div class="rounded-[var(--radius-md)] border border-line px-4 py-3">
+                            <p class="text-xs text-ink-soft">Producer</p>
                             <p class="mt-1 truncate text-sm" :title="metadataText('producer')">{{ metadataText('producer') }}</p>
                         </div>
                     </div>
@@ -623,11 +623,11 @@ function verificationLabel(source: FileSource) {
         </div>
 
         <div class="p-5 sm:p-7">
-            <div class="inline-flex rounded-xl border border-border bg-muted/40 p-1">
+            <div class="inline-flex rounded-[var(--radius-md)] border border-line bg-surface-subtle p-1">
                 <button
                     type="button"
                     class="rounded-lg px-4 py-2 text-sm font-medium transition-colors"
-                    :class="mode === 'local' ? 'bg-surface text-foreground shadow-sm' : 'text-muted-foreground'"
+                    :class="mode === 'local' ? 'bg-surface text-ink shadow-sm' : 'text-ink-soft'"
                     @click="mode = 'local'"
                 >
                     <span class="inline-flex items-center gap-2">
@@ -638,7 +638,7 @@ function verificationLabel(source: FileSource) {
                 <button
                     type="button"
                     class="rounded-lg px-4 py-2 text-sm font-medium transition-colors"
-                    :class="mode === 'external_url' ? 'bg-surface text-foreground shadow-sm' : 'text-muted-foreground'"
+                    :class="mode === 'external_url' ? 'bg-surface text-ink shadow-sm' : 'text-ink-soft'"
                     @click="mode = 'external_url'"
                 >
                     <span class="inline-flex items-center gap-2">
@@ -649,17 +649,17 @@ function verificationLabel(source: FileSource) {
             </div>
 
             <div v-if="mode === 'local'" class="mt-6">
-                <div class="rounded-2xl border border-dashed border-border bg-background p-5">
+                <div class="rounded-[var(--radius-lg)] border border-dashed border-line bg-canvas p-5">
                     <label class="block cursor-pointer">
                         <div class="flex flex-col items-center justify-center py-5 text-center">
-                            <Upload class="size-8 text-primary" />
+                            <Upload class="size-8 text-brand" />
                             <p class="mt-3 font-medium">
                                 {{ selectedFile ? selectedFile.name : 'Pilih file PDF' }}
                             </p>
-                            <p class="mt-1 text-sm text-muted-foreground">
+                            <p class="mt-1 text-sm text-ink-soft">
                                 Maksimal {{ config.max_pdf_mb }} MB · chunk efektif {{ effectiveChunkLabel }}
                             </p>
-                            <p v-if="selectedFile" class="mt-2 text-xs text-muted-foreground">
+                            <p v-if="selectedFile" class="mt-2 text-xs text-ink-soft">
                                 {{ formatBytes(selectedFile.size) }}
                             </p>
                         </div>
@@ -673,18 +673,18 @@ function verificationLabel(source: FileSource) {
                     </label>
                 </div>
 
-                <div v-if="session" class="mt-4 rounded-xl border border-border bg-background p-4">
+                <div v-if="session" class="mt-4 rounded-[var(--radius-md)] border border-line bg-canvas p-4">
                     <div class="flex items-center justify-between gap-4 text-sm">
                         <span class="font-medium">{{ uploading ? 'Mengunggah...' : 'Upload dapat dilanjutkan' }}</span>
-                        <span class="tabular-nums text-muted-foreground">{{ progress }}%</span>
+                        <span class="tabular-nums text-ink-soft">{{ progress }}%</span>
                     </div>
-                    <div class="mt-3 h-2 overflow-hidden rounded-full bg-muted">
+                    <div class="mt-3 h-2 overflow-hidden rounded-full bg-surface-subtle">
                         <div
                             class="h-full rounded-full bg-primary transition-[width] duration-200"
                             :style="{ width: `${progress}%` }"
                         />
                     </div>
-                    <div class="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+                    <div class="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-ink-soft">
                         <span>
                             {{ session.received_chunks }} / {{ session.total_chunks }} chunk ·
                             {{ formatBytes(session.received_bytes) }} diterima
@@ -718,7 +718,7 @@ function verificationLabel(source: FileSource) {
                     </Button>
                 </div>
 
-                <div class="mt-5 rounded-xl bg-muted px-4 py-3 text-xs leading-5 text-muted-foreground">
+                <div class="mt-5 rounded-[var(--radius-md)] bg-surface-subtle px-4 py-3 text-xs leading-5 text-ink-soft">
                     Upload dapat diulang per chunk hingga 3 kali saat koneksi terganggu. Jika halaman tertutup, pilih kembali file yang sama sebelum session kedaluwarsa; server akan melewati chunk yang sudah diterima. Saat checksum aktif, SHA-256 dihitung per chunk di browser dan diverifikasi server; setelah assembly server menghitung SHA-256 final.
                 </div>
             </div>
@@ -726,8 +726,8 @@ function verificationLabel(source: FileSource) {
             <div v-else class="mt-6">
                 <label class="block">
                     <span class="mb-2 block text-sm font-medium">URL PDF eksternal</span>
-                    <div class="flex min-h-11 items-center gap-2 rounded-xl border border-border bg-background px-3">
-                        <Link2 class="size-4 shrink-0 text-muted-foreground" />
+                    <div class="flex min-h-11 items-center gap-2 rounded-[var(--radius-md)] border border-line bg-canvas px-3">
+                        <Link2 class="size-4 shrink-0 text-ink-soft" />
                         <input
                             v-model="externalUrl"
                             type="url"
@@ -738,7 +738,7 @@ function verificationLabel(source: FileSource) {
                     </div>
                 </label>
 
-                <p class="mt-2 text-xs leading-5 text-muted-foreground">
+                <p class="mt-2 text-xs leading-5 text-ink-soft">
                     {{ config.verify_external_urls
                         ? 'Server akan mengikuti redirect secara terbatas, menolak alamat private/internal, memeriksa ukuran, dan membaca signature PDF.'
                         : 'Verifikasi isi URL sedang dimatikan di Settings, tetapi proteksi URL internal tetap diterapkan.' }}
