@@ -12,7 +12,7 @@ class HomepageSectionRegistry
         return [
             'hero' => [
                 'label' => 'Hero',
-                'description' => 'Judul utama, subjudul, dan kartu akses publik.',
+                'description' => 'Judul utama, subjudul, aksi katalog, dan preview koleksi nyata.',
                 'provider_available' => true,
                 'provider_note' => null,
                 'default_enabled' => true,
@@ -21,7 +21,7 @@ class HomepageSectionRegistry
                     'eyebrow' => $this->text('Label kecil', 'Perpustakaan digital', 100),
                     'title' => $this->text('Judul utama', 'Baca lebih nyaman, temukan lebih mudah.', 180),
                     'subtitle' => $this->textarea('Subjudul', 'Jelajahi koleksi ebook yang tersedia untuk publik.', 500),
-                    'show_access_card' => $this->boolean('Tampilkan kartu akses publik', true),
+                    'show_access_card' => $this->boolean('Tampilkan preview koleksi', true),
                     'cta_label' => $this->text('Label tombol', 'Buka katalog', 80),
                     'cta_href' => $this->urlPath('Tujuan tombol', '/library'),
                 ],

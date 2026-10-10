@@ -251,7 +251,8 @@ class HomepageBuilderManager
         ];
 
         $data = match ($section->type) {
-            'hero', 'search' => null,
+            'hero' => $this->catalog->recommended(3),
+            'search' => null,
             'latest_books' => $this->catalog->latest((int) ($config['limit'] ?? 8)),
             'popular_books' => $this->catalog->popular((int) ($config['limit'] ?? 8)),
             'recommendations' => $this->catalog->recommended((int) ($config['limit'] ?? 8)),
