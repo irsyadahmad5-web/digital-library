@@ -183,6 +183,15 @@ const pageNumbers = computed(() =>
 
 const zoomLabel = computed(() => `${Math.round(scale.value * 100)}%`);
 
+const readingPercent = computed(() => {
+    if (totalPages.value < 1) return 0;
+
+    return Math.min(
+        100,
+        Math.max(1, Math.round((currentPage.value / totalPages.value) * 100)),
+    );
+});
+
 const pageGap = computed(() =>
     Math.max(0, Math.min(48, Number(readerSettings.page_gap_px || 16))),
 );
@@ -1237,11 +1246,20 @@ onBeforeUnmount(async () => {
                 v-if="isLoading"
                 class="flex min-h-[70dvh] items-center justify-center px-6 text-center"
             >
-                <div class="rounded-2xl bg-reader-control/90 px-6 py-5 shadow-xl">
-                    <div class="text-sm font-semibold">Memuat PDF…</div>
-                    <div class="mt-2 text-xs text-slate-300">
-                        {{ loadingPercent > 0 ? `${loadingPercent}%` : 'Menyiapkan dokumen' }}
+                <div class="w-full max-w-xs rounded-[var(--radius-lg)] border border-white/10 bg-reader-control/92 px-5 py-4 shadow-xl backdrop-blur">
+                    <div class="flex items-center justify-between gap-4">
+                        <div class="text-sm font-semibold">Memuat PDF…</div>
+                        <div class="text-xs font-semibold tabular-nums text-slate-400">
+                            {{ loadingPercent > 0 ? loadingPercent + '%' : '…' }}
+                        </div>
                     </div>
+                    <div class="mt-3 h-1 overflow-hidden rounded-full bg-white/10">
+                        <div
+                            class="h-full rounded-full bg-blue-400 transition-[width]"
+                            :style="{ width: (loadingPercent > 0 ? loadingPercent : 8) + '%' }"
+                        />
+                    </div>
+                    <p class="mt-2 text-left text-[11px] text-slate-500">Menyiapkan dokumen untuk dibaca.</p>
                 </div>
             </div>
 
@@ -1249,19 +1267,27 @@ onBeforeUnmount(async () => {
                 v-else-if="loadError"
                 class="flex min-h-[70dvh] items-center justify-center px-6 text-center"
             >
-                <div class="max-w-md rounded-2xl bg-reader-control/95 p-6 shadow-xl">
-                    <p class="font-semibold">PDF gagal dimuat</p>
-                    <p class="mt-2 text-sm leading-6 text-slate-300">
+                <div class="w-full max-w-md rounded-[var(--radius-xl)] border border-white/10 bg-reader-control/95 p-5 shadow-xl backdrop-blur sm:p-6">
+                    <p class="font-semibold text-white">PDF gagal dimuat</p>
+                    <p class="mt-2 text-sm leading-6 text-slate-400">
                         {{ loadError }}
                     </p>
-                    <button
-                        type="button"
-                        class="mt-5 inline-flex min-h-10 items-center gap-2 rounded-xl bg-white px-4 text-sm font-semibold text-slate-900"
-                        @click="loadPdf"
-                    >
-                        <RefreshCw class="size-4" />
-                        Coba lagi
-                    </button>
+                    <div class="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-center">
+                        <Link
+                            :href="backUrl"
+                            class="inline-flex min-h-11 items-center justify-center rounded-[var(--radius-md)] border border-white/10 px-4 text-sm font-semibold text-slate-200 hover:bg-white/[0.06]"
+                        >
+                            Kembali ke ebook
+                        </Link>
+                        <button
+                            type="button"
+                            class="inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-md)] bg-white px-4 text-sm font-semibold text-slate-950 hover:bg-slate-100"
+                            @click="loadPdf"
+                        >
+                            <RefreshCw class="size-4" />
+                            Coba lagi
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -1330,147 +1356,181 @@ onBeforeUnmount(async () => {
         </div>
 
         <template #controls>
-            <div class="flex min-h-16 items-center gap-1.5 px-2 py-2 sm:gap-2 sm:px-3">
-                <Link
-                    :href="backUrl"
-                    class="inline-flex size-11 shrink-0 items-center justify-center rounded-xl text-slate-200 hover:bg-white/10 hover:text-white sm:size-10"
-                    aria-label="Kembali ke detail ebook"
-                >
-                    <ArrowLeft class="size-5" />
-                </Link>
-
-                <div class="hidden min-w-0 flex-1 lg:block">
-                    <p class="truncate text-sm font-semibold text-white">{{ book.title }}</p>
-                    <p v-if="book.authors.length" class="mt-0.5 truncate text-xs text-slate-400">
-                        {{ book.authors.join(', ') }}
-                    </p>
-                </div>
-
-                <div class="ml-auto flex items-center justify-end gap-1">
-                    <button
-                        type="button"
-                        class="hidden size-9 items-center justify-center rounded-lg text-slate-300 hover:bg-white/10 hover:text-white sm:flex"
-                        aria-label="Thumbnail"
-                        title="Thumbnail (T)"
-                        @click="openDrawer('thumbnails')"
+            <div class="relative">
+                <div class="flex min-h-14 items-center gap-1 px-1.5 py-1.5 sm:px-2">
+                    <Link
+                        :href="backUrl"
+                        class="grid size-11 shrink-0 place-items-center rounded-[var(--radius-md)] text-slate-300 transition-colors hover:bg-white/10 hover:text-white sm:size-9"
+                        aria-label="Kembali ke detail ebook"
                     >
-                        <Images class="size-4" />
-                    </button>
+                        <ArrowLeft class="size-[18px]" />
+                    </Link>
 
-                    <button
-                        type="button"
-                        class="hidden size-9 items-center justify-center rounded-lg text-slate-300 hover:bg-white/10 hover:text-white sm:flex"
-                        aria-label="Cari dalam PDF"
-                        title="Cari (S)"
-                        @click="openSearch"
-                    >
-                        <Search class="size-4" />
-                    </button>
-
-                    <button
-                        type="button"
-                        class="flex size-11 items-center justify-center rounded-lg hover:bg-white/10 disabled:opacity-40 sm:size-9"
-                        :disabled="currentPage <= 1 || isLoading"
-                        aria-label="Halaman sebelumnya"
-                        @click="changePage(-1)"
-                    >
-                        <ChevronLeft class="size-4" />
-                    </button>
-
-                    <div class="flex h-11 items-center rounded-lg bg-white/10 px-1.5 text-xs sm:h-9 sm:px-2">
-                        <input
-                            v-model="pageInput"
-                            inputmode="numeric"
-                            class="w-8 bg-transparent text-center font-semibold text-white outline-none sm:w-10"
-                            aria-label="Nomor halaman"
-                            @keyup.enter="goToPage()"
-                            @blur="goToPage()"
-                        >
-                        <span class="text-slate-400">/ {{ totalPages || '—' }}</span>
+                    <div class="min-w-0 flex-1 px-1.5">
+                        <p class="truncate text-xs font-semibold text-white sm:text-sm">{{ book.title }}</p>
+                        <p class="mt-0.5 truncate text-[10px] text-slate-500 sm:text-[11px]">
+                            <template v-if="book.authors.length">{{ book.authors.join(', ') }}</template>
+                            <template v-else>Reader PDF</template>
+                        </p>
                     </div>
 
-                    <button
-                        type="button"
-                        class="flex size-11 items-center justify-center rounded-lg hover:bg-white/10 disabled:opacity-40 sm:size-9"
-                        :disabled="currentPage >= totalPages || isLoading"
-                        aria-label="Halaman berikutnya"
-                        @click="changePage(1)"
-                    >
-                        <ChevronRight class="size-4" />
-                    </button>
+                    <div class="ml-auto flex shrink-0 items-center gap-0.5">
+                        <button
+                            type="button"
+                            class="hidden size-9 items-center justify-center rounded-[var(--radius-md)] text-slate-400 transition-colors hover:bg-white/10 hover:text-white sm:flex"
+                            aria-label="Thumbnail halaman"
+                            title="Thumbnail (T)"
+                            @click="openDrawer('thumbnails')"
+                        >
+                            <Images class="size-4" />
+                        </button>
 
-                    <span class="mx-1 hidden h-6 w-px bg-white/15 lg:block" />
+                        <button
+                            type="button"
+                            class="hidden size-9 items-center justify-center rounded-[var(--radius-md)] text-slate-400 transition-colors hover:bg-white/10 hover:text-white sm:flex"
+                            aria-label="Cari dalam PDF"
+                            title="Cari (S)"
+                            @click="openSearch"
+                        >
+                            <Search class="size-4" />
+                        </button>
 
-                    <button
-                        type="button"
-                        class="hidden size-9 items-center justify-center rounded-lg hover:bg-white/10 disabled:opacity-40 lg:flex"
-                        :disabled="isLoading"
-                        aria-label="Perkecil"
-                        title="Perkecil (-)"
-                        @click="zoomBy(-0.1)"
-                    >
-                        <Minus class="size-4" />
-                    </button>
+                        <div class="hidden items-center gap-0.5 sm:flex">
+                            <button
+                                type="button"
+                                class="grid size-9 place-items-center rounded-[var(--radius-md)] text-slate-300 hover:bg-white/10 hover:text-white disabled:opacity-35"
+                                :disabled="currentPage <= 1 || isLoading"
+                                aria-label="Halaman sebelumnya"
+                                @click="changePage(-1)"
+                            >
+                                <ChevronLeft class="size-4" />
+                            </button>
 
-                    <span class="hidden min-w-12 text-center text-xs font-semibold text-slate-200 lg:block">
-                        {{ zoomLabel }}
-                    </span>
+                            <div class="flex h-9 items-center rounded-[var(--radius-md)] bg-white/[0.07] px-1.5 text-[11px]">
+                                <input
+                                    v-model="pageInput"
+                                    inputmode="numeric"
+                                    class="w-8 bg-transparent text-center font-semibold text-white outline-none sm:w-9"
+                                    aria-label="Nomor halaman"
+                                    @keyup.enter="goToPage()"
+                                    @blur="goToPage()"
+                                >
+                                <span class="pr-1 text-slate-500">/ {{ totalPages || '—' }}</span>
+                            </div>
 
-                    <button
-                        type="button"
-                        class="hidden size-9 items-center justify-center rounded-lg hover:bg-white/10 disabled:opacity-40 lg:flex"
-                        :disabled="isLoading"
-                        aria-label="Perbesar"
-                        title="Perbesar (+)"
-                        @click="zoomBy(0.1)"
-                    >
-                        <Plus class="size-4" />
-                    </button>
+                            <button
+                                type="button"
+                                class="grid size-9 place-items-center rounded-[var(--radius-md)] text-slate-300 hover:bg-white/10 hover:text-white disabled:opacity-35"
+                                :disabled="currentPage >= totalPages || isLoading"
+                                aria-label="Halaman berikutnya"
+                                @click="changePage(1)"
+                            >
+                                <ChevronRight class="size-4" />
+                            </button>
+                        </div>
 
-                    <button
-                        type="button"
-                        class="hidden h-9 items-center gap-1.5 rounded-lg px-2.5 text-xs font-medium text-slate-300 hover:bg-white/10 hover:text-white md:inline-flex"
-                        title="Ganti mode (M)"
-                        @click="cycleMode"
-                    >
-                        <Rows3 v-if="readerMode === 'continuous'" class="size-4" />
-                        <File v-else-if="readerMode === 'single'" class="size-4" />
-                        <BookOpen v-else class="size-4" />
-                        {{ modeLabel }}
-                    </button>
+                        <span class="mx-1 hidden h-5 w-px bg-white/10 md:block" />
 
-                    <button
-                        type="button"
-                        class="hidden size-9 items-center justify-center rounded-lg hover:bg-white/10 disabled:opacity-40 lg:flex"
-                        :disabled="isLoading"
-                        aria-label="Putar halaman"
-                        title="Putar (R)"
-                        @click="rotate"
-                    >
-                        <RotateCw class="size-4" />
-                    </button>
+                        <div class="hidden items-center md:flex">
+                            <button
+                                type="button"
+                                class="grid size-9 place-items-center rounded-[var(--radius-md)] text-slate-400 hover:bg-white/10 hover:text-white disabled:opacity-35"
+                                :disabled="isLoading"
+                                aria-label="Perkecil"
+                                title="Perkecil (-)"
+                                @click="zoomBy(-0.1)"
+                            >
+                                <Minus class="size-4" />
+                            </button>
 
-                    <button
-                        type="button"
-                        class="hidden size-9 items-center justify-center rounded-lg hover:bg-white/10 sm:flex"
-                        :aria-label="isFullscreen ? 'Keluar layar penuh' : 'Layar penuh'"
-                        title="Fullscreen (F)"
-                        @click="toggleFullscreen"
-                    >
-                        <Minimize2 v-if="isFullscreen" class="size-4" />
-                        <Maximize2 v-else class="size-4" />
-                    </button>
+                            <button
+                                type="button"
+                                class="min-w-12 rounded-[var(--radius-md)] px-1.5 py-2 text-center text-[11px] font-semibold text-slate-300 hover:bg-white/[0.07]"
+                                title="Fit width"
+                                @click="fitWidth"
+                            >
+                                {{ zoomLabel }}
+                            </button>
 
-                    <button
-                        type="button"
-                        class="flex size-11 items-center justify-center rounded-lg text-slate-200 hover:bg-white/10 hover:text-white sm:size-9"
-                        aria-label="Pengaturan reader"
-                        title="Pengaturan (,)"
-                        @click="openDrawer('settings')"
-                    >
-                        <MoreHorizontal class="size-5" />
-                    </button>
+                            <button
+                                type="button"
+                                class="grid size-9 place-items-center rounded-[var(--radius-md)] text-slate-400 hover:bg-white/10 hover:text-white disabled:opacity-35"
+                                :disabled="isLoading"
+                                aria-label="Perbesar"
+                                title="Perbesar (+)"
+                                @click="zoomBy(0.1)"
+                            >
+                                <Plus class="size-4" />
+                            </button>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="hidden size-9 items-center justify-center rounded-[var(--radius-md)] text-slate-400 hover:bg-white/10 hover:text-white sm:flex"
+                            :aria-label="isFullscreen ? 'Keluar layar penuh' : 'Layar penuh'"
+                            title="Fullscreen (F)"
+                            @click="toggleFullscreen"
+                        >
+                            <Minimize2 v-if="isFullscreen" class="size-4" />
+                            <Maximize2 v-else class="size-4" />
+                        </button>
+
+                        <button
+                            type="button"
+                            class="grid size-11 place-items-center rounded-[var(--radius-md)] text-slate-200 hover:bg-white/10 hover:text-white sm:size-9"
+                            aria-label="Pengaturan reader"
+                            title="Pengaturan (,)"
+                            @click="openDrawer('settings')"
+                        >
+                            <MoreHorizontal class="size-5" />
+                        </button>
+                    </div>
                 </div>
+
+                <div class="h-0.5 bg-white/[0.06]" aria-hidden="true">
+                    <div
+                        class="h-full bg-blue-400/80 transition-[width] duration-150"
+                        :style="{ width: readingPercent + '%' }"
+                    />
+                </div>
+            </div>
+        </template>
+
+        <template #mobile-controls>
+            <div class="flex min-h-14 items-center justify-between gap-2 px-2 py-1.5">
+                <button
+                    type="button"
+                    class="grid size-11 place-items-center rounded-[var(--radius-md)] text-slate-200 hover:bg-white/10 disabled:opacity-35"
+                    :disabled="currentPage <= 1 || isLoading"
+                    aria-label="Halaman sebelumnya"
+                    @click="changePage(-1)"
+                >
+                    <ChevronLeft class="size-5" />
+                </button>
+
+                <button
+                    type="button"
+                    class="min-h-10 min-w-28 rounded-[var(--radius-md)] px-3 text-center"
+                    aria-label="Buka pengaturan reader"
+                    @click="openDrawer('settings')"
+                >
+                    <span class="block text-xs font-semibold tabular-nums text-white">
+                        {{ currentPage }} / {{ totalPages || '—' }}
+                    </span>
+                    <span class="mt-0.5 block text-[10px] text-slate-500">
+                        {{ readingPercent }}% · {{ modeLabel }}
+                    </span>
+                </button>
+
+                <button
+                    type="button"
+                    class="grid size-11 place-items-center rounded-[var(--radius-md)] text-slate-200 hover:bg-white/10 disabled:opacity-35"
+                    :disabled="currentPage >= totalPages || isLoading"
+                    aria-label="Halaman berikutnya"
+                    @click="changePage(1)"
+                >
+                    <ChevronRight class="size-5" />
+                </button>
             </div>
         </template>
 
