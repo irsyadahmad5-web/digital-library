@@ -18,7 +18,7 @@ class ProductionReleaseTest extends TestCase
             (string) file_get_contents(base_path('VERSION')),
         );
 
-        $this->assertSame('1.0.1', $version);
+        $this->assertSame('1.0.2', $version);
         $this->assertSame($version, config('release.version'));
         $this->assertSame('stable', config('release.channel'));
         $this->assertMatchesRegularExpression(
@@ -38,7 +38,7 @@ class ProductionReleaseTest extends TestCase
         $payload = json_decode(Artisan::output(), true);
 
         $this->assertIsArray($payload);
-        $this->assertSame('1.0.1', $payload['version']);
+        $this->assertSame('1.0.2', $payload['version']);
         $this->assertSame('stable', $payload['channel']);
     }
 
@@ -53,7 +53,7 @@ class ProductionReleaseTest extends TestCase
         $result = $verifier->verify();
 
         $this->assertTrue($result['passed']);
-        $this->assertSame('1.0.1', $result['version']);
+        $this->assertSame('1.0.2', $result['version']);
         $this->assertSame('stable', $result['channel']);
         $this->assertNotNull($result['restore']);
 
@@ -112,6 +112,14 @@ class ProductionReleaseTest extends TestCase
         $this->assertStringContainsString('RELEASE_FILES.sha256', $script);
         $this->assertStringContainsString('digital-library-v$VERSION', $script);
         $this->assertStringContainsString('$STAGE/.env', $script);
+        $this->assertStringContainsString(
+            '$STAGE/storage/app/installer/bootstrap.key',
+            $script,
+        );
+        $this->assertStringContainsString(
+            'find "$STAGE/storage" -type f ! -name',
+            $script,
+        );
 
         $attributes = (string) file_get_contents(
             base_path('.gitattributes'),
@@ -163,11 +171,11 @@ class ProductionReleaseTest extends TestCase
         );
 
         $this->assertStringContainsString(
-            '## [1.0.1] - 2026-10-09',
+            '## [1.0.2] - 2026-10-10',
             $changelog,
         );
         $this->assertStringContainsString(
-            '# Production Release 1.0.1',
+            '# Production Release 1.0.2',
             $runbook,
         );
         $this->assertStringContainsString(

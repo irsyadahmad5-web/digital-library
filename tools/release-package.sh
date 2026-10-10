@@ -57,6 +57,20 @@ rsync -a --delete public/build/ "$STAGE/public/build/"
     "$COMPOSER_BIN" install         --no-dev         --prefer-dist         --optimize-autoloader         --no-interaction         --no-progress
 )
 
+# Composer package discovery boots the application and may create installer
+# bootstrap state when the staged release intentionally has no .env yet.
+# Runtime state must never be shipped inside a reusable release artifact.
+rm -f \
+    "$STAGE/storage/app/installer/bootstrap.key" \
+    "$STAGE/storage/app/installer/pending.json" \
+    "$STAGE/storage/app/installed.lock"
+
+if find "$STAGE/storage" -type f ! -name '.gitignore' -print -quit | grep -q .; then
+    echo "Release staging contains runtime storage files." >&2
+    find "$STAGE/storage" -type f ! -name '.gitignore' -print >&2
+    exit 1
+fi
+
 cat > "$STAGE/RELEASE.json" <<JSON
 {
     "name": "Digital Library",
