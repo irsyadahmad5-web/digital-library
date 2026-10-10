@@ -2,6 +2,17 @@
 
 All notable changes to Digital Library are documented in this file.
 
+## [1.0.2] - 2026-10-10
+
+### Fixed
+
+- Sanitized release staging after Composer package discovery so installer bootstrap state and other runtime storage files cannot be embedded in distributable ZIP artifacts.
+- Added a fail-closed packaging check that rejects any non-placeholder file remaining under `storage/` before checksums and archive creation.
+
+### Release
+
+- Supersedes the v1.0.1 package artifact for deployment. Production should deploy v1.0.2 or newer.
+
 ## [1.0.1] - 2026-10-09
 
 ### Fixed

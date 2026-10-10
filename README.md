@@ -94,9 +94,9 @@ The full browser/device acceptance checklist and release blockers are documented
 
 ## Production Release
 
-The current stable release is **1.0.1** (the first stable release was 1.0.0). The canonical version is stored in `VERSION`; release notes live in `CHANGELOG.md`. Run `php artisan release:info` to read the runtime release identity.
+The current stable release is **1.0.2** (the first stable release was 1.0.0). The canonical version is stored in `VERSION`; release notes live in `CHANGELOG.md`. Run `php artisan release:info` to read the runtime release identity.
 
-A deployment-ready archive can be built from a clean commit with `composer release:package`. The resulting `dist/digital-library-v1.0.1.zip` includes full source, optimized production Composer dependencies, and compiled frontend assets, but excludes `.env`, Git metadata, `node_modules`, runtime logs, backups, and uploaded content. The archive is accompanied by an external SHA-256 file and contains `RELEASE_FILES.sha256` for per-file integrity verification.
+A deployment-ready archive can be built from a clean commit with `composer release:package`. The resulting `dist/digital-library-v1.0.2.zip` includes full source, optimized production Composer dependencies, and compiled frontend assets, but excludes `.env`, Git metadata, `node_modules`, runtime logs, backups, and uploaded content. The archive is accompanied by an external SHA-256 file and contains `RELEASE_FILES.sha256` for per-file integrity verification.
 
 After installing/upgrading a real production instance, run `php artisan release:verify`. This final gate combines the Stage 25 production checks with operational health and restore-readiness. For a truly empty first installation only, `--fresh-install` can temporarily waive the pre-existing backup requirement; create and verify the first backup immediately afterward and rerun the command without that option.
 
