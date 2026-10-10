@@ -26,33 +26,33 @@ const emit = defineEmits<{
     >
         <div
             v-if="open"
-            class="absolute inset-0 z-40"
+            class="absolute inset-0 z-[60]"
             @pointermove="emit('activity')"
             @pointerdown="emit('activity')"
         >
             <button
                 type="button"
-                class="absolute inset-0 bg-slate-950/35 backdrop-blur-[1px]"
+                class="absolute inset-0 bg-slate-950/45 backdrop-blur-[2px]"
                 aria-label="Tutup panel"
                 @click="emit('close')"
             />
 
             <section
-                class="reader-drawer-safe absolute inset-x-0 bottom-0 flex max-h-[82dvh] flex-col overflow-hidden rounded-t-3xl border border-white/10 bg-slate-950/96 text-slate-100 shadow-2xl md:inset-y-0 md:max-h-none md:w-[380px] md:rounded-none md:pb-0"
+                class="reader-drawer-safe absolute inset-x-0 bottom-0 flex max-h-[84dvh] flex-col overflow-hidden rounded-t-[var(--radius-2xl)] border border-white/10 bg-slate-950/97 text-slate-100 shadow-[0_24px_70px_-28px_rgb(0_0_0/.9)] md:inset-y-0 md:max-h-none md:w-[360px] md:rounded-none md:pb-0"
                 :class="side === 'left' ? 'md:left-0 md:right-auto md:border-r' : 'md:left-auto md:right-0 md:border-l'"
                 role="dialog"
                 aria-modal="true"
                 :aria-label="title"
             >
-                <div class="mx-auto mt-2 h-1 w-10 rounded-full bg-white/20 md:hidden" />
+                <div class="mx-auto mt-2 h-1 w-9 rounded-full bg-white/20 md:hidden" />
 
-                <header class="flex min-h-16 items-center gap-3 border-b border-white/10 px-4">
+                <header class="flex min-h-14 items-center gap-3 border-b border-white/10 px-4">
                     <h2 class="min-w-0 flex-1 truncate text-sm font-semibold text-white">
                         {{ title }}
                     </h2>
                     <button
                         type="button"
-                        class="flex size-11 items-center justify-center rounded-xl text-slate-300 hover:bg-white/10 hover:text-white md:size-9"
+                        class="grid size-11 shrink-0 place-items-center rounded-[var(--radius-md)] text-slate-300 transition-colors hover:bg-white/10 hover:text-white md:size-9"
                         aria-label="Tutup"
                         @click="emit('close')"
                     >

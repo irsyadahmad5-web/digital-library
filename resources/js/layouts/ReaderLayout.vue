@@ -44,12 +44,29 @@ const readerBackground = computed(() => {
             :inert="!controlsVisible"
         >
             <div
-                class="w-full max-w-7xl rounded-2xl bg-reader-control/95 shadow-xl backdrop-blur"
+                class="w-full max-w-6xl overflow-hidden rounded-[var(--radius-lg)] border border-white/10 bg-reader-control/94 shadow-[0_14px_40px_-20px_rgb(0_0_0/.75)] backdrop-blur-xl"
                 :class="controlsVisible ? 'pointer-events-auto' : 'pointer-events-none'"
                 @pointermove.stop="emit('activity')"
                 @focusin="emit('activity')"
             >
                 <slot name="controls" />
+            </div>
+        </div>
+
+        <div
+            class="pointer-events-none absolute inset-x-0 bottom-0 z-50 px-3 pb-[max(.75rem,env(safe-area-inset-bottom))] transition duration-200 sm:hidden"
+            :class="controlsVisible
+                ? 'translate-y-0 opacity-100'
+                : 'translate-y-3 opacity-0'"
+            :aria-hidden="!controlsVisible"
+            :inert="!controlsVisible"
+        >
+            <div
+                class="pointer-events-auto mx-auto max-w-sm overflow-hidden rounded-[var(--radius-lg)] border border-white/10 bg-reader-control/94 shadow-[0_14px_40px_-20px_rgb(0_0_0/.8)] backdrop-blur-xl"
+                @pointermove.stop="emit('activity')"
+                @focusin="emit('activity')"
+            >
+                <slot name="mobile-controls" />
             </div>
         </div>
 

@@ -260,8 +260,8 @@
 }
 
 .reader-scroller {
-    padding-top: calc(6rem + env(safe-area-inset-top));
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-top: calc(5.25rem + env(safe-area-inset-top));
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
     overscroll-behavior-x: none;
     -webkit-overflow-scrolling: touch;
 }
@@ -276,7 +276,10 @@
         padding-bottom: 1rem;
     }
 
-    .reader-scroller { padding-top: calc(7rem + env(safe-area-inset-top)); }
+    .reader-scroller {
+        padding-top: calc(6.25rem + env(safe-area-inset-top));
+        padding-bottom: env(safe-area-inset-bottom);
+    }
 }
 
 @media (pointer: coarse) {
