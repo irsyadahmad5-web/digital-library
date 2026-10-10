@@ -6,6 +6,7 @@ import {
     BookOpen,
     Building2,
     CalendarDays,
+    ChevronRight,
     Download,
     FileText,
     Globe2,
@@ -14,8 +15,11 @@ import {
     UserRound,
 } from '@lucide/vue';
 import PublicBookCard from '@/components/public/PublicBookCard.vue';
+import PublicSectionHeader from '@/components/public/PublicSectionHeader.vue';
 import SeoHead from '@/components/public/SeoHead.vue';
 import PublicLayout from '@/layouts/PublicLayout.vue';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
     readBookProgress,
     type ReaderProgressV1,
@@ -53,11 +57,35 @@ const hasReadingProgress = computed(() =>
     ),
 );
 
+const progressPercent = computed(() => {
+    const progress = readingProgress.value;
+
+    if (!progress || !hasReadingProgress.value) return 0;
+
+    if (progress.documentProgress > 0) {
+        return Math.min(100, Math.max(1, Math.round(progress.documentProgress * 100)));
+    }
+
+    if (progress.totalPages > 1) {
+        return Math.min(100, Math.max(1, Math.round(((progress.page - 1) / (progress.totalPages - 1)) * 100)));
+    }
+
+    return 0;
+});
+
 const readButtonLabel = computed(() =>
-    hasReadingProgress.value
-        ? `Lanjutkan · halaman ${readingProgress.value?.page ?? 1}`
-        : 'Baca Ebook',
+    hasReadingProgress.value ? 'Lanjutkan membaca' : 'Baca sekarang',
 );
+
+const metadataCount = computed(() => [
+    props.book.publisher,
+    props.book.publication_year,
+    props.book.page_count,
+    props.book.language,
+    props.book.collection,
+    props.book.isbn,
+    props.book.edition,
+].filter(Boolean).length);
 
 onMounted(() => {
     if (!props.book.read_enabled || !props.book.reader_revision) return;
@@ -73,159 +101,209 @@ onMounted(() => {
     <SeoHead :seo="seo" />
 
     <PublicLayout>
-        <section class="mx-auto px-5 py-10 sm:px-8 sm:py-14" style="max-width: var(--content-max-width)">
-            <Link href="/library" class="text-sm font-medium text-muted-foreground hover:text-foreground">
-                ← Kembali ke katalog
-            </Link>
+        <section class="ui-page-shell py-8 sm:py-11">
+            <nav aria-label="Breadcrumb" class="flex min-w-0 items-center gap-1.5 text-xs text-ink-soft">
+                <Link href="/library" class="shrink-0 hover:text-ink">Katalog</Link>
+                <ChevronRight class="size-3.5 shrink-0 text-ink-faint" />
+                <span class="truncate font-medium text-ink" aria-current="page">{{ book.title }}</span>
+            </nav>
 
-            <div class="mt-8 grid gap-8 lg:grid-cols-[260px_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)]">
-                <div>
-                    <div class="aspect-[3/4] overflow-hidden rounded-3xl border border-border bg-muted">
-                        <img
-                            v-if="book.cover_url"
-                            :src="book.cover_url"
-                            :alt="book.title"
-                            class="size-full object-cover"
-                            loading="eager"
-                            decoding="async"
-                            fetchpriority="high"
-                        >
-                        <div v-else class="flex size-full items-center justify-center">
-                            <BookOpen class="size-12 text-muted-foreground/70" />
+            <div class="mt-5 grid gap-7 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10 xl:grid-cols-[270px_minmax(0,1fr)]">
+                <aside class="mx-auto w-full max-w-[250px] lg:mx-0 lg:max-w-none">
+                    <div class="lg:sticky lg:top-[94px]">
+                        <div class="aspect-[3/4] overflow-hidden rounded-[var(--radius-xl)] border border-line bg-surface-subtle shadow-[var(--shadow-cover)]">
+                            <img
+                                v-if="book.cover_url"
+                                :src="book.cover_url"
+                                :alt="book.title"
+                                class="size-full object-cover"
+                                loading="eager"
+                                decoding="async"
+                                fetchpriority="high"
+                            >
+                            <div v-else class="flex size-full flex-col items-center justify-center gap-4 bg-brand-soft px-6 text-center text-brand">
+                                <span class="grid size-12 place-items-center rounded-full bg-surface shadow-sm">
+                                    <BookOpen class="size-6" />
+                                </span>
+                                <span class="line-clamp-4 text-sm font-semibold leading-6">{{ book.title }}</span>
+                            </div>
                         </div>
+
+                        <p v-if="book.publication_year || book.language" class="mt-3 text-center text-[11px] text-ink-faint lg:text-left">
+                            <span v-if="book.publication_year">{{ book.publication_year }}</span>
+                            <span v-if="book.publication_year && book.language" aria-hidden="true"> · </span>
+                            <span v-if="book.language">{{ book.language.name }}</span>
+                        </p>
                     </div>
-                </div>
+                </aside>
 
                 <div class="min-w-0">
-                    <div v-if="book.categories.length" class="flex flex-wrap gap-2">
+                    <div v-if="book.categories.length || book.collection" class="flex flex-wrap items-center gap-2">
                         <Link
-                            v-for="category in book.categories"
+                            v-for="category in book.categories.slice(0, 3)"
                             :key="category.slug"
-                            :href="`/category/${category.slug}`"
-                            class="rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+                            :href="'/category/' + category.slug"
+                            class="rounded-full bg-brand-soft px-2.5 py-1 text-[11px] font-semibold text-brand transition-colors hover:bg-brand/10"
                         >
                             {{ category.name }}
                         </Link>
+                        <Link
+                            v-if="book.collection"
+                            :href="'/collection/' + book.collection.slug"
+                            class="text-[11px] font-semibold text-ink-soft hover:text-brand"
+                        >
+                            {{ book.collection.name }}
+                        </Link>
                     </div>
 
-                    <h1 class="mt-4 text-balance text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
+                    <h1
+                        class="mt-3 max-w-4xl text-balance text-3xl font-semibold leading-[1.12] tracking-[-0.03em] text-ink sm:text-4xl xl:text-[2.8rem]"
+                        :class="book.categories.length || book.collection ? '' : 'mt-0'"
+                    >
                         {{ book.title }}
                     </h1>
-                    <p v-if="book.subtitle" class="mt-3 text-lg leading-7 text-muted-foreground">
+
+                    <p v-if="book.subtitle" class="mt-3 max-w-3xl text-base leading-7 text-ink-soft">
                         {{ book.subtitle }}
                     </p>
 
-                    <div v-if="book.authors.length" class="mt-5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-                        <UserRound class="size-4 text-muted-foreground" />
+                    <div v-if="book.authors.length" class="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+                        <UserRound class="size-4 shrink-0 text-ink-faint" aria-hidden="true" />
                         <template v-for="(author, index) in book.authors" :key="author.slug">
-                            <Link :href="`/author/${author.slug}`" class="font-medium hover:text-primary hover:underline">
+                            <Link :href="'/author/' + author.slug" class="font-semibold text-ink hover:text-brand">
                                 {{ author.name }}
                             </Link>
-                            <span v-if="index < book.authors.length - 1" class="text-muted-foreground">•</span>
+                            <span v-if="index < book.authors.length - 1" class="text-ink-faint">·</span>
                         </template>
                     </div>
 
                     <div
-                        v-if="book.read_enabled || downloadVisible"
-                        class="mt-7 flex flex-wrap items-center gap-3"
+                        v-if="hasReadingProgress && readingProgress"
+                        class="mt-6 max-w-2xl rounded-[var(--radius-lg)] bg-brand-soft p-4"
                     >
-                        <Link
-                            v-if="book.read_enabled"
-                            :href="`/read/${book.slug}`"
-                            class="inline-flex min-h-12 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
-                        >
-                            <BookOpen class="size-4" />
-                            {{ readButtonLabel }}
-                            <ArrowRight class="size-4" />
-                        </Link>
-
-                        <a
-                            v-if="downloadVisible"
-                            :href="`/book/${book.slug}/download`"
-                            class="inline-flex min-h-12 items-center gap-2 rounded-xl border border-border bg-surface px-5 text-sm font-semibold text-foreground hover:bg-muted"
-                        >
-                            <Download class="size-4" />
-                            Unduh PDF
-                        </a>
-                    </div>
-
-                    <div class="mt-7 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                        <div v-if="book.publisher" class="rounded-2xl border border-border bg-surface p-4">
-                            <Building2 class="size-4 text-primary" />
-                            <p class="mt-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">Penerbit</p>
-                            <Link :href="`/publisher/${book.publisher.slug}`" class="mt-1 block text-sm font-semibold hover:text-primary">
-                                {{ book.publisher.name }}
-                            </Link>
+                        <div class="flex items-center justify-between gap-4">
+                            <div class="min-w-0">
+                                <p class="text-xs font-semibold text-brand">Lanjutkan dari sesi terakhir</p>
+                                <p class="mt-1 text-xs text-ink-soft">
+                                    Halaman {{ readingProgress.page }}
+                                    <template v-if="readingProgress.totalPages"> dari {{ readingProgress.totalPages }}</template>
+                                </p>
+                            </div>
+                            <span class="shrink-0 text-xs font-semibold tabular-nums text-brand">{{ progressPercent }}%</span>
                         </div>
-
-                        <div v-if="book.publication_year" class="rounded-2xl border border-border bg-surface p-4">
-                            <CalendarDays class="size-4 text-primary" />
-                            <p class="mt-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">Tahun</p>
-                            <p class="mt-1 text-sm font-semibold">{{ book.publication_year }}</p>
-                        </div>
-
-                        <div v-if="book.page_count" class="rounded-2xl border border-border bg-surface p-4">
-                            <FileText class="size-4 text-primary" />
-                            <p class="mt-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">Halaman</p>
-                            <p class="mt-1 text-sm font-semibold">{{ book.page_count }} halaman</p>
-                        </div>
-
-                        <div v-if="book.language" class="rounded-2xl border border-border bg-surface p-4">
-                            <Globe2 class="size-4 text-primary" />
-                            <p class="mt-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">Bahasa</p>
-                            <p class="mt-1 text-sm font-semibold">{{ book.language.name }}</p>
-                        </div>
-
-                        <div v-if="book.collection" class="rounded-2xl border border-border bg-surface p-4">
-                            <LibraryBig class="size-4 text-primary" />
-                            <p class="mt-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">Koleksi</p>
-                            <Link :href="`/collection/${book.collection.slug}`" class="mt-1 block text-sm font-semibold hover:text-primary">
-                                {{ book.collection.name }}
-                            </Link>
-                        </div>
-
-                        <div v-if="book.isbn" class="rounded-2xl border border-border bg-surface p-4">
-                            <Hash class="size-4 text-primary" />
-                            <p class="mt-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">ISBN</p>
-                            <p class="mt-1 break-all text-sm font-semibold">{{ book.isbn }}</p>
+                        <div class="mt-3 h-1 overflow-hidden rounded-full bg-brand/10" aria-hidden="true">
+                            <div class="h-full rounded-full bg-brand" :style="{ width: progressPercent + '%' }" />
                         </div>
                     </div>
 
-                    <div v-if="book.description" class="mt-9 border-t border-border pt-8">
-                        <h2 class="text-xl font-semibold tracking-tight">Tentang ebook ini</h2>
-                        <p class="mt-4 whitespace-pre-line text-base leading-8 text-muted-foreground">
+                    <div v-if="book.read_enabled || downloadVisible" class="mt-6 flex flex-wrap items-center gap-2.5">
+                        <Button v-if="book.read_enabled" as-child size="large">
+                            <Link :href="'/read/' + book.slug">
+                                <BookOpen class="size-4" />
+                                {{ readButtonLabel }}
+                                <ArrowRight class="size-4" />
+                            </Link>
+                        </Button>
+
+                        <Button v-if="downloadVisible" as-child size="large" :variant="book.read_enabled ? 'secondary' : 'primary'">
+                            <a :href="'/book/' + book.slug + '/download'">
+                                <Download class="size-4" />
+                                Unduh PDF
+                            </a>
+                        </Button>
+                    </div>
+
+                    <div v-if="metadataCount" class="mt-7 max-w-3xl border-y border-line">
+                        <dl class="grid sm:grid-cols-2">
+                            <div v-if="book.publisher" class="flex gap-3 border-b border-line py-3.5 sm:pr-5">
+                                <Building2 class="mt-0.5 size-4 shrink-0 text-ink-faint" />
+                                <div class="min-w-0">
+                                    <dt class="text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-faint">Penerbit</dt>
+                                    <dd class="mt-1 text-sm font-medium text-ink">
+                                        <Link :href="'/publisher/' + book.publisher.slug" class="hover:text-brand">{{ book.publisher.name }}</Link>
+                                    </dd>
+                                </div>
+                            </div>
+
+                            <div v-if="book.publication_year" class="flex gap-3 border-b border-line py-3.5 sm:pl-5">
+                                <CalendarDays class="mt-0.5 size-4 shrink-0 text-ink-faint" />
+                                <div>
+                                    <dt class="text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-faint">Tahun terbit</dt>
+                                    <dd class="mt-1 text-sm font-medium text-ink">{{ book.publication_year }}</dd>
+                                </div>
+                            </div>
+
+                            <div v-if="book.page_count" class="flex gap-3 border-b border-line py-3.5 sm:pr-5">
+                                <FileText class="mt-0.5 size-4 shrink-0 text-ink-faint" />
+                                <div>
+                                    <dt class="text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-faint">Halaman</dt>
+                                    <dd class="mt-1 text-sm font-medium text-ink">{{ book.page_count }} halaman</dd>
+                                </div>
+                            </div>
+
+                            <div v-if="book.language" class="flex gap-3 border-b border-line py-3.5 sm:pl-5">
+                                <Globe2 class="mt-0.5 size-4 shrink-0 text-ink-faint" />
+                                <div>
+                                    <dt class="text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-faint">Bahasa</dt>
+                                    <dd class="mt-1 text-sm font-medium text-ink">{{ book.language.name }}</dd>
+                                </div>
+                            </div>
+
+                            <div v-if="book.collection" class="flex gap-3 border-b border-line py-3.5 sm:pr-5">
+                                <LibraryBig class="mt-0.5 size-4 shrink-0 text-ink-faint" />
+                                <div class="min-w-0">
+                                    <dt class="text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-faint">Koleksi</dt>
+                                    <dd class="mt-1 text-sm font-medium text-ink">
+                                        <Link :href="'/collection/' + book.collection.slug" class="hover:text-brand">{{ book.collection.name }}</Link>
+                                    </dd>
+                                </div>
+                            </div>
+
+                            <div v-if="book.isbn" class="flex gap-3 border-b border-line py-3.5 sm:pl-5">
+                                <Hash class="mt-0.5 size-4 shrink-0 text-ink-faint" />
+                                <div class="min-w-0">
+                                    <dt class="text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-faint">ISBN</dt>
+                                    <dd class="mt-1 break-all text-sm font-medium text-ink">{{ book.isbn }}</dd>
+                                </div>
+                            </div>
+
+                            <div v-if="book.edition" class="flex gap-3 py-3.5 sm:pr-5">
+                                <FileText class="mt-0.5 size-4 shrink-0 text-ink-faint" />
+                                <div>
+                                    <dt class="text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-faint">Edisi</dt>
+                                    <dd class="mt-1 text-sm font-medium text-ink">{{ book.edition }}</dd>
+                                </div>
+                            </div>
+                        </dl>
+                    </div>
+
+                    <div v-if="book.description" class="ui-reading-measure mt-8">
+                        <h2 class="text-lg font-semibold tracking-tight text-ink">Tentang ebook ini</h2>
+                        <p class="mt-3 whitespace-pre-line text-[15px] leading-7 text-ink-soft">
                             {{ book.description }}
                         </p>
                     </div>
 
-                    <div v-if="book.edition || book.tags.length" class="mt-8 border-t border-border pt-7">
-                        <p v-if="book.edition" class="text-sm text-muted-foreground">
-                            Edisi: <span class="font-medium text-foreground">{{ book.edition }}</span>
-                        </p>
-                        <div v-if="book.tags.length" class="mt-4 flex flex-wrap gap-2">
-                            <span
+                    <div v-if="book.tags.length" class="mt-7 border-t border-line pt-5">
+                        <p class="text-xs font-semibold text-ink-soft">Topik terkait</p>
+                        <div class="mt-2.5 flex flex-wrap gap-2">
+                            <Link
                                 v-for="tag in book.tags"
                                 :key="tag.slug"
-                                class="rounded-full border border-border bg-surface px-3 py-1 text-xs text-muted-foreground"
+                                :href="'/library?tag=' + encodeURIComponent(tag.slug)"
                             >
-                                #{{ tag.name }}
-                            </span>
+                                <Badge tone="neutral">#{{ tag.name }}</Badge>
+                            </Link>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section
-            v-if="relatedBooks.length"
-            class="mx-auto px-5 pb-8 pt-4 sm:px-8 sm:pb-14"
-            style="max-width: var(--content-max-width)"
-        >
-            <div class="border-t border-border pt-10">
-                <p class="text-sm font-medium text-primary">Rekomendasi</p>
-                <h2 class="mt-1 text-2xl font-semibold tracking-tight">Ebook terkait</h2>
-
-                <div class="mt-7 grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">
+        <section v-if="relatedBooks.length" class="ui-page-shell pb-10 pt-4 sm:pb-14">
+            <div class="border-t border-line pt-8">
+                <PublicSectionHeader eyebrow="Rekomendasi" title="Ebook terkait" href="/library" />
+                <div class="mt-6 grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
                     <PublicBookCard
                         v-for="item in relatedBooks"
                         :key="item.id"
