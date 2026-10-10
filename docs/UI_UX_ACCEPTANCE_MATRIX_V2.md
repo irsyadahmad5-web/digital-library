@@ -6,6 +6,9 @@ This matrix converts the UI/UX Blueprint v2 into final acceptance checks. A scre
 
 ## Global
 
+- [ ] Every primary screen is modern, responsive, professional, premium, compact, and consistent.
+- [ ] Compact means efficient density, not cramped spacing; mobile touch targets remain at least 44 px where practical.
+- [ ] No page uses oversized headers, excessive empty vertical space, or oversized cards without clear hierarchy value.
 - [ ] Semantic design tokens are the only default source for color/radius/elevation.
 - [ ] Reusable UI primitives are used instead of repeated one-off field/button/card patterns.
 - [ ] Plus Jakarta Sans remains the standard UI typeface.

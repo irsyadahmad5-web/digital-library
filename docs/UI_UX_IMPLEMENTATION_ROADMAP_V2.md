@@ -9,6 +9,8 @@ The roadmap is deliberately foundation-first to prevent page-by-page rework.
 Deliverables:
 
 - semantic CSS tokens;
+- explicit visual-density rules for a compact-but-comfortable interface;
+- six-quality visual gate: modern, responsive, professional, premium, compact, consistent;
 - radius/elevation/spacing policy;
 - form controls;
 - button/icon button;

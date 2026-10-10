@@ -21,7 +21,9 @@ The experience must communicate four qualities:
 3. **Fast** — the shortest path from discovery to reading is always obvious.
 4. **Trustworthy** — typography, spacing, states, feedback, accessibility, and security-sensitive actions are consistent.
 
-The visual direction is **Modern Editorial Digital Library**.
+The visual direction is **Modern Editorial Digital Library** with six non-negotiable visual qualities: **modern, responsive, professional, premium, compact, and consistent**.
+
+“Compact” means efficient information density and short interaction paths, not cramped spacing. The interface should avoid oversized headers, excessive empty vertical space, unnecessarily tall cards, and controls that consume more space than their importance requires. Desktop should feel efficient; mobile should remain comfortable and touch-friendly.
 
 This is not an e-commerce storefront, not a school portal, and not a conventional SaaS dashboard. Public pages should resemble a modern library/catalog experience. Admin should feel like a focused workspace. Reader should disappear behind the content.
 
@@ -114,6 +116,24 @@ Mobile is not desktop compressed. Use:
 - reduced simultaneous controls;
 - thumb-reachable primary actions;
 - shorter navigation depth.
+
+### 3.7 Compact by design, never cramped
+
+The whole interface must maintain a deliberate compact density.
+
+Rules:
+
+- Page headers should be concise and avoid excessive top/bottom padding.
+- Cards should only be used when they provide grouping or interaction value.
+- Repeated metadata should prefer rows/lists/chips over stacks of large cards.
+- Table toolbars, filters, actions, and pagination should align into efficient horizontal groups on desktop.
+- Forms should use consistent field heights and grouped sections instead of large vertical gaps.
+- Mobile keeps 44 px touch targets even when the visual system is compact.
+- Compactness must never reduce legibility, focus visibility, or error clarity.
+
+### 3.8 Consistency is a release requirement
+
+A page-specific visual shortcut is not acceptable if an equivalent global primitive exists. Public, reader, admin, and auth may have different contextual personalities, but they must share the same tokens, spacing logic, control anatomy, focus treatment, feedback patterns, and responsive rules.
 
 ---
 
@@ -986,6 +1006,8 @@ Production server receives only a verified release artifact and runs deployment-
 v1.1.0 UI/UX work is complete only when:
 
 - public, reader, admin, and auth use the same token/component language;
+- every primary screen visibly meets the six qualities: modern, responsive, professional, premium, compact, and consistent;
+- compact density is achieved without cramped spacing or sub-44 px mobile touch targets;
 - no critical page feels like an isolated Tailwind prototype;
 - mobile admin has full usable navigation;
 - public search is visually first-class;
