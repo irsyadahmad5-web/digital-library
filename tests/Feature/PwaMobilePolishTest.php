@@ -251,6 +251,9 @@ class PwaMobilePolishTest extends TestCase
         $publicLayout = (string) file_get_contents(
             resource_path('js/layouts/PublicLayout.vue'),
         );
+        $sheet = (string) file_get_contents(
+            resource_path('js/components/ui/sheet/SheetShell.vue'),
+        );
         $readerLayout = (string) file_get_contents(
             resource_path('js/layouts/ReaderLayout.vue'),
         );
@@ -273,8 +276,16 @@ class PwaMobilePolishTest extends TestCase
             $publicLayout,
         );
         $this->assertStringContainsString(
-            'max-h-[calc(100dvh-5rem)]',
+            '<SheetShell',
             $publicLayout,
+        );
+        $this->assertStringContainsString(
+            'max-h-[88dvh]',
+            $sheet,
+        );
+        $this->assertStringContainsString(
+            'safe-area-inset-bottom',
+            $sheet,
         );
         $this->assertStringContainsString(
             'reader-controls-safe',
