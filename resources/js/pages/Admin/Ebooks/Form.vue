@@ -12,7 +12,11 @@ import {
 } from '@lucide/vue';
 import EbookStoragePanel from '@/components/admin/EbookStoragePanel.vue';
 import RelationChecklist from '@/components/admin/RelationChecklist.vue';
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/ui/page-header';
+import { Select } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import AdminLayout from '@/layouts/AdminLayout.vue';
 import type { SharedPageProps } from '@/types';
 
@@ -160,7 +164,7 @@ function removeCover() {
 
 function submit() {
     const endpoint = isEdit.value
-        ? `/admin/ebooks/${props.ebook?.id}`
+        ? '/admin/ebooks/' + props.ebook?.id
         : '/admin/ebooks';
 
     form.post(endpoint, {
@@ -180,7 +184,7 @@ function submit() {
 
 function publicationStatusHelp() {
     if (form.publication_status === 'published') {
-        return 'Published akan menjadi kandidat tampil pada halaman publik saat Public Library selesai.';
+        return 'Published tampil sebagai kandidat koleksi publik setelah file dan syarat publikasi terpenuhi.';
     }
 
     if (form.publication_status === 'archived') {
@@ -188,6 +192,15 @@ function publicationStatusHelp() {
     }
 
     return 'Draft hanya tersedia di admin dan belum dianggap terbit.';
+}
+
+function publishedAtLabel() {
+    if (!props.ebook?.published_at) return '';
+
+    return new Intl.DateTimeFormat('id-ID', {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+    }).format(new Date(props.ebook.published_at));
 }
 
 onBeforeUnmount(() => {
@@ -198,134 +211,137 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <Head :title="isEdit ? `Edit Ebook — ${ebook?.title}` : 'Tambah Ebook'" />
+    <Head :title="isEdit ? 'Edit Ebook — ' + ebook?.title : 'Tambah Ebook'" />
 
     <AdminLayout>
-        <div class="max-w-7xl">
-            <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-                <div>
-                    <Link href="/admin/ebooks" class="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-                        <ArrowLeft class="size-4" />
-                        Kembali ke Ebook
-                    </Link>
-                    <p class="mt-5 text-sm font-medium text-primary">Katalog</p>
-                    <h1 class="mt-1 text-3xl font-semibold tracking-tight">
-                        {{ isEdit ? 'Edit Ebook' : 'Tambah Ebook' }}
-                    </h1>
-                    <p class="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-                        Lengkapi metadata, source PDF, klasifikasi, dan kebijakan akses ebook dari satu halaman.
-                    </p>
-                </div>
+        <div class="grid gap-5">
+            <div>
+                <Link
+                    href="/admin/ebooks"
+                    class="mb-4 inline-flex min-h-9 items-center gap-1.5 rounded-[var(--radius-md)] px-1 text-xs font-semibold text-ink-soft hover:text-ink"
+                >
+                    <ArrowLeft class="size-4" />
+                    Kembali ke Ebook
+                </Link>
 
-                <div v-if="isEdit && ebook?.published_at" class="text-sm text-muted-foreground">
-                    Pernah dipublish: {{ new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(ebook.published_at)) }}
-                </div>
+                <PageHeader
+                    eyebrow="Library"
+                    :title="isEdit ? 'Edit Ebook' : 'Tambah Ebook'"
+                    description="Kelola metadata, source PDF, klasifikasi, cover, serta kebijakan akses dari satu workspace."
+                >
+                    <template #actions>
+                        <span
+                            v-if="isEdit && ebook?.published_at"
+                            class="rounded-full bg-success-soft px-3 py-1.5 text-[11px] font-semibold text-success"
+                        >
+                            Pernah dipublish · {{ publishedAtLabel() }}
+                        </span>
+                    </template>
+                </PageHeader>
             </div>
 
-            <div v-if="page.props.flash.status" class="mt-6 rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                {{ page.props.flash.status }}
-            </div>
+            <Alert v-if="page.props.flash.status" tone="success" :title="page.props.flash.status" />
 
-            <form class="mt-7 grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]" @submit.prevent="submit">
-                <div class="space-y-6">
-                    <section class="rounded-2xl border border-border bg-surface">
-                        <div class="border-b border-border px-5 py-5 sm:px-7">
-                            <h2 class="text-lg font-semibold">Metadata utama</h2>
-                            <p class="mt-1 text-sm text-muted-foreground">Informasi bibliografi dasar ebook.</p>
+            <form class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]" @submit.prevent="submit">
+                <div class="grid gap-5">
+                    <section class="rounded-[var(--radius-lg)] border border-line bg-surface">
+                        <div class="border-b border-line px-4 py-3.5 sm:px-5">
+                            <h2 class="text-sm font-semibold text-ink">Metadata utama</h2>
+                            <p class="mt-1 text-xs text-ink-soft">Informasi bibliografi dasar ebook.</p>
                         </div>
 
-                        <div class="grid gap-5 p-5 sm:p-7 lg:grid-cols-2">
-                            <label class="lg:col-span-2">
-                                <span class="mb-2 block text-sm font-medium">Judul <span class="text-red-500">*</span></span>
+                        <div class="grid gap-4 p-4 sm:p-5 lg:grid-cols-2">
+                            <label class="grid gap-1.5 lg:col-span-2">
+                                <span class="text-xs font-semibold text-ink">Judul <span class="text-danger">*</span></span>
                                 <input
                                     v-model="form.title"
                                     type="text"
-                                    class="min-h-11 w-full rounded-xl border border-border bg-background px-4 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+                                    class="ui-control ui-focus-ring w-full px-3 text-sm"
                                     placeholder="Judul ebook"
                                 >
-                                <p v-if="form.errors.title" class="mt-2 text-sm text-red-600">{{ form.errors.title }}</p>
+                                <p v-if="form.errors.title" class="text-xs text-danger">{{ form.errors.title }}</p>
                             </label>
 
-                            <label class="lg:col-span-2">
-                                <span class="mb-2 block text-sm font-medium">Subjudul</span>
+                            <label class="grid gap-1.5 lg:col-span-2">
+                                <span class="text-xs font-semibold text-ink">Subjudul</span>
                                 <input
                                     v-model="form.subtitle"
                                     type="text"
-                                    class="min-h-11 w-full rounded-xl border border-border bg-background px-4 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+                                    class="ui-control ui-focus-ring w-full px-3 text-sm"
                                     placeholder="Opsional"
                                 >
-                                <p v-if="form.errors.subtitle" class="mt-2 text-sm text-red-600">{{ form.errors.subtitle }}</p>
+                                <p v-if="form.errors.subtitle" class="text-xs text-danger">{{ form.errors.subtitle }}</p>
                             </label>
 
-                            <label>
-                                <span class="mb-2 block text-sm font-medium">Slug</span>
+                            <label class="grid gap-1.5">
+                                <span class="text-xs font-semibold text-ink">Slug</span>
                                 <input
                                     v-model="form.slug"
                                     type="text"
-                                    class="min-h-11 w-full rounded-xl border border-border bg-background px-4 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+                                    class="ui-control ui-focus-ring w-full px-3 text-sm"
                                     placeholder="otomatis-dari-judul"
                                 >
-                                <p class="mt-1.5 text-xs text-muted-foreground">Kosongkan saat membuat ebook agar dibuat otomatis.</p>
-                                <p v-if="form.errors.slug" class="mt-2 text-sm text-red-600">{{ form.errors.slug }}</p>
+                                <p class="text-[11px] leading-5 text-ink-faint">Kosongkan saat membuat ebook agar dibuat otomatis.</p>
+                                <p v-if="form.errors.slug" class="text-xs text-danger">{{ form.errors.slug }}</p>
                             </label>
 
-                            <label>
-                                <span class="mb-2 block text-sm font-medium">ISBN</span>
+                            <label class="grid gap-1.5">
+                                <span class="text-xs font-semibold text-ink">ISBN</span>
                                 <input
                                     v-model="form.isbn"
                                     type="text"
-                                    class="min-h-11 w-full rounded-xl border border-border bg-background px-4 text-sm outline-none focus:ring-2 focus:ring-primary/20"
-                                    placeholder="978602..."
+                                    class="ui-control ui-focus-ring w-full px-3 text-sm"
+                                    placeholder="978602…"
                                 >
-                                <p class="mt-1.5 text-xs text-muted-foreground">ISBN-10 atau ISBN-13; spasi dan tanda hubung dinormalisasi otomatis.</p>
-                                <p v-if="form.errors.isbn" class="mt-2 text-sm text-red-600">{{ form.errors.isbn }}</p>
+                                <p class="text-[11px] leading-5 text-ink-faint">ISBN-10 atau ISBN-13; spasi dan tanda hubung dinormalisasi otomatis.</p>
+                                <p v-if="form.errors.isbn" class="text-xs text-danger">{{ form.errors.isbn }}</p>
                             </label>
 
-                            <label>
-                                <span class="mb-2 block text-sm font-medium">Tahun terbit</span>
+                            <label class="grid gap-1.5">
+                                <span class="text-xs font-semibold text-ink">Tahun terbit</span>
                                 <input
-                                    v-model="form.publication_year"
+                                    v-model.number="form.publication_year"
                                     type="number"
                                     min="1000"
                                     :max="new Date().getFullYear() + 1"
-                                    class="min-h-11 w-full rounded-xl border border-border bg-background px-4 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+                                    class="ui-control ui-focus-ring w-full px-3 text-sm"
                                 >
-                                <p v-if="form.errors.publication_year" class="mt-2 text-sm text-red-600">{{ form.errors.publication_year }}</p>
+                                <p v-if="form.errors.publication_year" class="text-xs text-danger">{{ form.errors.publication_year }}</p>
                             </label>
 
-                            <label>
-                                <span class="mb-2 block text-sm font-medium">Edisi</span>
+                            <label class="grid gap-1.5">
+                                <span class="text-xs font-semibold text-ink">Edisi</span>
                                 <input
                                     v-model="form.edition"
                                     type="text"
-                                    class="min-h-11 w-full rounded-xl border border-border bg-background px-4 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+                                    class="ui-control ui-focus-ring w-full px-3 text-sm"
                                     placeholder="Contoh: Edisi 2"
                                 >
-                                <p v-if="form.errors.edition" class="mt-2 text-sm text-red-600">{{ form.errors.edition }}</p>
+                                <p v-if="form.errors.edition" class="text-xs text-danger">{{ form.errors.edition }}</p>
                             </label>
 
-                            <label>
-                                <span class="mb-2 block text-sm font-medium">Jumlah halaman</span>
+                            <label class="grid gap-1.5">
+                                <span class="text-xs font-semibold text-ink">Jumlah halaman</span>
                                 <input
-                                    v-model="form.page_count"
+                                    v-model.number="form.page_count"
                                     type="number"
                                     min="1"
                                     max="100000"
-                                    class="min-h-11 w-full rounded-xl border border-border bg-background px-4 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+                                    class="ui-control ui-focus-ring w-full px-3 text-sm"
                                 >
-                                <p class="mt-1.5 text-xs text-muted-foreground">Opsional. Stage PDF Processing dapat mengisi otomatis nanti.</p>
-                                <p v-if="form.errors.page_count" class="mt-2 text-sm text-red-600">{{ form.errors.page_count }}</p>
+                                <p class="text-[11px] leading-5 text-ink-faint">Opsional. PDF Processing dapat mengisi otomatis.</p>
+                                <p v-if="form.errors.page_count" class="text-xs text-danger">{{ form.errors.page_count }}</p>
                             </label>
 
-                            <label class="lg:col-span-2">
-                                <span class="mb-2 block text-sm font-medium">Deskripsi</span>
+                            <label class="grid gap-1.5 lg:col-span-2">
+                                <span class="text-xs font-semibold text-ink">Deskripsi</span>
                                 <textarea
                                     v-model="form.description"
-                                    rows="8"
-                                    class="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm leading-6 outline-none focus:ring-2 focus:ring-primary/20"
-                                    placeholder="Sinopsis atau deskripsi ebook..."
+                                    rows="7"
+                                    class="ui-control ui-focus-ring w-full px-3 py-2.5 text-sm leading-6"
+                                    placeholder="Sinopsis atau deskripsi ebook…"
                                 />
-                                <p v-if="form.errors.description" class="mt-2 text-sm text-red-600">{{ form.errors.description }}</p>
+                                <p v-if="form.errors.description" class="text-xs text-danger">{{ form.errors.description }}</p>
                             </label>
                         </div>
                     </section>
@@ -338,35 +354,27 @@ onBeforeUnmount(() => {
                         :processing-config="processingConfig"
                     />
 
-                    <section v-else class="rounded-2xl border border-border bg-surface">
-                        <div class="p-5 sm:p-7">
-                            <div class="flex items-start gap-3">
-                                <BookOpen class="mt-0.5 size-5 shrink-0 text-primary" />
-                                <div>
-                                    <h2 class="font-semibold">File PDF tersedia setelah metadata disimpan</h2>
-                                    <p class="mt-1 text-sm leading-6 text-muted-foreground">
-                                        Simpan ebook terlebih dahulu. Setelah ID ebook terbentuk, halaman edit akan menampilkan upload chunk/resumable dan pilihan URL cloud.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
+                    <Alert
+                        v-else
+                        tone="info"
+                        title="File PDF tersedia setelah metadata disimpan"
+                    >
+                        Simpan ebook terlebih dahulu. Setelah ID terbentuk, halaman edit akan menyediakan upload chunk/resumable dan URL cloud.
+                    </Alert>
 
-                    <section class="rounded-2xl border border-border bg-surface">
-                        <div class="border-b border-border px-5 py-5 sm:px-7">
-                            <h2 class="text-lg font-semibold">Klasifikasi</h2>
-                            <p class="mt-1 text-sm text-muted-foreground">
-                                Hubungkan ebook dengan master data agar katalog dan pencarian nanti lebih akurat.
-                            </p>
+                    <section class="rounded-[var(--radius-lg)] border border-line bg-surface">
+                        <div class="border-b border-line px-4 py-3.5 sm:px-5">
+                            <h2 class="text-sm font-semibold text-ink">Klasifikasi</h2>
+                            <p class="mt-1 text-xs text-ink-soft">Hubungkan ebook dengan master data agar katalog dan pencarian tetap konsisten.</p>
                         </div>
 
-                        <div class="grid gap-6 p-5 sm:p-7 lg:grid-cols-2">
+                        <div class="grid gap-5 p-4 sm:p-5 lg:grid-cols-2">
                             <RelationChecklist
                                 v-model="form.authors"
                                 label="Penulis"
                                 :options="options.authors"
-                                description="Urutan checkbox yang dipilih dipertahankan sebagai urutan penulis."
-                                search-placeholder="Cari penulis..."
+                                description="Urutan yang dipilih dipertahankan sebagai urutan penulis."
+                                search-placeholder="Cari penulis…"
                             />
 
                             <RelationChecklist
@@ -374,7 +382,7 @@ onBeforeUnmount(() => {
                                 label="Kategori & subkategori"
                                 :options="options.categories"
                                 description="Ebook dapat berada pada lebih dari satu kategori."
-                                search-placeholder="Cari kategori..."
+                                search-placeholder="Cari kategori…"
                             />
 
                             <RelationChecklist
@@ -382,119 +390,107 @@ onBeforeUnmount(() => {
                                 label="Tag"
                                 :options="options.tags"
                                 description="Gunakan tag untuk topik yang lebih fleksibel daripada kategori."
-                                search-placeholder="Cari tag..."
+                                search-placeholder="Cari tag…"
                             />
 
-                            <div class="space-y-5">
-                                <label class="block">
-                                    <span class="mb-2 block text-sm font-medium">Penerbit</span>
-                                    <select
-                                        v-model="form.publisher_id"
-                                        class="min-h-11 w-full rounded-xl border border-border bg-background px-4 text-sm outline-none"
-                                    >
+                            <div class="grid content-start gap-4">
+                                <label class="grid gap-1.5">
+                                    <span class="text-xs font-semibold text-ink">Penerbit</span>
+                                    <Select v-model="form.publisher_id">
                                         <option :value="null">— Belum ditentukan —</option>
                                         <option v-for="item in options.publishers" :key="item.value" :value="item.value">
                                             {{ item.label }}{{ item.active === false ? ' (nonaktif)' : '' }}
                                         </option>
-                                    </select>
-                                    <p v-if="form.errors.publisher_id" class="mt-2 text-sm text-red-600">{{ form.errors.publisher_id }}</p>
+                                    </Select>
+                                    <p v-if="form.errors.publisher_id" class="text-xs text-danger">{{ form.errors.publisher_id }}</p>
                                 </label>
 
-                                <label class="block">
-                                    <span class="mb-2 block text-sm font-medium">Bahasa</span>
-                                    <select
-                                        v-model="form.language_id"
-                                        class="min-h-11 w-full rounded-xl border border-border bg-background px-4 text-sm outline-none"
-                                    >
+                                <label class="grid gap-1.5">
+                                    <span class="text-xs font-semibold text-ink">Bahasa</span>
+                                    <Select v-model="form.language_id">
                                         <option :value="null">— Belum ditentukan —</option>
                                         <option v-for="item in options.languages" :key="item.value" :value="item.value">
                                             {{ item.label }}{{ item.active === false ? ' (nonaktif)' : '' }}
                                         </option>
-                                    </select>
-                                    <p v-if="form.errors.language_id" class="mt-2 text-sm text-red-600">{{ form.errors.language_id }}</p>
+                                    </Select>
+                                    <p v-if="form.errors.language_id" class="text-xs text-danger">{{ form.errors.language_id }}</p>
                                 </label>
 
-                                <label class="block">
-                                    <span class="mb-2 block text-sm font-medium">Koleksi</span>
-                                    <select
-                                        v-model="form.collection_id"
-                                        class="min-h-11 w-full rounded-xl border border-border bg-background px-4 text-sm outline-none"
-                                    >
+                                <label class="grid gap-1.5">
+                                    <span class="text-xs font-semibold text-ink">Koleksi</span>
+                                    <Select v-model="form.collection_id">
                                         <option :value="null">— Belum ditentukan —</option>
                                         <option v-for="item in options.collections" :key="item.value" :value="item.value">
                                             {{ item.label }}{{ item.active === false ? ' (nonaktif)' : '' }}
                                         </option>
-                                    </select>
-                                    <p v-if="form.errors.collection_id" class="mt-2 text-sm text-red-600">{{ form.errors.collection_id }}</p>
+                                    </Select>
+                                    <p v-if="form.errors.collection_id" class="text-xs text-danger">{{ form.errors.collection_id }}</p>
                                 </label>
                             </div>
 
-                            <p v-if="form.errors.authors || form.errors.categories || form.errors.tags" class="lg:col-span-2 text-sm text-red-600">
+                            <p v-if="form.errors.authors || form.errors.categories || form.errors.tags" class="text-xs text-danger lg:col-span-2">
                                 {{ form.errors.authors || form.errors.categories || form.errors.tags }}
                             </p>
                         </div>
                     </section>
                 </div>
 
-                <aside class="space-y-6 xl:sticky xl:top-6 xl:h-fit">
-                    <section class="rounded-2xl border border-border bg-surface">
-                        <div class="border-b border-border px-5 py-4">
-                            <h2 class="font-semibold">Publikasi & akses</h2>
+                <aside class="grid content-start gap-4 xl:sticky xl:top-20 xl:h-fit">
+                    <section class="rounded-[var(--radius-lg)] border border-line bg-surface">
+                        <div class="border-b border-line px-4 py-3.5">
+                            <h2 class="text-sm font-semibold text-ink">Publikasi & akses</h2>
                         </div>
 
-                        <div class="space-y-5 p-5">
-                            <label class="block">
-                                <span class="mb-2 block text-sm font-medium">Status publikasi</span>
-                                <select
-                                    v-model="form.publication_status"
-                                    class="min-h-11 w-full rounded-xl border border-border bg-background px-4 text-sm outline-none"
-                                >
+                        <div class="grid gap-4 p-4">
+                            <label class="grid gap-1.5">
+                                <span class="text-xs font-semibold text-ink">Status publikasi</span>
+                                <Select v-model="form.publication_status">
                                     <option value="draft">Draft</option>
                                     <option value="published">Published</option>
                                     <option value="archived">Archived</option>
-                                </select>
-                                <p class="mt-2 text-xs leading-5 text-muted-foreground">{{ publicationStatusHelp() }}</p>
-                                <p v-if="form.errors.publication_status" class="mt-2 text-sm text-red-600">{{ form.errors.publication_status }}</p>
+                                </Select>
+                                <p class="text-[11px] leading-5 text-ink-faint">{{ publicationStatusHelp() }}</p>
+                                <p v-if="form.errors.publication_status" class="text-xs text-danger">{{ form.errors.publication_status }}</p>
                             </label>
 
-                            <label class="flex min-h-12 items-center justify-between gap-4 rounded-xl border border-border bg-background px-4">
-                                <span>
-                                    <span class="block text-sm font-medium">Boleh dibaca</span>
-                                    <span class="mt-0.5 block text-xs text-muted-foreground">Kontrol reader publik per ebook.</span>
-                                </span>
-                                <input v-model="form.read_enabled" type="checkbox" class="size-4 rounded border-border">
-                            </label>
-
-                            <label class="flex min-h-12 items-center justify-between gap-4 rounded-xl border border-border bg-background px-4">
-                                <span>
-                                    <span class="block text-sm font-medium">Boleh diunduh</span>
-                                    <span class="mt-0.5 block text-xs text-muted-foreground">Kontrol download publik per ebook.</span>
-                                </span>
-                                <input v-model="form.download_enabled" type="checkbox" class="size-4 rounded border-border">
-                            </label>
-
-                            <div class="rounded-xl bg-muted px-4 py-3 text-xs leading-5 text-muted-foreground">
-                                Akses baca dan download diterapkan langsung pada route publik yang aman. File private maupun URL eksternal tidak diekspos ke pengunjung.
+                            <div class="flex items-center justify-between gap-4 rounded-[var(--radius-md)] border border-line px-3 py-3">
+                                <div class="min-w-0">
+                                    <p class="text-xs font-semibold text-ink">Boleh dibaca</p>
+                                    <p class="mt-1 text-[11px] leading-4 text-ink-faint">Kontrol reader publik per ebook.</p>
+                                </div>
+                                <Switch v-model="form.read_enabled" />
                             </div>
+
+                            <div class="flex items-center justify-between gap-4 rounded-[var(--radius-md)] border border-line px-3 py-3">
+                                <div class="min-w-0">
+                                    <p class="text-xs font-semibold text-ink">Boleh diunduh</p>
+                                    <p class="mt-1 text-[11px] leading-4 text-ink-faint">Kontrol download publik per ebook.</p>
+                                </div>
+                                <Switch v-model="form.download_enabled" />
+                            </div>
+
+                            <p class="rounded-[var(--radius-md)] bg-surface-subtle px-3 py-2.5 text-[11px] leading-5 text-ink-soft">
+                                Akses diterapkan langsung pada route publik yang aman. File private dan URL eksternal tidak diekspos.
+                            </p>
                         </div>
                     </section>
 
-                    <section class="rounded-2xl border border-border bg-surface">
-                        <div class="border-b border-border px-5 py-4">
-                            <h2 class="font-semibold">Cover</h2>
+                    <section class="rounded-[var(--radius-lg)] border border-line bg-surface">
+                        <div class="border-b border-line px-4 py-3.5">
+                            <h2 class="text-sm font-semibold text-ink">Cover</h2>
                         </div>
 
-                        <div class="p-5">
-                            <div class="flex aspect-[3/4] items-center justify-center overflow-hidden rounded-2xl border border-dashed border-border bg-muted/50">
+                        <div class="p-4">
+                            <div class="mx-auto flex aspect-[3/4] w-full max-w-[190px] items-center justify-center overflow-hidden rounded-[var(--radius-lg)] border border-dashed border-line bg-surface-subtle">
                                 <img v-if="coverPreview" :src="String(coverPreview)" alt="" class="size-full object-cover">
-                                <div v-else class="text-center text-muted-foreground">
-                                    <FileImage class="mx-auto size-8" />
-                                    <p class="mt-2 text-sm">Belum ada cover</p>
+                                <div v-else class="text-center text-ink-faint">
+                                    <FileImage class="mx-auto size-7" />
+                                    <p class="mt-2 text-xs">Belum ada cover</p>
                                 </div>
                             </div>
 
-                            <div class="mt-4 flex flex-wrap gap-2">
-                                <label class="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-border bg-background px-3 py-2 text-sm font-medium hover:bg-muted">
+                            <div class="mt-3 flex flex-wrap justify-center gap-2">
+                                <label class="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-[var(--radius-md)] border border-line bg-surface px-3 text-xs font-semibold text-ink hover:bg-surface-subtle">
                                     <Upload class="size-4" />
                                     Pilih cover
                                     <input
@@ -504,47 +500,49 @@ onBeforeUnmount(() => {
                                         @change="onCoverChange"
                                     >
                                 </label>
-                                <button
+                                <Button
                                     v-if="coverPreview"
                                     type="button"
-                                    class="rounded-xl px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                                    size="small"
+                                    variant="quiet"
+                                    class="text-danger hover:bg-danger-soft hover:text-danger"
                                     @click="removeCover"
                                 >
                                     Hapus
-                                </button>
+                                </Button>
                             </div>
 
-                            <p class="mt-3 text-xs leading-5 text-muted-foreground">
-                                JPG, PNG, atau WebP. Maksimal {{ maxCoverMb }} MB sesuai Settings.
+                            <p class="mt-3 text-center text-[11px] leading-5 text-ink-faint">
+                                JPG, PNG, atau WebP · Maks. {{ maxCoverMb }} MB.
                             </p>
-                            <p v-if="form.errors.cover" class="mt-2 text-sm text-red-600">{{ form.errors.cover }}</p>
+                            <p v-if="form.errors.cover" class="mt-2 text-center text-xs text-danger">{{ form.errors.cover }}</p>
                         </div>
                     </section>
 
-                    <section class="rounded-2xl border border-border bg-surface p-5">
+                    <section class="rounded-[var(--radius-lg)] border border-line bg-surface p-4">
                         <div class="flex items-start gap-3">
-                            <div class="mt-0.5 text-primary">
-                                <CheckCircle2 v-if="!form.hasErrors" class="size-5" />
-                                <XCircle v-else class="size-5 text-red-600" />
+                            <div class="mt-0.5 text-brand">
+                                <CheckCircle2 v-if="!form.hasErrors" class="size-4" />
+                                <XCircle v-else class="size-4 text-danger" />
                             </div>
                             <div>
-                                <p class="text-sm font-medium">
+                                <p class="text-xs font-semibold text-ink">
                                     {{ form.hasErrors ? 'Periksa form' : 'Siap disimpan' }}
                                 </p>
-                                <p class="mt-1 text-xs leading-5 text-muted-foreground">
-                                    Metadata dapat diubah kapan saja. Source PDF dikelola terpisah sehingga perubahan metadata tidak memindahkan file.
+                                <p class="mt-1 text-[11px] leading-5 text-ink-soft">
+                                    Metadata dapat diubah kapan saja tanpa memindahkan source PDF.
                                 </p>
                             </div>
                         </div>
 
-                        <Button class="mt-5 w-full" size="large" :disabled="form.processing">
+                        <Button class="mt-4 w-full" :disabled="form.processing">
                             <Save class="size-4" />
-                            {{ form.processing ? 'Menyimpan...' : (isEdit ? 'Simpan perubahan' : 'Simpan ebook') }}
+                            {{ form.processing ? 'Menyimpan…' : (isEdit ? 'Simpan perubahan' : 'Simpan ebook') }}
                         </Button>
 
-                        <Link href="/admin/ebooks" class="mt-3 block text-center text-sm text-muted-foreground hover:text-foreground">
-                            Batal
-                        </Link>
+                        <Button as-child variant="quiet" class="mt-2 w-full">
+                            <Link href="/admin/ebooks">Batal</Link>
+                        </Button>
                     </section>
                 </aside>
             </form>

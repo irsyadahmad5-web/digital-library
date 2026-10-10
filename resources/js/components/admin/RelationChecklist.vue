@@ -49,14 +49,14 @@ function toggle(value: number) {
     <div>
         <div class="mb-2">
             <p class="text-sm font-medium">{{ label }}</p>
-            <p v-if="description" class="mt-1 text-xs leading-5 text-muted-foreground">
+            <p v-if="description" class="mt-1 text-xs leading-5 text-ink-soft">
                 {{ description }}
             </p>
         </div>
 
-        <div class="overflow-hidden rounded-xl border border-border bg-background">
-            <div class="flex min-h-10 items-center gap-2 border-b border-border px-3">
-                <Search class="size-4 shrink-0 text-muted-foreground" />
+        <div class="overflow-hidden rounded-[var(--radius-md)] border border-line bg-canvas">
+            <div class="flex min-h-10 items-center gap-2 border-b border-line px-3">
+                <Search class="size-4 shrink-0 text-ink-soft" />
                 <input
                     v-model="search"
                     type="search"
@@ -69,11 +69,11 @@ function toggle(value: number) {
                 <label
                     v-for="option in filtered"
                     :key="option.value"
-                    class="flex cursor-pointer items-start gap-3 rounded-lg px-2.5 py-2 text-sm hover:bg-muted"
+                    class="flex cursor-pointer items-start gap-3 rounded-lg px-2.5 py-2 text-sm hover:bg-surface-subtle"
                 >
                     <input
                         type="checkbox"
-                        class="mt-0.5 size-4 rounded border-border"
+                        class="mt-0.5 size-4 rounded border-line"
                         :checked="modelValue.includes(option.value)"
                         @change="toggle(option.value)"
                     >
@@ -85,12 +85,12 @@ function toggle(value: number) {
                     </span>
                 </label>
 
-                <p v-if="!filtered.length" class="px-3 py-6 text-center text-sm text-muted-foreground">
+                <p v-if="!filtered.length" class="px-3 py-6 text-center text-sm text-ink-soft">
                     Tidak ada pilihan yang cocok.
                 </p>
             </div>
 
-            <div class="border-t border-border px-3 py-2 text-xs text-muted-foreground">
+            <div class="border-t border-line px-3 py-2 text-xs text-ink-soft">
                 {{ modelValue.length }} dipilih
             </div>
         </div>
