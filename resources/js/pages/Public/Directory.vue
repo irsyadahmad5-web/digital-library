@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { Link } from '@inertiajs/vue3';
-import { ArrowRight, BookOpen } from '@lucide/vue';
+import { BookOpen } from '@lucide/vue';
+import PublicDirectoryCard from '@/components/public/PublicDirectoryCard.vue';
 import SeoHead from '@/components/public/SeoHead.vue';
 import PublicLayout from '@/layouts/PublicLayout.vue';
+import { EmptyState } from '@/components/ui/empty-state';
 import type { DirectoryItem } from '@/types/public-library';
 import type { SeoPayload } from '@/types/seo';
 
@@ -15,14 +16,21 @@ const props = defineProps<{
 }>();
 
 const description = computed(() => ({
-    category: 'Jelajahi ebook berdasarkan kategori dan subkategori.',
-    author: 'Temukan karya berdasarkan penulis.',
-    publisher: 'Jelajahi ebook berdasarkan penerbit.',
-    collection: 'Temukan ebook yang dikelompokkan dalam koleksi.',
+    category: 'Jelajahi koleksi berdasarkan topik dan subkategori.',
+    author: 'Temukan karya berdasarkan penulis yang tersedia.',
+    publisher: 'Jelajahi koleksi berdasarkan penerbit.',
+    collection: 'Temukan ebook melalui koleksi yang telah dikurasi.',
+}[props.type]));
+
+const eyebrow = computed(() => ({
+    category: 'Topik',
+    author: 'Kontributor',
+    publisher: 'Referensi',
+    collection: 'Kurasi',
 }[props.type]));
 
 function href(slug: string) {
-    return `/${props.type}/${slug}`;
+    return '/' + props.type + '/' + slug;
 }
 </script>
 
@@ -30,49 +38,33 @@ function href(slug: string) {
     <SeoHead :seo="seo" />
 
     <PublicLayout>
-        <section class="mx-auto px-5 py-10 sm:px-8 sm:py-14" style="max-width: var(--content-max-width)">
-            <div class="max-w-3xl">
-                <p class="text-sm font-medium text-primary">Direktori</p>
-                <h1 class="mt-2 text-4xl font-semibold tracking-tight">{{ title }}</h1>
-                <p class="mt-4 text-base leading-7 text-muted-foreground">{{ description }}</p>
+        <section class="ui-page-shell py-9 sm:py-12">
+            <div class="flex flex-col gap-4 border-b border-line pb-6 sm:flex-row sm:items-end sm:justify-between">
+                <div class="max-w-2xl">
+                    <p class="text-xs font-semibold uppercase tracking-[0.12em] text-brand">{{ eyebrow }}</p>
+                    <h1 class="mt-1.5 text-3xl font-semibold tracking-[-0.025em] text-ink sm:text-4xl">{{ title }}</h1>
+                    <p class="mt-2 text-sm leading-6 text-ink-soft">{{ description }}</p>
+                </div>
+                <p v-if="items.length" class="text-xs font-medium tabular-nums text-ink-soft">{{ items.length }} entri</p>
             </div>
 
-            <div v-if="items.length" class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <Link
+            <div v-if="items.length" class="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <PublicDirectoryCard
                     v-for="item in items"
                     :key="item.slug"
+                    :item="item"
                     :href="href(item.slug)"
-                    class="group rounded-2xl border border-border bg-surface p-5 transition-colors hover:bg-muted/50"
-                >
-                    <div class="flex items-start justify-between gap-4">
-                        <div class="min-w-0">
-                            <p v-if="item.parent" class="mb-1 text-xs font-medium text-primary">
-                                {{ item.parent.name }}
-                            </p>
-                            <h2 class="font-semibold tracking-tight group-hover:text-primary">{{ item.name }}</h2>
-                            <p v-if="item.description" class="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">
-                                {{ item.description }}
-                            </p>
-                        </div>
-                        <span class="shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                            {{ item.count }}
-                        </span>
-                    </div>
-
-                    <div class="mt-5 flex items-center gap-2 text-sm font-medium text-primary">
-                        Lihat ebook
-                        <ArrowRight class="size-4 transition-transform group-hover:translate-x-0.5" />
-                    </div>
-                </Link>
+                />
             </div>
 
-            <div v-else class="mt-10 rounded-2xl border border-dashed border-border bg-surface px-6 py-14 text-center">
-                <BookOpen class="mx-auto size-8 text-muted-foreground" />
-                <p class="mt-3 font-semibold">Belum ada data publik</p>
-                <p class="mt-1 text-sm text-muted-foreground">
-                    Direktori akan terisi setelah ebook dipublikasikan dan PDF selesai diproses.
-                </p>
-            </div>
+            <EmptyState
+                v-else
+                class="mt-8"
+                title="Belum ada data publik"
+                description="Direktori akan terisi setelah ebook dipublikasikan dan PDF selesai diproses."
+            >
+                <template #icon><BookOpen class="size-5" /></template>
+            </EmptyState>
         </section>
     </PublicLayout>
 </template>

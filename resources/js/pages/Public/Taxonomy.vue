@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
-import { ArrowLeft, BookOpen } from '@lucide/vue';
+import { BookOpen, ChevronRight } from '@lucide/vue';
 import PublicBookCard from '@/components/public/PublicBookCard.vue';
 import PublicPagination from '@/components/public/PublicPagination.vue';
 import SeoHead from '@/components/public/SeoHead.vue';
 import PublicLayout from '@/layouts/PublicLayout.vue';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Select } from '@/components/ui/select';
 import type {
     PublicBookCard as PublicBook,
     PublicPaginator,
@@ -48,7 +50,7 @@ function apply() {
     if (perPage.value !== 12) params.per_page = perPage.value;
 
     router.get(
-        `/${props.type}/${props.taxonomy.slug}`,
+        '/' + props.type + '/' + props.taxonomy.slug,
         params,
         {
             preserveScroll: false,
@@ -63,48 +65,55 @@ function apply() {
     <SeoHead :seo="seo" />
 
     <PublicLayout>
-        <section class="mx-auto px-5 py-10 sm:px-8 sm:py-14" style="max-width: var(--content-max-width)">
-            <Link
-                :href="directoryUrls[type]"
-                class="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"
-            >
-                <ArrowLeft class="size-4" />
-                {{ labels[type] }}
-            </Link>
+        <section class="ui-page-shell py-9 sm:py-12">
+            <nav aria-label="Breadcrumb" class="flex items-center gap-1.5 text-xs text-ink-soft">
+                <Link href="/library" class="hover:text-ink">Katalog</Link>
+                <ChevronRight class="size-3.5 text-ink-faint" />
+                <Link :href="directoryUrls[type]" class="hover:text-ink">{{ labels[type] }}</Link>
+                <ChevronRight class="size-3.5 text-ink-faint" />
+                <span class="max-w-52 truncate font-medium text-ink" aria-current="page">{{ taxonomy.name }}</span>
+            </nav>
 
-            <div class="mt-8 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+            <div class="mt-5 flex flex-col gap-4 border-b border-line pb-6 sm:flex-row sm:items-end sm:justify-between">
                 <div class="max-w-3xl">
-                    <p class="text-sm font-medium text-primary">{{ labels[type] }}</p>
-                    <h1 class="mt-2 text-4xl font-semibold tracking-tight">{{ taxonomy.name }}</h1>
-                    <p v-if="taxonomy.parent" class="mt-2 text-sm text-muted-foreground">
+                    <p class="text-xs font-semibold uppercase tracking-[0.12em] text-brand">{{ labels[type] }}</p>
+                    <h1 class="mt-1.5 text-balance text-3xl font-semibold tracking-[-0.025em] text-ink sm:text-4xl">{{ taxonomy.name }}</h1>
+                    <p v-if="taxonomy.parent" class="mt-2 text-xs text-ink-soft">
                         Subkategori dari
-                        <Link :href="`/category/${taxonomy.parent.slug}`" class="font-medium text-foreground hover:underline">
+                        <Link :href="'/category/' + taxonomy.parent.slug" class="font-semibold text-ink hover:text-brand">
                             {{ taxonomy.parent.name }}
                         </Link>
                     </p>
-                    <p v-if="taxonomy.description" class="mt-4 whitespace-pre-line text-base leading-7 text-muted-foreground">
+                    <p v-if="taxonomy.description" class="ui-reading-measure mt-3 whitespace-pre-line text-sm leading-6 text-ink-soft">
                         {{ taxonomy.description }}
                     </p>
                 </div>
 
-                <p class="text-sm text-muted-foreground">{{ books.total }} ebook</p>
+                <p class="text-xs font-medium tabular-nums text-ink-soft">{{ books.total }} ebook</p>
             </div>
 
-            <div class="mt-8 flex flex-wrap justify-end gap-2">
-                <select v-model="sort" class="min-h-10 rounded-xl border border-border bg-surface px-3 text-sm" @change="apply">
-                    <option value="newest">Terbaru</option>
-                    <option value="title">Judul A–Z</option>
-                    <option value="year_desc">Tahun terbaru</option>
-                    <option value="year_asc">Tahun terlama</option>
-                </select>
-                <select v-model="perPage" class="min-h-10 rounded-xl border border-border bg-surface px-3 text-sm" @change="apply">
-                    <option :value="12">12 / halaman</option>
-                    <option :value="24">24 / halaman</option>
-                    <option :value="48">48 / halaman</option>
-                </select>
+            <div class="mt-5 flex flex-wrap items-center justify-between gap-3">
+                <p class="text-xs text-ink-soft">
+                    {{ books.total ? books.total + ' ebook dalam ' + labels[type].toLowerCase() + ' ini' : 'Belum ada ebook publik' }}
+                </p>
+
+                <div class="flex items-center gap-2">
+                    <Select v-model="sort" class="w-auto min-w-36" aria-label="Urutkan ebook" @change="apply">
+                        <option value="popular">Paling populer</option>
+                        <option value="newest">Terbaru</option>
+                        <option value="title">Judul A–Z</option>
+                        <option value="year_desc">Tahun terbaru</option>
+                        <option value="year_asc">Tahun terlama</option>
+                    </Select>
+                    <Select v-model="perPage" class="hidden w-auto min-w-32 sm:block" aria-label="Jumlah ebook per halaman" @change="apply">
+                        <option :value="12">12 / halaman</option>
+                        <option :value="24">24 / halaman</option>
+                        <option :value="48">48 / halaman</option>
+                    </Select>
+                </div>
             </div>
 
-            <div v-if="books.data.length" class="mt-7 grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+            <div v-if="books.data.length" class="mt-6 grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
                 <PublicBookCard
                     v-for="book in books.data"
                     :key="book.id"
@@ -112,10 +121,14 @@ function apply() {
                 />
             </div>
 
-            <div v-else class="mt-8 rounded-2xl border border-dashed border-border bg-surface px-6 py-14 text-center">
-                <BookOpen class="mx-auto size-8 text-muted-foreground" />
-                <p class="mt-3 font-semibold">Belum ada ebook publik</p>
-            </div>
+            <EmptyState
+                v-else
+                class="mt-8"
+                title="Belum ada ebook publik"
+                description="Koleksi akan muncul di halaman ini setelah ebook terkait dipublikasikan dan siap dibaca."
+            >
+                <template #icon><BookOpen class="size-5" /></template>
+            </EmptyState>
 
             <PublicPagination
                 :current-page="books.current_page"
