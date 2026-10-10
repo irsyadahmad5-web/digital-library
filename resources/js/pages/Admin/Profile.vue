@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import { Head, useForm, usePage } from '@inertiajs/vue3';
+import { KeyRound, MonitorSmartphone, ShieldCheck, UserRound } from '@lucide/vue';
 import AdminLayout from '@/layouts/AdminLayout.vue';
+import { Alert } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/ui/page-header';
 import type { SharedPageProps } from '@/types';
 
 interface ProfileData {
@@ -77,125 +81,171 @@ function formatTime(timestamp: number) {
     <Head title="Profil & Keamanan" />
 
     <AdminLayout>
-        <div class="max-w-5xl">
-            <div>
-                <p class="text-sm font-medium text-primary">Akun</p>
-                <h1 class="mt-1 text-3xl font-semibold tracking-tight">Profil & Keamanan</h1>
-                <p class="mt-2 text-sm text-muted-foreground">
-                    Kelola identitas admin, password, dan sesi aktif.
-                </p>
-            </div>
+        <div class="grid gap-5">
+            <PageHeader
+                eyebrow="System"
+                title="Profil & Keamanan"
+                description="Kelola identitas admin, password, role, dan sesi perangkat dari satu tempat."
+            />
 
-            <div v-if="page.props.flash.status" class="mt-6 rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                {{ page.props.flash.status }}
-            </div>
+            <Alert v-if="page.props.flash.status" tone="success" :title="page.props.flash.status" />
 
-            <div class="mt-8 grid gap-6 lg:grid-cols-2">
-                <section class="rounded-2xl border border-border bg-surface p-6">
-                    <h2 class="font-semibold">Informasi profil</h2>
-                    <p class="mt-1 text-sm text-muted-foreground">
-                        Konfirmasi password saat mengubah data sensitif.
-                    </p>
+            <div class="grid gap-4 lg:grid-cols-2">
+                <section class="rounded-[var(--radius-lg)] border border-line bg-surface">
+                    <div class="flex items-start gap-3 border-b border-line px-4 py-3.5">
+                        <span class="grid size-9 shrink-0 place-items-center rounded-[var(--radius-md)] bg-brand-soft text-brand">
+                            <UserRound class="size-4" />
+                        </span>
+                        <div>
+                            <h2 class="text-sm font-semibold text-ink">Informasi profil</h2>
+                            <p class="mt-1 text-xs text-ink-soft">Konfirmasi password saat mengubah data sensitif.</p>
+                        </div>
+                    </div>
 
-                    <form class="mt-6 space-y-4" @submit.prevent="updateProfile">
-                        <label class="block">
-                            <span class="mb-2 block text-sm font-medium">Nama</span>
-                            <input v-model="profileForm.name" class="min-h-11 w-full rounded-xl border border-border bg-background px-4 text-sm outline-none">
-                            <p v-if="profileForm.errors.name" class="mt-2 text-sm text-red-600">{{ profileForm.errors.name }}</p>
+                    <form class="grid gap-4 p-4" @submit.prevent="updateProfile">
+                        <label class="grid gap-1.5">
+                            <span class="text-xs font-semibold text-ink">Nama</span>
+                            <input v-model="profileForm.name" class="ui-control ui-focus-ring w-full px-3 text-sm">
+                            <p v-if="profileForm.errors.name" class="text-xs text-danger">{{ profileForm.errors.name }}</p>
                         </label>
 
-                        <label class="block">
-                            <span class="mb-2 block text-sm font-medium">Email</span>
-                            <input v-model="profileForm.email" type="email" class="min-h-11 w-full rounded-xl border border-border bg-background px-4 text-sm outline-none">
-                            <p v-if="profileForm.errors.email" class="mt-2 text-sm text-red-600">{{ profileForm.errors.email }}</p>
+                        <label class="grid gap-1.5">
+                            <span class="text-xs font-semibold text-ink">Email</span>
+                            <input v-model="profileForm.email" type="email" class="ui-control ui-focus-ring w-full px-3 text-sm">
+                            <p v-if="profileForm.errors.email" class="text-xs text-danger">{{ profileForm.errors.email }}</p>
                         </label>
 
-                        <label class="block">
-                            <span class="mb-2 block text-sm font-medium">Password saat ini</span>
-                            <input v-model="profileForm.current_password" type="password" autocomplete="current-password" class="min-h-11 w-full rounded-xl border border-border bg-background px-4 text-sm outline-none">
-                            <p v-if="profileForm.errors.current_password" class="mt-2 text-sm text-red-600">{{ profileForm.errors.current_password }}</p>
+                        <label class="grid gap-1.5">
+                            <span class="text-xs font-semibold text-ink">Password saat ini</span>
+                            <input
+                                v-model="profileForm.current_password"
+                                type="password"
+                                autocomplete="current-password"
+                                class="ui-control ui-focus-ring w-full px-3 text-sm"
+                            >
+                            <p v-if="profileForm.errors.current_password" class="text-xs text-danger">{{ profileForm.errors.current_password }}</p>
                         </label>
 
-                        <Button :disabled="profileForm.processing">Simpan profil</Button>
+                        <div class="flex justify-end">
+                            <Button :disabled="profileForm.processing">Simpan profil</Button>
+                        </div>
                     </form>
 
-                    <div class="mt-6 border-t border-border pt-5 text-sm text-muted-foreground">
-                        <p>Role: {{ profile.roles.join(', ') || '-' }}</p>
-                        <p class="mt-1">Login terakhir: {{ profile.last_login_at || '-' }}</p>
-                        <p class="mt-1">IP terakhir: {{ profile.last_login_ip || '-' }}</p>
+                    <div class="border-t border-line px-4 py-3">
+                        <div class="flex flex-wrap gap-1.5">
+                            <Badge v-for="role in profile.roles" :key="role" tone="brand">{{ role }}</Badge>
+                            <Badge v-if="!profile.roles.length" tone="neutral">Tanpa role</Badge>
+                        </div>
+                        <dl class="mt-3 grid gap-2 text-[11px] sm:grid-cols-2">
+                            <div>
+                                <dt class="text-ink-faint">Login terakhir</dt>
+                                <dd class="mt-0.5 font-medium text-ink">{{ profile.last_login_at || '—' }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-ink-faint">IP terakhir</dt>
+                                <dd class="mt-0.5 font-mono text-ink">{{ profile.last_login_ip || '—' }}</dd>
+                            </div>
+                        </dl>
                     </div>
                 </section>
 
-                <section class="rounded-2xl border border-border bg-surface p-6">
-                    <h2 class="font-semibold">Ganti password</h2>
-                    <p class="mt-1 text-sm text-muted-foreground">
-                        Minimal 10 karakter, huruf besar/kecil, angka, dan simbol.
-                    </p>
+                <section class="rounded-[var(--radius-lg)] border border-line bg-surface">
+                    <div class="flex items-start gap-3 border-b border-line px-4 py-3.5">
+                        <span class="grid size-9 shrink-0 place-items-center rounded-[var(--radius-md)] bg-surface-subtle text-ink-soft">
+                            <KeyRound class="size-4" />
+                        </span>
+                        <div>
+                            <h2 class="text-sm font-semibold text-ink">Ganti password</h2>
+                            <p class="mt-1 text-xs text-ink-soft">Minimal 10 karakter, huruf besar/kecil, angka, dan simbol.</p>
+                        </div>
+                    </div>
 
-                    <form class="mt-6 space-y-4" @submit.prevent="updatePassword">
-                        <label class="block">
-                            <span class="mb-2 block text-sm font-medium">Password saat ini</span>
-                            <input v-model="passwordForm.current_password" type="password" autocomplete="current-password" class="min-h-11 w-full rounded-xl border border-border bg-background px-4 text-sm outline-none">
-                            <p v-if="passwordForm.errors.current_password" class="mt-2 text-sm text-red-600">{{ passwordForm.errors.current_password }}</p>
+                    <form class="grid gap-4 p-4" @submit.prevent="updatePassword">
+                        <label class="grid gap-1.5">
+                            <span class="text-xs font-semibold text-ink">Password saat ini</span>
+                            <input
+                                v-model="passwordForm.current_password"
+                                type="password"
+                                autocomplete="current-password"
+                                class="ui-control ui-focus-ring w-full px-3 text-sm"
+                            >
+                            <p v-if="passwordForm.errors.current_password" class="text-xs text-danger">{{ passwordForm.errors.current_password }}</p>
                         </label>
 
-                        <label class="block">
-                            <span class="mb-2 block text-sm font-medium">Password baru</span>
-                            <input v-model="passwordForm.password" type="password" autocomplete="new-password" class="min-h-11 w-full rounded-xl border border-border bg-background px-4 text-sm outline-none">
-                            <p v-if="passwordForm.errors.password" class="mt-2 text-sm text-red-600">{{ passwordForm.errors.password }}</p>
+                        <label class="grid gap-1.5">
+                            <span class="text-xs font-semibold text-ink">Password baru</span>
+                            <input
+                                v-model="passwordForm.password"
+                                type="password"
+                                autocomplete="new-password"
+                                class="ui-control ui-focus-ring w-full px-3 text-sm"
+                            >
+                            <p v-if="passwordForm.errors.password" class="text-xs text-danger">{{ passwordForm.errors.password }}</p>
                         </label>
 
-                        <label class="block">
-                            <span class="mb-2 block text-sm font-medium">Ulangi password baru</span>
-                            <input v-model="passwordForm.password_confirmation" type="password" autocomplete="new-password" class="min-h-11 w-full rounded-xl border border-border bg-background px-4 text-sm outline-none">
+                        <label class="grid gap-1.5">
+                            <span class="text-xs font-semibold text-ink">Ulangi password baru</span>
+                            <input
+                                v-model="passwordForm.password_confirmation"
+                                type="password"
+                                autocomplete="new-password"
+                                class="ui-control ui-focus-ring w-full px-3 text-sm"
+                            >
                         </label>
 
-                        <Button :disabled="passwordForm.processing">Perbarui password</Button>
+                        <div class="flex justify-end">
+                            <Button :disabled="passwordForm.processing">
+                                <ShieldCheck class="size-4" />
+                                Perbarui password
+                            </Button>
+                        </div>
                     </form>
                 </section>
             </div>
 
-            <section class="mt-6 rounded-2xl border border-border bg-surface p-6">
-                <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <section class="rounded-[var(--radius-lg)] border border-line bg-surface">
+                <div class="flex items-start gap-3 border-b border-line px-4 py-3.5">
+                    <span class="grid size-9 shrink-0 place-items-center rounded-[var(--radius-md)] bg-surface-subtle text-ink-soft">
+                        <MonitorSmartphone class="size-4" />
+                    </span>
                     <div>
-                        <h2 class="font-semibold">Sesi aktif</h2>
-                        <p class="mt-1 text-sm text-muted-foreground">
-                            Keluarkan perangkat lain bila ada sesi yang tidak dikenali.
-                        </p>
+                        <h2 class="text-sm font-semibold text-ink">Sesi aktif</h2>
+                        <p class="mt-1 text-xs text-ink-soft">Keluarkan perangkat lain bila ada sesi yang tidak dikenali.</p>
                     </div>
                 </div>
 
-                <div class="mt-5 divide-y divide-border rounded-xl border border-border">
+                <div class="divide-y divide-line">
                     <div
                         v-for="session in sessions"
                         :key="session.id"
-                        class="grid gap-2 p-4 text-sm sm:grid-cols-[140px_1fr_auto]"
+                        class="grid gap-2 px-4 py-3 text-xs sm:grid-cols-[150px_minmax(0,1fr)_auto] sm:items-center"
                     >
-                        <span>{{ session.ip_address || 'IP tidak tersedia' }}</span>
-                        <span class="truncate text-muted-foreground">{{ session.user_agent || 'User agent tidak tersedia' }}</span>
-                        <span class="text-muted-foreground">
-                            {{ session.is_current ? 'Sesi ini' : formatTime(session.last_activity) }}
-                        </span>
+                        <div class="flex items-center gap-2">
+                            <span class="font-mono text-ink">{{ session.ip_address || 'IP tidak tersedia' }}</span>
+                            <Badge v-if="session.is_current" tone="success">Sesi ini</Badge>
+                        </div>
+                        <span class="truncate text-ink-soft">{{ session.user_agent || 'User agent tidak tersedia' }}</span>
+                        <span class="text-ink-faint">{{ session.is_current ? 'Aktif sekarang' : formatTime(session.last_activity) }}</span>
                     </div>
 
-                    <div v-if="!sessions.length" class="p-4 text-sm text-muted-foreground">
+                    <div v-if="!sessions.length" class="px-4 py-8 text-center text-xs text-ink-soft">
                         Data sesi belum tersedia.
                     </div>
                 </div>
 
-                <form class="mt-5 flex flex-col gap-3 sm:max-w-md sm:flex-row" @submit.prevent="revokeOthers">
+                <form class="flex flex-col gap-2 border-t border-line p-4 sm:max-w-xl sm:flex-row" @submit.prevent="revokeOthers">
                     <input
                         v-model="sessionsForm.current_password"
                         type="password"
                         autocomplete="current-password"
                         placeholder="Password saat ini"
-                        class="min-h-11 min-w-0 flex-1 rounded-xl border border-border bg-background px-4 text-sm outline-none"
+                        class="ui-control ui-focus-ring min-w-0 flex-1 px-3 text-sm"
                     >
                     <Button variant="secondary" :disabled="sessionsForm.processing">
                         Keluarkan sesi lain
                     </Button>
                 </form>
-                <p v-if="sessionsForm.errors.current_password" class="mt-2 text-sm text-red-600">
+                <p v-if="sessionsForm.errors.current_password" class="-mt-2 px-4 pb-4 text-xs text-danger">
                     {{ sessionsForm.errors.current_password }}
                 </p>
             </section>
