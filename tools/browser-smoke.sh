@@ -45,6 +45,7 @@ export APP_URL="http://127.0.0.1:$PORT"
 export SECURITY_ENFORCE_HOST=false
 
 "$PHP_BIN" artisan migrate:fresh --seed --force --no-interaction >/dev/null
+"$PHP_BIN" tools/qa-browser-fixtures.php >/dev/null
 
 "$PHP_BIN" artisan serve     --host=127.0.0.1     --port="$PORT"     >"$SERVER_LOG" 2>&1 &
 SERVER_PID=$!
@@ -92,4 +93,9 @@ grep -q 'Baca lebih nyaman' "$TMP_DIR/home-desktop.html"
 
 grep -q 'Masuk ke Admin' "$TMP_DIR/admin-mobile.html"
 
-echo "Browser smoke: PASS (desktop public + mobile public/admin)"
+QA_BASE_URL="http://127.0.0.1:$PORT" \
+CHROME_BIN="$CHROME_BIN" \
+QA_UI_AUDIT_DIR="$TMP_DIR/ui-audit" \
+node tools/browser-ui-audit.mjs
+
+echo "Browser smoke: PASS (desktop/mobile public, auth, responsive/accessibility matrix, reader portrait/landscape)"

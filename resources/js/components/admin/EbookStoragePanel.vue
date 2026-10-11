@@ -680,7 +680,7 @@ function verificationLabel(source: FileSource) {
                     </div>
                     <div class="mt-3 h-2 overflow-hidden rounded-full bg-surface-subtle">
                         <div
-                            class="h-full rounded-full bg-primary transition-[width] duration-200"
+                            class="h-full rounded-full bg-brand transition-[width] duration-200"
                             :style="{ width: `${progress}%` }"
                         />
                     </div>
