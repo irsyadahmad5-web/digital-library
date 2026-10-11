@@ -12,17 +12,16 @@ use Tests\TestCase;
 
 class ProductionReleaseTest extends TestCase
 {
-    public function test_version_file_and_release_config_are_stable_semver(): void
+    public function test_version_file_and_release_config_follow_semver_and_channel(): void
     {
         $version = trim(
             (string) file_get_contents(base_path('VERSION')),
         );
 
-        $this->assertSame('1.0.2', $version);
         $this->assertSame($version, config('release.version'));
-        $this->assertSame('stable', config('release.channel'));
+        $this->assertSame($this->expectedChannel($version), config('release.channel'));
         $this->assertMatchesRegularExpression(
-            '/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/',
+            '/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?$/',
             $version,
         );
     }
@@ -38,8 +37,10 @@ class ProductionReleaseTest extends TestCase
         $payload = json_decode(Artisan::output(), true);
 
         $this->assertIsArray($payload);
-        $this->assertSame('1.0.2', $payload['version']);
-        $this->assertSame('stable', $payload['channel']);
+        $version = trim((string) file_get_contents(base_path('VERSION')));
+
+        $this->assertSame($version, $payload['version']);
+        $this->assertSame($this->expectedChannel($version), $payload['channel']);
     }
 
     public function test_production_release_verifier_combines_quality_operations_and_restore_gates(): void
@@ -53,8 +54,10 @@ class ProductionReleaseTest extends TestCase
         $result = $verifier->verify();
 
         $this->assertTrue($result['passed']);
-        $this->assertSame('1.0.2', $result['version']);
-        $this->assertSame('stable', $result['channel']);
+        $version = trim((string) file_get_contents(base_path('VERSION')));
+
+        $this->assertSame($version, $result['version']);
+        $this->assertSame($this->expectedChannel($version), $result['channel']);
         $this->assertNotNull($result['restore']);
 
         $keys = collect($result['checks'])
@@ -109,6 +112,8 @@ class ProductionReleaseTest extends TestCase
         $this->assertStringContainsString('--no-dev', $script);
         $this->assertStringContainsString('public/build/', $script);
         $this->assertStringContainsString('RELEASE.json', $script);
+        $this->assertStringContainsString('CHANNEL="${RELEASE_CHANNEL:-}"', $script);
+        $this->assertStringContainsString('"channel": "$CHANNEL"', $script);
         $this->assertStringContainsString('RELEASE_FILES.sha256', $script);
         $this->assertStringContainsString('digital-library-v$VERSION', $script);
         $this->assertStringContainsString('$STAGE/.env', $script);
@@ -161,7 +166,7 @@ class ProductionReleaseTest extends TestCase
         );
     }
 
-    public function test_release_changelog_and_runbook_match_the_stable_version(): void
+    public function test_release_changelog_and_runbooks_cover_candidate_and_stable_baseline(): void
     {
         $changelog = (string) file_get_contents(
             base_path('CHANGELOG.md'),
@@ -169,9 +174,12 @@ class ProductionReleaseTest extends TestCase
         $runbook = (string) file_get_contents(
             base_path('docs/PRODUCTION_RELEASE.md'),
         );
+        $candidate = (string) file_get_contents(
+            base_path('docs/RELEASE_CANDIDATE_1.1.0.md'),
+        );
 
         $this->assertStringContainsString(
-            '## [1.0.2] - 2026-10-10',
+            '## [1.1.0-rc.1] - 2026-10-11',
             $changelog,
         );
         $this->assertStringContainsString(
@@ -186,6 +194,24 @@ class ProductionReleaseTest extends TestCase
             'Do not automatically run `migrate:rollback`',
             $runbook,
         );
+        $this->assertStringContainsString(
+            '# Release Candidate 1.1.0-rc.1',
+            $candidate,
+        );
+        $this->assertStringContainsString(
+            'Production tetap pada v1.0.2',
+            $candidate,
+        );
+    }
+
+    private function expectedChannel(string $version): string
+    {
+        return match (true) {
+            str_contains($version, '-rc') => 'rc',
+            str_contains($version, '-beta') => 'beta',
+            str_contains($version, '-alpha') => 'alpha',
+            default => 'stable',
+        };
     }
 
     private function passingQuality(): ReleaseQualityGate

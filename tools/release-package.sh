@@ -10,6 +10,21 @@ PHP_BIN="${PHP_BIN:-php}"
 COMPOSER_BIN="${COMPOSER_BIN:-composer}"
 NPM_BIN="${NPM_BIN:-npm}"
 SKIP_QA="${SKIP_QA:-0}"
+CHANNEL="${RELEASE_CHANNEL:-}"
+
+if [[ -z "$CHANNEL" ]]; then
+    case "$VERSION" in
+        *-rc*) CHANNEL="rc" ;;
+        *-beta*) CHANNEL="beta" ;;
+        *-alpha*) CHANNEL="alpha" ;;
+        *) CHANNEL="stable" ;;
+    esac
+fi
+
+if [[ ! "$CHANNEL" =~ ^(stable|rc|beta|alpha)$ ]]; then
+    echo "Invalid release channel: $CHANNEL" >&2
+    exit 1
+fi
 
 if [[ ! "$VERSION" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?$ ]]; then
     echo "Invalid VERSION: $VERSION" >&2
@@ -75,7 +90,7 @@ cat > "$STAGE/RELEASE.json" <<JSON
 {
     "name": "Digital Library",
     "version": "$VERSION",
-    "channel": "stable",
+    "channel": "$CHANNEL",
     "commit": "$COMMIT",
     "short_commit": "$SHORT_COMMIT",
     "generated_at": "$GENERATED_AT",
@@ -116,4 +131,4 @@ rm -f "$ARCHIVE" "$CHECKSUM"
 echo "Release package created:"
 echo "  $ARCHIVE"
 echo "  $CHECKSUM"
-echo "  version=$VERSION commit=$COMMIT"
+echo "  version=$VERSION channel=$CHANNEL commit=$COMMIT"
