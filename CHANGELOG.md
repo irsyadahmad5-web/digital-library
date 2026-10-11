@@ -2,6 +2,24 @@
 
 All notable changes to Digital Library are documented in this file.
 
+## [1.1.0] - 2026-10-11
+
+### Changed
+
+- Promoted the complete Modern Editorial Digital Library UI/UX v2 redesign after UX-01 through UX-10 acceptance.
+- Public shell, homepage, catalog/discovery, taxonomy, book detail, PDF reader, admin workspace, authentication, PWA, offline, maintenance, and system states now share one semantic design language.
+- The interface is intentionally modern, responsive, professional, premium, compact, and consistent across desktop and mobile.
+
+### Accessibility & Quality
+
+- Added automated multi-viewport browser acceptance at 360/390/430/768/1024/1280/1440/1600 px, long-content stress, touch-target checks, accessible-name checks, keyboard-focus checks, reduced-motion verification, and reader portrait/landscape coverage.
+- Hardened semantic text contrast, high-contrast/forced-colors behavior, safe-area handling, and coarse-pointer ergonomics.
+- Release packaging continues to run the full QA and browser acceptance gates on GitHub-hosted runners before producing a verified artifact.
+
+### Release
+
+- Stable v1.1.0 release. Deployment requires the UX-12 backup, verified artifact, health, smoke, security-header, and rollback acceptance gates in `docs/PRODUCTION_RELEASE.md`.
+
 ## [1.1.0-rc.1] - 2026-10-11
 
 ### Changed
