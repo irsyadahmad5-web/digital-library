@@ -540,8 +540,15 @@ try {
         failures.push('Reduced-motion media emulation was not honored.');
     }
 
-    if (!String(reducedMotion.animation).includes('0.00001') && !String(reducedMotion.animation).includes('0s')) {
+    const reducedAnimationSeconds = Number.parseFloat(String(reducedMotion.animation));
+    const reducedTransitionSeconds = Number.parseFloat(String(reducedMotion.transition));
+
+    if (!Number.isFinite(reducedAnimationSeconds) || reducedAnimationSeconds > 0.001) {
         failures.push('Reduced-motion animation duration is not effectively disabled: ' + reducedMotion.animation);
+    }
+
+    if (!Number.isFinite(reducedTransitionSeconds) || reducedTransitionSeconds > 0.001) {
+        failures.push('Reduced-motion transition duration is not effectively disabled: ' + reducedMotion.transition);
     }
 
     await writeFile(
