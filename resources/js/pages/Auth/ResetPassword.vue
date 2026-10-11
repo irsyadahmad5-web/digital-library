@@ -1,11 +1,23 @@
 <script setup lang="ts">
+import { ref } from 'vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import {
+    ArrowLeft,
+    Eye,
+    EyeOff,
+    KeyRound,
+    Mail,
+} from '@lucide/vue';
 import { Button } from '@/components/ui/button';
+import AuthLayout from '@/layouts/AuthLayout.vue';
 
 const props = defineProps<{
     token: string;
     email: string;
 }>();
+
+const showPassword = ref(false);
+const showConfirmation = ref(false);
 
 const form = useForm({
     token: props.token,
@@ -24,39 +36,82 @@ function submit() {
 <template>
     <Head title="Buat Password Baru" />
 
-    <main class="flex min-h-dvh items-center justify-center bg-background px-5 py-10">
-        <section class="w-full max-w-md rounded-3xl border border-border bg-surface p-6 shadow-sm sm:p-8">
-            <h1 class="text-2xl font-semibold tracking-tight">Buat password baru</h1>
-            <p class="mt-2 text-sm leading-6 text-muted-foreground">
-                Minimal 10 karakter dan gunakan kombinasi huruf besar, huruf kecil, angka, serta simbol.
-            </p>
+    <AuthLayout
+        eyebrow="Account recovery"
+        title="Buat password baru"
+        description="Gunakan minimal 10 karakter dengan kombinasi huruf besar, huruf kecil, angka, dan simbol."
+    >
+        <form class="grid gap-4" @submit.prevent="submit">
+            <label class="grid gap-1.5">
+                <span class="text-xs font-semibold text-ink">Email</span>
+                <div class="ui-control ui-focus-ring flex min-h-11 items-center px-3">
+                    <Mail class="size-4 shrink-0 text-ink-faint" aria-hidden="true" />
+                    <input
+                        v-model="form.email"
+                        type="email"
+                        autocomplete="email"
+                        class="min-w-0 flex-1 bg-transparent px-2.5 text-sm text-ink outline-none"
+                    >
+                </div>
+                <p v-if="form.errors.email" class="text-xs leading-5 text-danger" role="alert">{{ form.errors.email }}</p>
+            </label>
 
-            <form class="mt-6 space-y-5" @submit.prevent="submit">
-                <label class="block">
-                    <span class="mb-2 block text-sm font-medium">Email</span>
-                    <input v-model="form.email" type="email" autocomplete="email" class="min-h-12 w-full rounded-xl border border-border bg-background px-4 text-sm outline-none">
-                    <p v-if="form.errors.email" class="mt-2 text-sm text-red-600">{{ form.errors.email }}</p>
-                </label>
+            <label class="grid gap-1.5">
+                <span class="text-xs font-semibold text-ink">Password baru</span>
+                <div class="ui-control ui-focus-ring flex min-h-11 items-center px-3">
+                    <KeyRound class="size-4 shrink-0 text-ink-faint" aria-hidden="true" />
+                    <input
+                        v-model="form.password"
+                        :type="showPassword ? 'text' : 'password'"
+                        autocomplete="new-password"
+                        class="min-w-0 flex-1 bg-transparent px-2.5 text-sm text-ink outline-none"
+                    >
+                    <button
+                        type="button"
+                        class="grid size-9 shrink-0 place-items-center rounded-[var(--radius-md)] text-ink-faint hover:bg-surface-subtle hover:text-ink"
+                        :aria-label="showPassword ? 'Sembunyikan password baru' : 'Tampilkan password baru'"
+                        @click="showPassword = !showPassword"
+                    >
+                        <EyeOff v-if="showPassword" class="size-4" />
+                        <Eye v-else class="size-4" />
+                    </button>
+                </div>
+                <p v-if="form.errors.password" class="text-xs leading-5 text-danger" role="alert">{{ form.errors.password }}</p>
+            </label>
 
-                <label class="block">
-                    <span class="mb-2 block text-sm font-medium">Password baru</span>
-                    <input v-model="form.password" type="password" autocomplete="new-password" class="min-h-12 w-full rounded-xl border border-border bg-background px-4 text-sm outline-none">
-                    <p v-if="form.errors.password" class="mt-2 text-sm text-red-600">{{ form.errors.password }}</p>
-                </label>
+            <label class="grid gap-1.5">
+                <span class="text-xs font-semibold text-ink">Ulangi password</span>
+                <div class="ui-control ui-focus-ring flex min-h-11 items-center px-3">
+                    <KeyRound class="size-4 shrink-0 text-ink-faint" aria-hidden="true" />
+                    <input
+                        v-model="form.password_confirmation"
+                        :type="showConfirmation ? 'text' : 'password'"
+                        autocomplete="new-password"
+                        class="min-w-0 flex-1 bg-transparent px-2.5 text-sm text-ink outline-none"
+                    >
+                    <button
+                        type="button"
+                        class="grid size-9 shrink-0 place-items-center rounded-[var(--radius-md)] text-ink-faint hover:bg-surface-subtle hover:text-ink"
+                        :aria-label="showConfirmation ? 'Sembunyikan konfirmasi password' : 'Tampilkan konfirmasi password'"
+                        @click="showConfirmation = !showConfirmation"
+                    >
+                        <EyeOff v-if="showConfirmation" class="size-4" />
+                        <Eye v-else class="size-4" />
+                    </button>
+                </div>
+            </label>
 
-                <label class="block">
-                    <span class="mb-2 block text-sm font-medium">Ulangi password</span>
-                    <input v-model="form.password_confirmation" type="password" autocomplete="new-password" class="min-h-12 w-full rounded-xl border border-border bg-background px-4 text-sm outline-none">
-                </label>
+            <Button class="w-full" size="large" :disabled="form.processing">
+                <KeyRound class="size-4" />
+                {{ form.processing ? 'Menyimpan…' : 'Simpan password baru' }}
+            </Button>
+        </form>
 
-                <Button class="w-full" size="large" :disabled="form.processing">
-                    Simpan password baru
-                </Button>
-            </form>
-
-            <Link href="/admin/login" class="mt-6 block text-center text-sm text-muted-foreground hover:text-foreground">
-                ← Kembali ke login
+        <template #footer>
+            <Link href="/admin/login" class="inline-flex items-center gap-1.5 font-semibold text-ink-soft hover:text-ink">
+                <ArrowLeft class="size-3.5" />
+                Kembali ke login
             </Link>
-        </section>
-    </main>
+        </template>
+    </AuthLayout>
 </template>

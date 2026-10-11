@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { ArrowLeft, BookOpen } from '@lucide/vue';
+import { ArrowLeft, BookOpen, Search } from '@lucide/vue';
 import SeoHead from '@/components/public/SeoHead.vue';
 import PublicLayout from '@/layouts/PublicLayout.vue';
+import { Button } from '@/components/ui/button';
 import type { SeoPayload } from '@/types/seo';
 
 defineProps<{
@@ -14,31 +15,33 @@ defineProps<{
     <SeoHead :seo="seo" />
 
     <PublicLayout>
-        <section class="mx-auto px-5 py-20 sm:px-8 sm:py-28" style="max-width: var(--content-max-width)">
-            <div class="mx-auto max-w-xl text-center">
-                <div class="mx-auto flex size-14 items-center justify-center rounded-2xl bg-muted">
-                    <BookOpen class="size-6 text-primary" />
-                </div>
-                <p class="mt-7 text-sm font-semibold text-primary">404</p>
-                <h1 class="mt-2 text-4xl font-semibold tracking-tight">Halaman tidak ditemukan</h1>
-                <p class="mt-4 text-base leading-7 text-muted-foreground">
-                    Tautan yang Anda buka mungkin sudah berubah, tidak tersedia, atau belum dipublikasikan.
+        <section class="ui-page-shell flex min-h-[62vh] items-center justify-center py-14 sm:py-20">
+            <div class="w-full max-w-xl text-center">
+                <span class="mx-auto grid size-11 place-items-center rounded-[var(--radius-lg)] bg-brand-soft text-brand">
+                    <BookOpen class="size-5" />
+                </span>
+
+                <p class="mt-5 text-[11px] font-semibold uppercase tracking-[0.14em] text-brand">404 · Tidak ditemukan</p>
+                <h1 class="mt-2 text-balance text-3xl font-semibold tracking-[-0.03em] text-ink sm:text-4xl">
+                    Halaman ini tidak tersedia
+                </h1>
+                <p class="mx-auto mt-3 max-w-lg text-sm leading-6 text-ink-soft">
+                    Tautan mungkin sudah berubah, belum dipublikasikan, atau tidak lagi tersedia. Anda tetap dapat melanjutkan dari katalog.
                 </p>
 
-                <div class="mt-8 flex flex-wrap justify-center gap-3">
-                    <Link
-                        href="/library"
-                        class="inline-flex min-h-11 items-center rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground"
-                    >
-                        Buka katalog
-                    </Link>
-                    <Link
-                        href="/"
-                        class="inline-flex min-h-11 items-center gap-2 rounded-xl border border-border bg-surface px-5 text-sm font-semibold"
-                    >
-                        <ArrowLeft class="size-4" />
-                        Kembali ke beranda
-                    </Link>
+                <div class="mt-6 flex flex-wrap justify-center gap-2">
+                    <Button as-child>
+                        <Link href="/library">
+                            <Search class="size-4" />
+                            Buka katalog
+                        </Link>
+                    </Button>
+                    <Button as-child variant="secondary">
+                        <Link href="/">
+                            <ArrowLeft class="size-4" />
+                            Kembali ke beranda
+                        </Link>
+                    </Button>
                 </div>
             </div>
         </section>

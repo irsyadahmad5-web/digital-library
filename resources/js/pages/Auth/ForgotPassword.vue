@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
-import { Mail } from '@lucide/vue';
+import { ArrowLeft, Mail, Send } from '@lucide/vue';
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import AuthLayout from '@/layouts/AuthLayout.vue';
 import type { SharedPageProps } from '@/types';
 
 const page = usePage<SharedPageProps>();
@@ -15,35 +17,41 @@ function submit() {
 <template>
     <Head title="Lupa Password" />
 
-    <main class="flex min-h-dvh items-center justify-center bg-background px-5 py-10">
-        <section class="w-full max-w-md rounded-3xl border border-border bg-surface p-6 shadow-sm sm:p-8">
-            <h1 class="text-2xl font-semibold tracking-tight">Reset password</h1>
-            <p class="mt-2 text-sm leading-6 text-muted-foreground">
-                Masukkan email admin. Jika akun terdaftar, sistem akan mengirim tautan reset.
-            </p>
+    <AuthLayout
+        eyebrow="Account recovery"
+        title="Reset password"
+        description="Masukkan email admin. Jika akun terdaftar, sistem akan mengirim tautan reset."
+    >
+        <Alert v-if="page.props.flash.status" tone="success" :title="page.props.flash.status" />
 
-            <div v-if="page.props.flash.status" class="mt-5 rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                {{ page.props.flash.status }}
-            </div>
+        <form class="grid gap-4" :class="page.props.flash.status ? 'mt-4' : ''" @submit.prevent="submit">
+            <label class="grid gap-1.5">
+                <span class="text-xs font-semibold text-ink">Email</span>
+                <div class="ui-control ui-focus-ring flex min-h-11 items-center px-3">
+                    <Mail class="size-4 shrink-0 text-ink-faint" aria-hidden="true" />
+                    <input
+                        v-model="form.email"
+                        type="email"
+                        autocomplete="email"
+                        autofocus
+                        class="min-w-0 flex-1 bg-transparent px-2.5 text-sm text-ink outline-none placeholder:text-ink-faint"
+                        placeholder="admin@example.com"
+                    >
+                </div>
+                <p v-if="form.errors.email" class="text-xs leading-5 text-danger" role="alert">{{ form.errors.email }}</p>
+            </label>
 
-            <form class="mt-6 space-y-5" @submit.prevent="submit">
-                <label class="block">
-                    <span class="mb-2 block text-sm font-medium">Email</span>
-                    <div class="flex min-h-12 items-center gap-3 rounded-xl border border-border bg-background px-4">
-                        <Mail class="size-4 text-muted-foreground" />
-                        <input v-model="form.email" type="email" autocomplete="email" class="min-w-0 flex-1 bg-transparent text-sm outline-none">
-                    </div>
-                    <p v-if="form.errors.email" class="mt-2 text-sm text-red-600">{{ form.errors.email }}</p>
-                </label>
+            <Button class="w-full" size="large" :disabled="form.processing">
+                <Send class="size-4" />
+                {{ form.processing ? 'Mengirim…' : 'Kirim tautan reset' }}
+            </Button>
+        </form>
 
-                <Button class="w-full" size="large" :disabled="form.processing">
-                    Kirim tautan reset
-                </Button>
-            </form>
-
-            <Link href="/admin/login" class="mt-6 block text-center text-sm text-muted-foreground hover:text-foreground">
-                ← Kembali ke login
+        <template #footer>
+            <Link href="/admin/login" class="inline-flex items-center gap-1.5 font-semibold text-ink-soft hover:text-ink">
+                <ArrowLeft class="size-3.5" />
+                Kembali ke login
             </Link>
-        </section>
-    </main>
+        </template>
+    </AuthLayout>
 </template>
