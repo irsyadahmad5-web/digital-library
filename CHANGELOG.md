@@ -2,6 +2,25 @@
 
 All notable changes to Digital Library are documented in this file.
 
+## [1.1.0-rc.1] - 2026-10-11
+
+### Changed
+
+- Rebuilt the frontend around the Modern Editorial Digital Library direction with a semantic design system shared by public, reader, admin, authentication, PWA, and system states.
+- Redesigned public navigation, homepage, catalog/discovery, taxonomy directories, book detail, reader controls, and responsive mobile flows with compact professional hierarchy.
+- Redesigned the complete admin workspace including collapsible grouped navigation, dashboard/analytics, ebook management, master data, homepage builder, settings, audit log, and profile/security.
+- Unified login, password recovery, maintenance, offline, 404, About, and Contact experiences with the v2 visual language.
+
+### Accessibility & QA
+
+- Hardened semantic text contrast, keyboard focus visibility, reduced-motion, increased-contrast, forced-colors, safe-area, and coarse-pointer touch behavior.
+- Added automated Chrome acceptance across 360/390/430/768/1024/1280/1440/1600 px, long-content stress, accessible-name checks, touch targets, keyboard focus, reduced motion, and reader portrait/landscape.
+- Kept heavy QA and release packaging on GitHub-hosted runners so production is not used as a build machine.
+
+### Release
+
+- First v1.1.0 release candidate. Production remains on v1.0.2 until the final UX-12 deployment and production acceptance gate passes.
+
 ## [1.0.2] - 2026-10-10
 
 ### Fixed
