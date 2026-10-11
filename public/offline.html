@@ -3,83 +3,157 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="theme-color" content="#2563EB">
+    <meta name="theme-color" content="#3157D5">
     <meta name="robots" content="noindex,nofollow,noarchive">
     <title>Offline · Digital Library</title>
     <style>
-        * { box-sizing: border-box; }
-        html {
-            min-height: 100%;
-            background: #f8fafc;
-            color: #0f172a;
-            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        :root {
+            color-scheme: light;
+            --canvas: #f7f6f2;
+            --surface: #ffffff;
+            --ink: #172033;
+            --ink-soft: #5d6678;
+            --line: #e6e3dc;
+            --brand: #3157d5;
+            --brand-soft: #eef2ff;
+            --radius-md: 10px;
+            --radius-xl: 20px;
         }
+
+        * { box-sizing: border-box; }
+
+        html {
+            min-width: 320px;
+            min-height: 100%;
+            background: var(--canvas);
+            color: var(--ink);
+            font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
         body {
             margin: 0;
             min-height: 100dvh;
             display: grid;
             place-items: center;
-            padding: max(24px, env(safe-area-inset-top))
-                max(20px, env(safe-area-inset-right))
+            padding:
+                max(24px, env(safe-area-inset-top))
+                max(16px, env(safe-area-inset-right))
                 max(24px, env(safe-area-inset-bottom))
-                max(20px, env(safe-area-inset-left));
+                max(16px, env(safe-area-inset-left));
         }
+
         main {
-            width: min(100%, 440px);
-            border: 1px solid #e2e8f0;
-            border-radius: 24px;
-            background: #fff;
-            padding: 28px;
-            box-shadow: 0 20px 50px rgba(15, 23, 42, .08);
+            width: min(100%, 480px);
+            border: 1px solid var(--line);
+            border-radius: var(--radius-xl);
+            background: var(--surface);
+            padding: clamp(20px, 5vw, 28px);
+            box-shadow: 0 16px 38px -22px rgb(23 32 51 / .34);
         }
-        .icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 16px;
+
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--ink-soft);
+        }
+
+        .mark {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-md);
             display: grid;
             place-items: center;
-            background: #eff6ff;
-            color: #2563eb;
+            background: var(--brand);
+            color: #fff;
+            font-size: 12px;
             font-weight: 800;
         }
+
+        .eyebrow {
+            margin: 24px 0 0;
+            color: var(--brand);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+        }
+
         h1 {
-            margin: 20px 0 0;
-            font-size: 24px;
-            line-height: 1.2;
+            margin: 7px 0 0;
+            font-size: clamp(24px, 7vw, 32px);
+            line-height: 1.15;
             letter-spacing: -.03em;
         }
+
         p {
             margin: 12px 0 0;
-            color: #64748b;
+            color: var(--ink-soft);
             font-size: 14px;
             line-height: 1.7;
         }
+
         button {
             margin-top: 22px;
-            min-height: 46px;
+            min-height: 44px;
             width: 100%;
             border: 0;
-            border-radius: 14px;
-            background: #0f172a;
+            border-radius: var(--radius-md);
+            background: var(--brand);
             color: #fff;
             font: inherit;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 700;
             cursor: pointer;
+        }
+
+        button:focus-visible {
+            outline: 2px solid var(--brand);
+            outline-offset: 3px;
+        }
+
+        .hint {
+            margin-top: 14px;
+            font-size: 11px;
+            line-height: 1.6;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                scroll-behavior: auto !important;
+                animation-duration: .01ms !important;
+                transition-duration: .01ms !important;
+            }
+        }
+
+        @media (forced-colors: active) {
+            button {
+                border: 1px solid ButtonText;
+            }
         }
     </style>
 </head>
 <body>
     <main>
-        <div class="icon" aria-hidden="true">DL</div>
+        <div class="brand">
+            <span class="mark" aria-hidden="true">DL</span>
+            <span>Digital Library</span>
+        </div>
+
+        <p class="eyebrow">Mode offline</p>
         <h1>Koneksi internet tidak tersedia.</h1>
         <p>
-            Digital Library tetap terpasang, tetapi katalog terbaru dan file PDF
-            membutuhkan koneksi internet. Sambungkan perangkat lalu coba lagi.
+            Halaman yang sudah terbuka mungkin masih dapat digunakan, tetapi katalog terbaru dan file PDF membutuhkan koneksi internet.
         </p>
+
         <form action="/" method="get">
             <button type="submit">Coba lagi</button>
         </form>
+
+        <p class="hint">Sambungkan perangkat ke internet, lalu coba kembali ke perpustakaan.</p>
     </main>
 </body>
 </html>

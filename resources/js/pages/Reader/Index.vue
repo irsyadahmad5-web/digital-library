@@ -1553,7 +1553,7 @@ onBeforeUnmount(async () => {
                         aria-modal="true"
                         aria-labelledby="resume-reading-title"
                     >
-                        <div class="flex size-11 items-center justify-center rounded-2xl bg-blue-500/15 text-blue-300">
+                        <div class="flex size-11 items-center justify-center rounded-[var(--radius-lg)] bg-blue-500/15 text-blue-300">
                             <BookOpen class="size-5" />
                         </div>
 
@@ -1656,7 +1656,7 @@ onBeforeUnmount(async () => {
 
                     <p
                         v-else-if="searchQuery.trim() !== '' && searchResults.length === 0 && searchProgress === 100"
-                        class="mt-5 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-slate-400"
+                        class="mt-5 rounded-[var(--radius-lg)] border border-white/10 bg-white/[0.03] p-4 text-sm text-slate-400"
                     >
                         Teks tidak ditemukan.
                     </p>
@@ -1670,7 +1670,7 @@ onBeforeUnmount(async () => {
                             v-for="result in searchResults"
                             :key="result.pageNumber"
                             type="button"
-                            class="w-full rounded-2xl border border-white/10 bg-white/[0.03] p-3 text-left hover:border-white/20 hover:bg-white/[0.06]"
+                            class="w-full rounded-[var(--radius-lg)] border border-white/10 bg-white/[0.03] p-3 text-left hover:border-white/20 hover:bg-white/[0.06]"
                             @click="selectSearchResult(result.pageNumber)"
                         >
                             <div class="flex items-center justify-between gap-3">
@@ -1705,7 +1705,7 @@ onBeforeUnmount(async () => {
                         <div class="mt-3 grid grid-cols-3 gap-2">
                             <button
                                 type="button"
-                                class="rounded-2xl border p-3 text-center text-xs font-semibold transition"
+                                class="rounded-[var(--radius-lg)] border p-3 text-center text-xs font-semibold transition"
                                 :class="readerMode === 'continuous'
                                     ? 'border-blue-400/70 bg-blue-500/15 text-white'
                                     : 'border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.06]'"
@@ -1717,7 +1717,7 @@ onBeforeUnmount(async () => {
 
                             <button
                                 type="button"
-                                class="rounded-2xl border p-3 text-center text-xs font-semibold transition"
+                                class="rounded-[var(--radius-lg)] border p-3 text-center text-xs font-semibold transition"
                                 :class="readerMode === 'single'
                                     ? 'border-blue-400/70 bg-blue-500/15 text-white'
                                     : 'border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.06]'"
@@ -1729,7 +1729,7 @@ onBeforeUnmount(async () => {
 
                             <button
                                 type="button"
-                                class="rounded-2xl border p-3 text-center text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-40"
+                                class="rounded-[var(--radius-lg)] border p-3 text-center text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-40"
                                 :class="readerMode === 'book'
                                     ? 'border-blue-400/70 bg-blue-500/15 text-white'
                                     : 'border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.06]'"
@@ -1753,7 +1753,7 @@ onBeforeUnmount(async () => {
                         <div class="mt-3 grid grid-cols-3 gap-2">
                             <button
                                 type="button"
-                                class="rounded-2xl border p-3 text-xs font-semibold"
+                                class="rounded-[var(--radius-lg)] border p-3 text-xs font-semibold"
                                 :class="readerTheme === 'light'
                                     ? 'border-blue-400/70 bg-blue-500/15 text-white'
                                     : 'border-white/10 bg-white/[0.03] text-slate-300'"
@@ -1764,7 +1764,7 @@ onBeforeUnmount(async () => {
                             </button>
                             <button
                                 type="button"
-                                class="rounded-2xl border p-3 text-xs font-semibold"
+                                class="rounded-[var(--radius-lg)] border p-3 text-xs font-semibold"
                                 :class="readerTheme === 'sepia'
                                     ? 'border-amber-300/60 bg-amber-300/10 text-white'
                                     : 'border-white/10 bg-white/[0.03] text-slate-300'"
@@ -1775,7 +1775,7 @@ onBeforeUnmount(async () => {
                             </button>
                             <button
                                 type="button"
-                                class="rounded-2xl border p-3 text-xs font-semibold"
+                                class="rounded-[var(--radius-lg)] border p-3 text-xs font-semibold"
                                 :class="readerTheme === 'dark'
                                     ? 'border-blue-400/70 bg-blue-500/15 text-white'
                                     : 'border-white/10 bg-white/[0.03] text-slate-300'"
@@ -1868,7 +1868,7 @@ onBeforeUnmount(async () => {
                         </button>
                     </section>
 
-                    <section class="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                    <section class="rounded-[var(--radius-lg)] border border-white/10 bg-white/[0.03] p-4">
                         <p class="text-xs font-semibold text-white">Shortcut</p>
                         <div class="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-[11px] text-slate-400">
                             <span>← / →</span><span>Halaman</span>
@@ -1880,7 +1880,7 @@ onBeforeUnmount(async () => {
                         </div>
                     </section>
 
-                    <section class="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                    <section class="rounded-[var(--radius-lg)] border border-white/10 bg-white/[0.03] p-4">
                         <div class="flex items-center justify-between gap-3">
                             <div>
                                 <p class="text-xs font-semibold text-white">Penyimpanan lokal</p>

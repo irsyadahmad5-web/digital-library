@@ -90,7 +90,7 @@ onBeforeUnmount(() => {
     <button
         ref="root"
         type="button"
-        class="group flex w-full items-center gap-3 rounded-2xl border p-2 text-left transition"
+        class="group flex w-full items-center gap-3 rounded-[var(--radius-lg)] border p-2 text-left transition"
         :class="active
             ? 'border-blue-400/70 bg-blue-500/15'
             : 'border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.06]'"

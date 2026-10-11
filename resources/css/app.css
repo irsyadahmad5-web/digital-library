@@ -11,8 +11,8 @@
     --surface-subtle: #f2f1ec;
     --surface-elevated: #ffffff;
     --ink: #172033;
-    --ink-soft: #667085;
-    --ink-faint: #98a2b3;
+    --ink-soft: #5d6678;
+    --ink-faint: #667085;
     --line: #e6e3dc;
     --line-strong: #d6d2c9;
     --brand: #3157d5;
@@ -21,7 +21,7 @@
     --brand-foreground: #ffffff;
     --success: #267a55;
     --success-soft: #edf8f2;
-    --warning: #a76512;
+    --warning: #9a5f10;
     --warning-soft: #fff7e8;
     --danger: #b42318;
     --danger-soft: #fff0ee;
@@ -239,6 +239,35 @@
     }
 }
 
+@media (prefers-contrast: more) {
+    :root {
+        --ink-soft: #475467;
+        --ink-faint: #475467;
+        --line: #b7b2a8;
+        --line-strong: #8f897e;
+    }
+
+    .dark {
+        --ink-soft: #d0d7e3;
+        --ink-faint: #c0cad9;
+        --line: #526075;
+        --line-strong: #74829a;
+    }
+}
+
+@media (forced-colors: active) {
+    :focus-visible {
+        outline: 2px solid Highlight;
+        outline-offset: 2px;
+    }
+
+    .ui-control,
+    button,
+    [role='button'] {
+        forced-color-adjust: auto;
+    }
+}
+
 .safe-top { padding-top: env(safe-area-inset-top); }
 .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
 .safe-x {
@@ -284,10 +313,23 @@
 
 @media (pointer: coarse) {
     button,
+    [role='button'],
     a,
     input,
     select,
     textarea {
         touch-action: manipulation;
+    }
+
+    button:not([role='checkbox']):not([role='switch']),
+    [role='button'],
+    a[aria-label] {
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    .ui-control,
+    select {
+        min-height: 44px;
     }
 }
