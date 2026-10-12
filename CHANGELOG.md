@@ -2,6 +2,26 @@
 
 All notable changes to Digital Library are documented in this file.
 
+## [1.5.1] - 2026-10-13
+
+### Changed
+
+- Reworked the public Hero Slider into a full-bleed image-only banner that attaches directly beneath the public top bar with no side gutters, card radius, text overlay, description, or CTA.
+- Standardized slider proportions to horizontal formats on every breakpoint: 1920 × 720 (8:3) guidance for desktop and 1280 × 720 (16:9) guidance for mobile.
+- Navigation arrows and position indicators now use translucent controls that reveal during interaction and automatically fade away while idle.
+- Homepage Builder now focuses slider editing on responsive image uploads, ordering, accessibility alt text, autoplay, interval, arrows, and indicators; the obsolete overlay-strength and public title/CTA editing controls are removed from the active schema.
+- Public pages now use the same compact auto-hiding document scrollbar behavior as the admin workspace.
+
+### Quality
+
+- Added regression coverage for full-bleed image-only rendering, horizontal desktop/mobile ratios, idle-hidden slider controls, the simplified admin slider editor, and the public auto-hiding root scrollbar.
+- Frontend typecheck/build passed and the complete PHP suite passed with 227 tests and 2,314 assertions before release promotion.
+
+### Release
+
+- Stable presentation patch based on v1.5.0. No new database migration is required.
+- Production upgrade still requires verified backup/restore-readiness, release artifact checksum validation, Homepage Builder/public slider smoke, public scrollbar smoke, security/health gates, and rollback readiness.
+
 ## [1.5.0] - 2026-10-12
 
 ### Fixed

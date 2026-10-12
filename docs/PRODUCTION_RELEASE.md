@@ -1,6 +1,6 @@
-# Production Release 1.5.0
+# Production Release 1.5.1
 
-Digital Library 1.5.0 is the stable Batch E homepage-experience release. It keeps the v1.4.0 admin-scrollbar polish while recovering the Homepage Builder, adding a visible starter carousel with responsive admin image uploads, and redesigning the public footer with navigation, contact, CTA, and privacy-safe aggregate statistics.
+Digital Library 1.5.1 is the stable presentation patch on top of v1.5.0. It keeps the Homepage Builder recovery and modern footer while changing the public Hero Slider to a full-bleed, image-only horizontal banner, simplifying slider administration, auto-hiding translucent carousel controls, and bringing the admin-style compact auto-hiding document scrollbar to public pages.
 
 ## Release artifact
 
@@ -13,8 +13,8 @@ composer release:package
 The packaging command runs the full QA gate and browser smoke test, rebuilds frontend assets, exports only tracked source files, installs optimized production Composer dependencies without dev packages, adds `RELEASE.json`, generates `RELEASE_FILES.sha256`, and creates:
 
 ```text
-dist/digital-library-v1.5.0.zip
-dist/digital-library-v1.5.0.zip.sha256
+dist/digital-library-v1.5.1.zip
+dist/digital-library-v1.5.1.zip.sha256
 ```
 
 The archive deliberately excludes `.env`, Git metadata, `node_modules`, runtime logs, backups, uploaded ebooks, and other server state. It includes the full application source, migrations, tests/documentation, production `vendor/`, and compiled `public/build/`.
@@ -23,7 +23,7 @@ Verify the ZIP before deployment:
 
 ```bash
 cd dist
-sha256sum -c digital-library-v1.5.0.zip.sha256
+sha256sum -c digital-library-v1.5.1.zip.sha256
 ```
 
 After extraction, `RELEASE_FILES.sha256` can be used to validate all packaged files.
@@ -121,6 +121,8 @@ The release is ready to open publicly only when:
 - Admin main document scrollbar is compact and visually idle-hidden, revealing during scroll/wheel activity or when the pointer approaches the right edge.
 - Admin sidebar and nested overflow regions use thin rounded scrollbars that reveal on hover/focus, with forced-colors fallback preserved.
 - Authenticated /admin/homepage-builder renders its admin shell and Homepage Builder content instead of a blank client page; the deployed frontend bundle no longer contains the unsafe structuredClone(section.config) path.
-- Homepage hero contains at least one rendered carousel slide after migration. On sites with no uploaded hero images, the three starter editorial slides render; uploaded desktop/mobile images replace the starter visual per slide.
-- Homepage Builder exposes desktop 1920 × 820 and mobile 1080 × 1350 upload guidance and preserves existing custom slide media.
+- Homepage Hero Slider renders only slides backed by an uploaded desktop or mobile image; the slider itself contains no public title, description, overlay, or CTA. If no slider image is available, the homepage uses the non-carousel hero fallback instead of fabricating an image slide.
+- The Hero Slider is full-bleed directly beneath the public top bar, stays horizontal on desktop and mobile, uses translucent navigation controls that auto-hide while idle, and preserves keyboard/reduced-motion behavior.
+- Homepage Builder exposes desktop 1920 × 720 (8:3) and mobile 1280 × 720 (16:9) horizontal upload guidance, keeps existing custom slide media, and no longer exposes overlay/title/CTA presentation controls for the slider.
+- Public document scrollbar is compact and visually idle-hidden, revealing briefly during scroll/wheel/touch activity or when the pointer approaches the right edge, with forced-colors fallback preserved.
 - Public footer renders the new editorial CTA, site/navigation/contact columns, and aggregate Buku publik/Pembacaan/Kategori/Penulis statistics without exposing visitor identities.

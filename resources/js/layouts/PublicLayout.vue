@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import {
     ArrowRight,
@@ -24,6 +24,7 @@ const page = usePage<SharedPageProps>();
 const site = page.props.site;
 const mobileOpen = ref(false);
 const searchOpen = ref(false);
+let rootScrollbarTimer: number | null = null;
 
 const siteName = computed(() => String(site.general.site_name || 'Digital Library'));
 const logoUrl = computed(() => site.general.logo_url ? String(site.general.logo_url) : null);
@@ -105,13 +106,57 @@ function toggleSearch() {
 
 const removeNavigateListener = router.on('navigate', closeOverlays);
 
+function hideRootScrollbarSoon() {
+    if (rootScrollbarTimer !== null) {
+        window.clearTimeout(rootScrollbarTimer);
+    }
+
+    rootScrollbarTimer = window.setTimeout(() => {
+        document.documentElement.classList.remove('public-scrollbar-active');
+        rootScrollbarTimer = null;
+    }, 850);
+}
+
+function activateRootScrollbar() {
+    document.documentElement.classList.add('public-scrollbar-active');
+    hideRootScrollbarSoon();
+}
+
+function revealRootScrollbarNearEdge(event: PointerEvent) {
+    if (window.innerWidth - event.clientX <= 36) {
+        activateRootScrollbar();
+    }
+}
+
+onMounted(() => {
+    document.documentElement.classList.add('public-scrollbar-scope');
+    window.addEventListener('scroll', activateRootScrollbar, { passive: true });
+    window.addEventListener('wheel', activateRootScrollbar, { passive: true });
+    window.addEventListener('touchmove', activateRootScrollbar, { passive: true });
+    window.addEventListener('pointermove', revealRootScrollbarNearEdge, { passive: true });
+});
+
 onBeforeUnmount(() => {
     removeNavigateListener();
+    window.removeEventListener('scroll', activateRootScrollbar);
+    window.removeEventListener('wheel', activateRootScrollbar);
+    window.removeEventListener('touchmove', activateRootScrollbar);
+    window.removeEventListener('pointermove', revealRootScrollbarNearEdge);
+
+    if (rootScrollbarTimer !== null) {
+        window.clearTimeout(rootScrollbarTimer);
+        rootScrollbarTimer = null;
+    }
+
+    document.documentElement.classList.remove(
+        'public-scrollbar-scope',
+        'public-scrollbar-active',
+    );
 });
 </script>
 
 <template>
-    <div class="safe-x min-h-screen bg-canvas text-ink" :style="themeStyle">
+    <div class="public-shell safe-x min-h-screen bg-canvas text-ink" :style="themeStyle">
         <Head>
             <link v-if="faviconUrl" head-key="favicon" rel="icon" :href="faviconUrl">
         </Head>

@@ -12,7 +12,7 @@ class HomepageSectionRegistry
         return [
             'hero' => [
                 'label' => 'Hero Slider',
-                'description' => 'Slider gambar utama responsif dengan gambar desktop dan mobile terpisah.',
+                'description' => 'Slider gambar penuh responsif tanpa teks/CTA, dengan gambar desktop dan mobile horizontal terpisah.',
                 'provider_available' => true,
                 'provider_note' => null,
                 'default_enabled' => true,
@@ -20,9 +20,8 @@ class HomepageSectionRegistry
                 'fields' => [
                     'autoplay' => $this->boolean('Putar otomatis', true),
                     'interval_seconds' => $this->number('Interval slide (detik)', 6, 4, 12),
-                    'show_arrows' => $this->boolean('Tampilkan tombol navigasi', true),
-                    'show_dots' => $this->boolean('Tampilkan indikator slide', true),
-                    'overlay_strength' => $this->number('Kekuatan overlay (%)', 42, 0, 80),
+                    'show_arrows' => $this->boolean('Tampilkan tombol geser', true),
+                    'show_dots' => $this->boolean('Tampilkan indikator posisi', true),
                 ],
             ],
             'latest_books' => [

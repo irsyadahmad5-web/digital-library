@@ -62,7 +62,7 @@ function addSlide() {
         title: '',
         subtitle: '',
         alt: '',
-        cta_label: 'Buka katalog',
+        cta_label: '',
         cta_href: '/library',
         desktop_path: null,
         mobile_path: null,
@@ -145,8 +145,8 @@ onBeforeUnmount(() => {
         <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
                 <p class="text-xs font-semibold text-ink">Gambar slider</p>
-                <p class="mt-1 max-w-2xl text-[11px] leading-5 text-ink-faint">
-                    Maksimal 6 slide. Gunakan dua gambar per slide agar proporsi desktop dan mobile tetap rapi tanpa gambar terlihat melebar.
+                <p class="mt-1 max-w-3xl text-[11px] leading-5 text-ink-faint">
+                    Slider publik hanya menampilkan gambar tanpa judul, deskripsi, overlay, atau tombol CTA. Maksimal 6 slide. Gunakan gambar horizontal terpisah untuk desktop dan mobile agar komposisi tetap tajam dan tidak terpotong berlebihan.
                 </p>
             </div>
             <Button
@@ -161,6 +161,13 @@ onBeforeUnmount(() => {
             </Button>
         </div>
 
+        <div
+            class="mt-4 rounded-[var(--radius-md)] border border-brand/20 bg-brand-soft/55 px-3 py-2.5 text-[11px] leading-5 text-ink-soft"
+        >
+            <strong class="text-ink">Konsep tampilan:</strong>
+            full-width menempel tepat di bawah top bar, rasio horizontal di desktop maupun mobile, gambar memakai object-cover, dan kontrol navigasi transparan akan otomatis menghilang saat tidak digunakan.
+        </div>
+
         <div v-if="slides.length" class="mt-4 grid gap-4">
             <article
                 v-for="(slide, index) in slides"
@@ -172,9 +179,10 @@ onBeforeUnmount(() => {
                         <span class="grid size-7 place-items-center rounded-[var(--radius-sm)] bg-brand-soft text-[10px] font-semibold text-brand">
                             {{ index + 1 }}
                         </span>
-                        <p class="truncate text-xs font-semibold text-ink">
-                            {{ slide.title || 'Slide baru' }}
-                        </p>
+                        <div class="min-w-0">
+                            <p class="truncate text-xs font-semibold text-ink">Slide {{ index + 1 }}</p>
+                            <p class="mt-0.5 text-[10px] text-ink-faint">Gambar saja · tanpa teks publik</p>
+                        </div>
                     </div>
 
                     <div class="flex shrink-0 gap-1">
@@ -207,23 +215,25 @@ onBeforeUnmount(() => {
                     </div>
                 </header>
 
-                <div class="grid gap-4 p-3 sm:p-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(280px,.8fr)]">
-                    <div class="grid gap-2">
+                <div class="grid gap-4 p-3 sm:p-4 xl:grid-cols-2">
+                    <div class="grid content-start gap-2">
                         <div>
                             <p class="text-xs font-semibold text-ink">Gambar desktop</p>
-                            <p class="mt-0.5 text-[10px] text-ink-faint">Rekomendasi 1920 × 820 px · format lebar · fokus utama di area tengah · JPG/PNG/WebP · maks. 8 MB</p>
+                            <p class="mt-0.5 text-[10px] leading-4 text-ink-faint">
+                                Rekomendasi 1920 × 720 px · rasio 8:3 · horizontal · fokus penting di area tengah · JPG/PNG/WebP · maks. 8 MB
+                            </p>
                         </div>
 
-                        <div class="aspect-video overflow-hidden rounded-[var(--radius-md)] border border-dashed border-line bg-surface">
+                        <div class="aspect-[8/3] overflow-hidden rounded-[var(--radius-md)] border border-dashed border-line bg-surface">
                             <img
                                 v-if="preview(slide, 'desktop')"
                                 :src="String(preview(slide, 'desktop'))"
                                 alt=""
                                 class="size-full object-cover"
                             >
-                            <div v-else class="flex size-full flex-col items-center justify-center gap-2 text-center text-ink-faint">
+                            <div v-else class="flex size-full flex-col items-center justify-center gap-2 px-3 text-center text-ink-faint">
                                 <ImagePlus class="size-6" />
-                                <span class="text-[10px]">Belum ada gambar desktop</span>
+                                <span class="text-[10px]">Belum ada gambar desktop horizontal</span>
                             </div>
                         </div>
 
@@ -249,13 +259,15 @@ onBeforeUnmount(() => {
                         </div>
                     </div>
 
-                    <div class="grid gap-2">
+                    <div class="grid content-start gap-2">
                         <div>
                             <p class="text-xs font-semibold text-ink">Gambar mobile</p>
-                            <p class="mt-0.5 text-[10px] text-ink-faint">Rekomendasi 1080 × 1350 px · rasio 4:5 · fokus utama di area tengah · JPG/PNG/WebP · maks. 8 MB</p>
+                            <p class="mt-0.5 text-[10px] leading-4 text-ink-faint">
+                                Rekomendasi 1280 × 720 px · rasio 16:9 · tetap horizontal, bukan poster/kotak · JPG/PNG/WebP · maks. 8 MB
+                            </p>
                         </div>
 
-                        <div class="mx-auto aspect-[4/5] w-full max-w-[220px] overflow-hidden rounded-[var(--radius-md)] border border-dashed border-line bg-surface">
+                        <div class="aspect-[16/9] overflow-hidden rounded-[var(--radius-md)] border border-dashed border-line bg-surface">
                             <img
                                 v-if="preview(slide, 'mobile')"
                                 :src="String(preview(slide, 'mobile'))"
@@ -268,7 +280,7 @@ onBeforeUnmount(() => {
                             </div>
                         </div>
 
-                        <div class="flex flex-wrap justify-center gap-2">
+                        <div class="flex flex-wrap gap-2">
                             <label class="inline-flex min-h-9 cursor-pointer items-center gap-2 rounded-[var(--radius-md)] border border-line bg-surface px-3 text-[11px] font-semibold text-ink hover:bg-surface-subtle">
                                 <Upload class="size-3.5" />
                                 Upload mobile
@@ -290,34 +302,18 @@ onBeforeUnmount(() => {
                         </div>
                     </div>
 
-                    <div class="grid content-start gap-3">
-                        <label class="grid gap-1.5">
-                            <span class="text-[11px] font-semibold text-ink">Judul slide</span>
-                            <input v-model="slide.title" maxlength="180" class="ui-control ui-focus-ring w-full px-3 text-sm">
-                        </label>
-
-                        <label class="grid gap-1.5">
-                            <span class="text-[11px] font-semibold text-ink">Deskripsi singkat</span>
-                            <textarea v-model="slide.subtitle" rows="3" maxlength="500" class="ui-control ui-focus-ring w-full px-3 py-2 text-sm leading-5" />
-                        </label>
-
-                        <label class="grid gap-1.5">
-                            <span class="text-[11px] font-semibold text-ink">Alt gambar</span>
-                            <input v-model="slide.alt" maxlength="180" class="ui-control ui-focus-ring w-full px-3 text-sm" placeholder="Deskripsi singkat gambar">
-                        </label>
-
-                        <div class="grid grid-cols-2 gap-2">
-                            <label class="grid gap-1.5">
-                                <span class="text-[11px] font-semibold text-ink">Label tombol</span>
-                                <input v-model="slide.cta_label" maxlength="80" class="ui-control ui-focus-ring w-full px-3 text-sm">
-                            </label>
-
-                            <label class="grid gap-1.5">
-                                <span class="text-[11px] font-semibold text-ink">Tujuan tombol</span>
-                                <input v-model="slide.cta_href" maxlength="255" class="ui-control ui-focus-ring w-full px-3 text-sm" placeholder="/library">
-                            </label>
-                        </div>
-                    </div>
+                    <label class="grid gap-1.5 xl:col-span-2">
+                        <span class="text-[11px] font-semibold text-ink">Deskripsi gambar untuk aksesibilitas (alt)</span>
+                        <input
+                            v-model="slide.alt"
+                            maxlength="180"
+                            class="ui-control ui-focus-ring w-full px-3 text-sm"
+                            placeholder="Contoh: Siswa membaca buku di perpustakaan"
+                        >
+                        <span class="text-[10px] leading-4 text-ink-faint">
+                            Tidak tampil sebagai teks di slider. Digunakan pembaca layar dan membantu aksesibilitas.
+                        </span>
+                    </label>
                 </div>
             </article>
         </div>
@@ -327,8 +323,8 @@ onBeforeUnmount(() => {
             class="mt-4 rounded-[var(--radius-lg)] border border-dashed border-line bg-surface-subtle px-4 py-8 text-center"
         >
             <ImagePlus class="mx-auto size-6 text-ink-faint" />
-            <p class="mt-2 text-xs font-semibold text-ink">Belum ada slide</p>
-            <p class="mt-1 text-[11px] text-ink-soft">Tambahkan slide pertama lalu upload gambar desktop dan mobile.</p>
+            <p class="mt-2 text-xs font-semibold text-ink">Belum ada slide gambar</p>
+            <p class="mt-1 text-[11px] text-ink-soft">Tambahkan slide pertama lalu upload gambar horizontal desktop dan mobile.</p>
             <Button type="button" size="small" class="mt-3" @click="addSlide">
                 <Plus class="size-4" />
                 Tambah slide

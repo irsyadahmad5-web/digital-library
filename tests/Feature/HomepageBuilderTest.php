@@ -147,7 +147,6 @@ class HomepageBuilderTest extends TestCase
                     'interval_seconds' => 99,
                     'show_arrows' => false,
                     'show_dots' => true,
-                    'overlay_strength' => 999,
                     'slides' => [],
                 ],
                 'latest_books' => [
@@ -194,7 +193,7 @@ class HomepageBuilderTest extends TestCase
         $this->assertSame(12, $hero->config_json['interval_seconds']);
         $this->assertFalse($hero->config_json['show_arrows']);
         $this->assertTrue($hero->config_json['show_dots']);
-        $this->assertSame(80, $hero->config_json['overlay_strength']);
+        $this->assertArrayNotHasKey('overlay_strength', $hero->config_json);
         $this->assertSame([], $hero->config_json['slides']);
 
         $this->assertDatabaseHas('audit_logs', [
@@ -226,7 +225,6 @@ class HomepageBuilderTest extends TestCase
                     'interval_seconds' => 6,
                     'show_arrows' => true,
                     'show_dots' => true,
-                    'overlay_strength' => 42,
                     'slides' => [[
                         'key' => $key,
                         'title' => 'Membaca membuka wawasan',
@@ -235,7 +233,7 @@ class HomepageBuilderTest extends TestCase
                         'cta_label' => 'Buka katalog',
                         'cta_href' => '/library',
                         'desktop_upload' => UploadedFile::fake()->image('desktop.jpg', 1600, 900),
-                        'mobile_upload' => UploadedFile::fake()->image('mobile.jpg', 1080, 1350),
+                        'mobile_upload' => UploadedFile::fake()->image('mobile.jpg', 1280, 720),
                     ]],
                 ] : ($section->config_json ?? []),
             ])
