@@ -11,51 +11,51 @@ class HomepageSectionRegistry
     {
         return [
             'hero' => [
-                'label' => 'Hero',
-                'description' => 'Judul utama, subjudul, aksi katalog, dan preview koleksi nyata.',
+                'label' => 'Hero Slider',
+                'description' => 'Slider gambar utama responsif dengan gambar desktop dan mobile terpisah.',
                 'provider_available' => true,
                 'provider_note' => null,
                 'default_enabled' => true,
-                'default_title' => 'Hero',
+                'default_title' => 'Hero Slider',
                 'fields' => [
-                    'eyebrow' => $this->text('Label kecil', 'Perpustakaan digital', 100),
-                    'title' => $this->text('Judul utama', 'Baca lebih nyaman, temukan lebih mudah.', 180),
-                    'subtitle' => $this->textarea('Subjudul', 'Jelajahi koleksi ebook yang tersedia untuk publik.', 500),
-                    'show_access_card' => $this->boolean('Tampilkan preview koleksi', true),
-                    'cta_label' => $this->text('Label tombol', 'Buka katalog', 80),
-                    'cta_href' => $this->urlPath('Tujuan tombol', '/library'),
-                ],
-            ],
-            'search' => [
-                'label' => 'Search',
-                'description' => 'Kotak pencarian katalog pada homepage.',
-                'provider_available' => true,
-                'provider_note' => null,
-                'default_enabled' => true,
-                'default_title' => 'Cari Ebook',
-                'fields' => [
-                    'title' => $this->text('Judul section', 'Temukan ebook', 120),
-                    'subtitle' => $this->textarea('Deskripsi', 'Cari berdasarkan judul, penulis, kategori, tag, penerbit, koleksi, bahasa, atau ISBN.', 300),
-                    'placeholder' => $this->text('Placeholder pencarian', 'Cari judul, penulis, kategori, tag, penerbit, koleksi, atau ISBN...', 180),
+                    'autoplay' => $this->boolean('Putar otomatis', true),
+                    'interval_seconds' => $this->number('Interval slide (detik)', 6, 4, 12),
+                    'show_arrows' => $this->boolean('Tampilkan tombol navigasi', true),
+                    'show_dots' => $this->boolean('Tampilkan indikator slide', true),
+                    'overlay_strength' => $this->number('Kekuatan overlay (%)', 42, 0, 80),
                 ],
             ],
             'latest_books' => [
-                'label' => 'Ebook Terbaru',
-                'description' => 'Ebook publik terbaru berdasarkan tanggal publish.',
+                'label' => 'Buku Terbaru',
+                'description' => 'Buku publik terbaru berdasarkan tanggal publish.',
                 'provider_available' => true,
                 'provider_note' => null,
                 'default_enabled' => true,
-                'default_title' => 'Ebook Terbaru',
+                'default_title' => 'Buku Terbaru',
                 'fields' => [
                     'eyebrow' => $this->text('Label kecil', 'Koleksi terbaru', 100),
-                    'title' => $this->text('Judul section', 'Ebook terbaru', 120),
-                    'limit' => $this->number('Jumlah ebook', 8, 4, 24),
+                    'title' => $this->text('Judul section', 'Buku Terbaru', 120),
+                    'limit' => $this->number('Jumlah buku', 8, 4, 24),
+                    'show_view_all' => $this->boolean('Tampilkan link lihat semua', true),
+                ],
+            ],
+            'popular_books' => [
+                'label' => 'Buku Populer',
+                'description' => 'Buku dengan jumlah pembukaan reader terbanyak berdasarkan analytics agregat.',
+                'provider_available' => true,
+                'provider_note' => 'Popularitas memakai jumlah pembukaan reader, bukan profil atau identitas pengunjung.',
+                'default_enabled' => true,
+                'default_title' => 'Buku Populer',
+                'fields' => [
+                    'eyebrow' => $this->text('Label kecil', 'Paling banyak dibaca', 100),
+                    'title' => $this->text('Judul section', 'Buku Populer', 120),
+                    'limit' => $this->number('Jumlah buku', 8, 4, 24),
                     'show_view_all' => $this->boolean('Tampilkan link lihat semua', true),
                 ],
             ],
             'categories' => [
                 'label' => 'Kategori',
-                'description' => 'Kategori aktif yang mempunyai ebook publik.',
+                'description' => 'Kategori aktif yang mempunyai buku publik.',
                 'provider_available' => true,
                 'provider_note' => null,
                 'default_enabled' => true,
@@ -69,7 +69,7 @@ class HomepageSectionRegistry
             ],
             'collections' => [
                 'label' => 'Koleksi',
-                'description' => 'Koleksi aktif yang mempunyai ebook publik.',
+                'description' => 'Koleksi aktif yang mempunyai buku publik.',
                 'provider_available' => true,
                 'provider_note' => null,
                 'default_enabled' => true,
@@ -81,37 +81,37 @@ class HomepageSectionRegistry
                     'show_view_all' => $this->boolean('Tampilkan link semua koleksi', true),
                 ],
             ],
-            'popular_books' => [
-                'label' => 'Ebook Populer',
-                'description' => 'Urutan berdasarkan statistik download agregat yang sudah tersedia.',
+            'search' => [
+                'label' => 'Pencarian',
+                'description' => 'Kotak pencarian katalog pada homepage.',
                 'provider_available' => true,
-                'provider_note' => 'Menggunakan counter download agregat Stage 16; analytics lanjutan tetap di Stage 18.',
+                'provider_note' => null,
                 'default_enabled' => false,
-                'default_title' => 'Ebook Populer',
+                'default_title' => 'Cari Buku',
                 'fields' => [
-                    'eyebrow' => $this->text('Label kecil', 'Paling banyak diakses', 100),
-                    'title' => $this->text('Judul section', 'Ebook populer', 120),
-                    'limit' => $this->number('Jumlah ebook', 8, 4, 24),
+                    'title' => $this->text('Judul section', 'Temukan buku', 120),
+                    'subtitle' => $this->textarea('Deskripsi', 'Cari berdasarkan judul, penulis, kategori, tag, penerbit, koleksi, bahasa, atau ISBN.', 300),
+                    'placeholder' => $this->text('Placeholder pencarian', 'Cari judul, penulis, kategori, tag, penerbit, koleksi, atau ISBN...', 180),
                 ],
             ],
             'recommendations' => [
                 'label' => 'Rekomendasi',
                 'description' => 'Rekomendasi homepage berbasis variasi kategori, koleksi, dan recency.',
                 'provider_available' => true,
-                'provider_note' => 'Discovery Stage 17 memilih ebook lintas topik secara deterministik tanpa profiling pengunjung.',
+                'provider_note' => 'Discovery memilih buku lintas topik secara deterministik tanpa profiling pengunjung.',
                 'default_enabled' => false,
                 'default_title' => 'Rekomendasi',
                 'fields' => [
                     'eyebrow' => $this->text('Label kecil', 'Untuk dijelajahi', 100),
                     'title' => $this->text('Judul section', 'Rekomendasi', 120),
-                    'limit' => $this->number('Jumlah ebook', 8, 4, 24),
+                    'limit' => $this->number('Jumlah buku', 8, 4, 24),
                 ],
             ],
             'statistics' => [
                 'label' => 'Statistik',
                 'description' => 'Ringkasan angka publik perpustakaan dari data agregat tanpa identitas pengunjung.',
                 'provider_available' => true,
-                'provider_note' => 'Provider Stage 18 menampilkan statistik agregat yang aman untuk publik.',
+                'provider_note' => 'Menampilkan statistik agregat yang aman untuk publik.',
                 'default_enabled' => false,
                 'default_title' => 'Statistik',
                 'fields' => [
@@ -122,25 +122,19 @@ class HomepageSectionRegistry
         ];
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     public function section(string $type): array
     {
         return $this->sections()[$type] ?? [];
     }
 
-    /**
-     * @return array<int, string>
-     */
+    /** @return array<int, string> */
     public function types(): array
     {
         return array_keys($this->sections());
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     public function defaults(string $type): array
     {
         $definition = $this->section($type);
@@ -150,12 +144,14 @@ class HomepageSectionRegistry
             $defaults[$key] = $field['default'] ?? null;
         }
 
+        if ($type === 'hero') {
+            $defaults['slides'] = [];
+        }
+
         return $defaults;
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     private function text(string $label, string $default, int $max): array
     {
         return [
@@ -166,9 +162,7 @@ class HomepageSectionRegistry
         ];
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     private function textarea(string $label, string $default, int $max): array
     {
         return [
@@ -179,9 +173,7 @@ class HomepageSectionRegistry
         ];
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     private function boolean(string $label, bool $default): array
     {
         return [
@@ -192,9 +184,7 @@ class HomepageSectionRegistry
         ];
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     private function number(string $label, int $default, int $min, int $max): array
     {
         return [
@@ -208,9 +198,7 @@ class HomepageSectionRegistry
         ];
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     private function urlPath(string $label, string $default): array
     {
         return [

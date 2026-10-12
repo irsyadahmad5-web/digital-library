@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Modules\Analytics\Domain\Models\EbookDailyMetric;
 use App\Modules\Library\Application\PublicLibrary\PublicLibraryCatalog;
 use App\Modules\Library\Domain\Models\Author;
 use App\Modules\Library\Domain\Models\Category;
@@ -105,6 +106,21 @@ class SearchDiscoveryTest extends TestCase
             );
     }
 
+    public function test_relevance_sql_placeholder_count_matches_bindings(): void
+    {
+        $this->book('MikroTik Dasar');
+
+        $query = app(PublicLibraryCatalog::class)->query([
+            'q' => 'MikroTik Dasar',
+        ]);
+
+        $this->assertSame(
+            substr_count($query->toSql(), '?'),
+            count($query->getBindings()),
+            'Search relevance SQL placeholder count must match the bound parameter count.',
+        );
+    }
+
     public function test_tag_filter_and_popular_sort_only_use_public_books(): void
     {
         $tag = $this->tag('Laravel');
@@ -121,9 +137,9 @@ class SearchDiscoveryTest extends TestCase
             tags: [$tag],
         );
 
-        $this->downloads($low['ebook'], 2);
-        $this->downloads($high['ebook'], 12);
-        $this->downloads($hidden['ebook'], 100);
+        $this->readerOpens($low['ebook'], 2);
+        $this->readerOpens($high['ebook'], 12);
+        $this->readerOpens($hidden['ebook'], 100);
 
         $this->get('/library?tag='.$tag->slug.'&sort=popular')
             ->assertOk()
@@ -138,13 +154,13 @@ class SearchDiscoveryTest extends TestCase
             );
     }
 
-    public function test_popular_discovery_requires_real_download_signal(): void
+    public function test_popular_discovery_requires_real_reader_signal(): void
     {
         $catalog = app(PublicLibraryCatalog::class);
 
         $popular = $this->book('Popular Signal');
         $this->book('No Signal');
-        $this->downloads($popular['ebook'], 7);
+        $this->readerOpens($popular['ebook'], 7);
 
         $items = $catalog->popular(8);
 
@@ -236,7 +252,7 @@ class SearchDiscoveryTest extends TestCase
     {
         $popular = $this->book('Buku Paling Populer');
         $this->book('Buku Rekomendasi Lain');
-        $this->downloads($popular['ebook'], 20);
+        $this->readerOpens($popular['ebook'], 20);
 
         HomepageSection::query()
             ->whereIn('type', ['popular_books', 'recommendations'])
@@ -320,6 +336,17 @@ class SearchDiscoveryTest extends TestCase
         Storage::disk('public')->put($file->preview_path, 'preview');
 
         return compact('ebook', 'file');
+    }
+
+    private function readerOpens(Ebook $ebook, int $readerOpens): void
+    {
+        EbookDailyMetric::query()->create([
+            'metric_date' => now()->toDateString(),
+            'ebook_id' => $ebook->getKey(),
+            'detail_views' => 0,
+            'reader_opens' => $readerOpens,
+            'downloads' => 0,
+        ]);
     }
 
     private function downloads(Ebook $ebook, int $downloads): void

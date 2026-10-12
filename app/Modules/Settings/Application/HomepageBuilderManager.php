@@ -9,6 +9,7 @@ use App\Modules\Settings\Domain\Models\HomepageSection;
 use App\Modules\Settings\Support\HomepageSectionRegistry;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -29,14 +30,10 @@ class HomepageBuilderManager
         $initial = [
             'hero' => [
                 'enabled' => true,
-                'config' => [
-                    'eyebrow' => (string) ($this->settings->get('general', 'tagline') ?: 'Perpustakaan digital'),
-                    'title' => (string) ($legacy['hero_title'] ?? ''),
-                    'subtitle' => (string) ($legacy['hero_subtitle'] ?? ''),
-                ],
+                'config' => [],
             ],
             'search' => [
-                'enabled' => (bool) ($legacy['show_search'] ?? true),
+                'enabled' => false,
                 'config' => [],
             ],
             'latest_books' => [
@@ -54,7 +51,7 @@ class HomepageBuilderManager
                 'config' => [],
             ],
             'popular_books' => [
-                'enabled' => false,
+                'enabled' => true,
                 'config' => [
                     'limit' => (int) ($legacy['popular_limit'] ?? 8),
                 ],
@@ -216,6 +213,17 @@ class HomepageBuilderManager
     private function serializeAdmin(HomepageSection $section): array
     {
         $definition = $this->registry->section($section->type);
+        $config = [
+            ...$this->registry->defaults($section->type),
+            ...($section->config_json ?? []),
+        ];
+
+        if ($section->type === 'hero') {
+            $config['slides'] = $this->serializeHeroSlides(
+                is_array($config['slides'] ?? null) ? $config['slides'] : [],
+                true,
+            );
+        }
 
         return [
             'id' => $section->getKey(),
@@ -223,10 +231,7 @@ class HomepageBuilderManager
             'title' => $section->title,
             'is_enabled' => $section->is_enabled,
             'sort_order' => $section->sort_order,
-            'config' => [
-                ...$this->registry->defaults($section->type),
-                ...($section->config_json ?? []),
-            ],
+            'config' => $config,
             'label' => $definition['label'] ?? Str::headline($section->type),
             'description' => $definition['description'] ?? '',
             'provider_available' => (bool) ($definition['provider_available'] ?? false),
@@ -250,9 +255,15 @@ class HomepageBuilderManager
             ...($section->config_json ?? []),
         ];
 
+        if ($section->type === 'hero') {
+            $config['slides'] = $this->serializeHeroSlides(
+                is_array($config['slides'] ?? null) ? $config['slides'] : [],
+                false,
+            );
+        }
+
         $data = match ($section->type) {
-            'hero' => $this->catalog->recommended(3),
-            'search' => null,
+            'hero', 'search' => null,
             'latest_books' => $this->catalog->latest((int) ($config['limit'] ?? 8)),
             'popular_books' => $this->catalog->popular((int) ($config['limit'] ?? 8)),
             'recommendations' => $this->catalog->recommended((int) ($config['limit'] ?? 8)),
@@ -320,14 +331,95 @@ class HomepageBuilderManager
         }
 
         if ($type === 'hero') {
-            $href = trim((string) ($output['cta_href'] ?? '/library'));
-
-            if (! str_starts_with($href, '/') || str_starts_with($href, '//')) {
-                $output['cta_href'] = '/library';
-            }
+            $output['slides'] = $this->normalizeHeroSlides(
+                is_array($input['slides'] ?? null) ? $input['slides'] : [],
+            );
         }
 
         return $output;
+    }
+
+    /**
+     * @param  array<int, mixed>  $slides
+     * @return array<int, array<string, mixed>>
+     */
+    private function normalizeHeroSlides(array $slides): array
+    {
+        return collect(array_slice($slides, 0, 6))
+            ->filter(fn ($slide): bool => is_array($slide))
+            ->map(function (array $slide): array {
+                $href = trim(is_scalar($slide['cta_href'] ?? null)
+                    ? (string) $slide['cta_href']
+                    : '/library');
+
+                if ($href === '' || ! str_starts_with($href, '/') || str_starts_with($href, '//')) {
+                    $href = '/library';
+                }
+
+                $desktopPath = $this->managedMediaPath($slide['desktop_path'] ?? null);
+                $mobilePath = $this->managedMediaPath($slide['mobile_path'] ?? null);
+
+                return [
+                    'key' => Str::isUuid((string) ($slide['key'] ?? ''))
+                        ? (string) $slide['key']
+                        : (string) Str::uuid(),
+                    'title' => $this->cleanText($slide['title'] ?? '', 180, ''),
+                    'subtitle' => $this->cleanText($slide['subtitle'] ?? '', 500, ''),
+                    'alt' => $this->cleanText($slide['alt'] ?? '', 180, ''),
+                    'cta_label' => $this->cleanText($slide['cta_label'] ?? '', 80, ''),
+                    'cta_href' => $href,
+                    'desktop_path' => $desktopPath,
+                    'mobile_path' => $mobilePath,
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @param  array<int, mixed>  $slides
+     * @return array<int, array<string, mixed>>
+     */
+    private function serializeHeroSlides(array $slides, bool $includePaths): array
+    {
+        return collect($slides)
+            ->filter(fn ($slide): bool => is_array($slide))
+            ->map(function (array $slide) use ($includePaths): array {
+                $desktopPath = $this->managedMediaPath($slide['desktop_path'] ?? null);
+                $mobilePath = $this->managedMediaPath($slide['mobile_path'] ?? null);
+
+                $payload = [
+                    'key' => (string) ($slide['key'] ?? ''),
+                    'title' => (string) ($slide['title'] ?? ''),
+                    'subtitle' => (string) ($slide['subtitle'] ?? ''),
+                    'alt' => (string) ($slide['alt'] ?? ''),
+                    'cta_label' => (string) ($slide['cta_label'] ?? ''),
+                    'cta_href' => (string) ($slide['cta_href'] ?? '/library'),
+                    'desktop_url' => $desktopPath ? Storage::disk('public')->url($desktopPath) : null,
+                    'mobile_url' => $mobilePath ? Storage::disk('public')->url($mobilePath) : null,
+                ];
+
+                if ($includePaths) {
+                    $payload['desktop_path'] = $desktopPath;
+                    $payload['mobile_path'] = $mobilePath;
+                }
+
+                return $payload;
+            })
+            ->filter(fn (array $slide): bool => $includePaths
+                || $slide['desktop_url'] !== null
+                || $slide['mobile_url'] !== null)
+            ->values()
+            ->all();
+    }
+
+    private function managedMediaPath(mixed $path): ?string
+    {
+        if (! is_string($path) || ! str_starts_with($path, 'homepage/slides/')) {
+            return null;
+        }
+
+        return $path;
     }
 
     private function cleanTitle(mixed $value, string $fallback): string
@@ -339,7 +431,7 @@ class HomepageBuilderManager
     {
         $value = trim(is_scalar($value) ? (string) $value : '');
 
-        if ($value === '') {
+        if ($value === '' && $fallback !== '') {
             $value = $fallback;
         }
 

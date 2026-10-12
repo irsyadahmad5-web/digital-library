@@ -20,8 +20,14 @@ withDefaults(defineProps<{
             <p v-if="eyebrow" class="text-xs font-semibold uppercase tracking-[0.12em] text-brand">
                 {{ eyebrow }}
             </p>
-            <h2 class="text-balance text-2xl font-semibold tracking-tight text-ink sm:text-[28px]" :class="eyebrow ? 'mt-1.5' : ''">
-                {{ title }}
+            <h2
+                class="flex items-center gap-2.5 text-balance text-2xl font-semibold tracking-tight text-ink sm:text-[28px]"
+                :class="eyebrow ? 'mt-1.5' : ''"
+            >
+                <span v-if="$slots.icon" class="grid size-8 shrink-0 place-items-center">
+                    <slot name="icon" />
+                </span>
+                <span>{{ title }}</span>
             </h2>
             <slot />
         </div>

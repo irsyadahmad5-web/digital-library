@@ -28,6 +28,7 @@ export interface PublicBookCard {
     page_count: number | null;
     read_enabled: boolean;
     download_enabled: boolean;
+    reader_count: number;
     published_at: string | null;
 }
 

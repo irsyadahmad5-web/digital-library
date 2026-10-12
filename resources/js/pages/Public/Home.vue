@@ -5,11 +5,13 @@ import {
     ArrowRight,
     BookOpen,
     Compass,
+    Flame,
     LibraryBig,
     Search,
-    Sparkles,
+    Star,
 } from '@lucide/vue';
 import PublicBookCard from '@/components/public/PublicBookCard.vue';
+import PublicHeroSlider from '@/components/public/PublicHeroSlider.vue';
 import PublicSearchForm from '@/components/public/PublicSearchForm.vue';
 import PublicSectionHeader from '@/components/public/PublicSectionHeader.vue';
 import SeoHead from '@/components/public/SeoHead.vue';
@@ -31,6 +33,17 @@ const props = defineProps<{
 const page = usePage<SharedPageProps>();
 const general = page.props.site.general;
 const hasSearchSection = computed(() => props.sections.some((section) => section.type === 'search'));
+
+interface HeroSlide {
+    key: string;
+    title: string;
+    subtitle: string;
+    alt: string;
+    cta_label: string;
+    cta_href: string;
+    desktop_url: string | null;
+    mobile_url: string | null;
+}
 
 const discoveryLinks = [
     { label: 'Katalog', href: '/library' },
@@ -63,18 +76,30 @@ function statisticsData(section: HomepageSectionPayload) {
     return (section.data ?? []) as HomepageStatistic[];
 }
 
+function heroSlides(section: HomepageSectionPayload): HeroSlide[] {
+    const value = section.config.slides;
+
+    return Array.isArray(value) ? value as HeroSlide[] : [];
+}
+
+function configNumber(section: HomepageSectionPayload, key: string, fallback: number) {
+    const value = section.config[key];
+
+    return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+}
+
 function bookSectionEyebrow(section: HomepageSectionPayload) {
-    if (section.type === 'popular_books') return 'Paling banyak diakses';
+    if (section.type === 'popular_books') return 'Paling banyak dibaca';
     if (section.type === 'recommendations') return 'Pilihan untuk dijelajahi';
 
     return 'Baru di perpustakaan';
 }
 
 function bookSectionTitle(section: HomepageSectionPayload) {
-    if (section.type === 'popular_books') return 'Ebook populer';
+    if (section.type === 'popular_books') return 'Buku Populer';
     if (section.type === 'recommendations') return 'Pilihan perpustakaan';
 
-    return 'Ebook terbaru';
+    return 'Buku Terbaru';
 }
 
 function bookSectionHref(section: HomepageSectionPayload) {
@@ -84,12 +109,6 @@ function bookSectionHref(section: HomepageSectionPayload) {
     return null;
 }
 
-function heroCoverClass(index: number) {
-    if (index === 0) return 'left-[6%] top-[16%] z-30 w-[42%] rotate-[-5deg]';
-    if (index === 1) return 'left-[34%] top-[4%] z-20 w-[40%] rotate-[4deg]';
-
-    return 'right-[3%] top-[24%] z-10 w-[38%] rotate-[8deg]';
-}
 </script>
 
 <template>
@@ -97,94 +116,57 @@ function heroCoverClass(index: number) {
 
     <PublicLayout>
         <template v-for="section in sections" :key="section.id">
+            <PublicHeroSlider
+                v-if="section.type === 'hero' && heroSlides(section).length"
+                :slides="heroSlides(section)"
+                :autoplay="configBoolean(section, 'autoplay')"
+                :interval-seconds="configNumber(section, 'interval_seconds', 6)"
+                :show-arrows="configBoolean(section, 'show_arrows')"
+                :show-dots="configBoolean(section, 'show_dots')"
+                :overlay-strength="configNumber(section, 'overlay_strength', 42)"
+            />
+
             <section
-                v-if="section.type === 'hero'"
+                v-else-if="section.type === 'hero'"
                 class="ui-page-shell pb-8 pt-9 sm:pb-10 sm:pt-12 lg:pb-12 lg:pt-14"
             >
-                <div
-                    class="grid items-center gap-9 lg:gap-12"
-                    :class="configBoolean(section, 'show_access_card') && bookData(section).length
-                        ? 'lg:grid-cols-[minmax(0,1.06fr)_minmax(360px,.94fr)]'
-                        : ''"
-                >
-                    <div class="min-w-0">
-                        <div class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-brand">
-                            <BookOpen class="size-4" />
-                            {{ configString(section, 'eyebrow', String(general.tagline || 'Perpustakaan digital')) }}
-                        </div>
+                <div class="max-w-4xl">
+                    <div class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-brand">
+                        <BookOpen class="size-4" />
+                        {{ String(general.tagline || 'Perpustakaan digital') }}
+                    </div>
 
-                        <h1 class="mt-4 max-w-4xl text-balance text-[2.6rem] font-semibold leading-[1.08] tracking-[-0.035em] text-ink sm:text-5xl lg:text-[3.6rem]">
-                            {{ configString(section, 'title', 'Baca lebih nyaman, temukan lebih mudah.') }}
-                        </h1>
+                    <h1 class="mt-4 text-balance text-[2.6rem] font-semibold leading-[1.08] tracking-[-0.035em] text-ink sm:text-5xl lg:text-[3.6rem]">
+                        Baca lebih nyaman, temukan lebih mudah.
+                    </h1>
 
-                        <p
-                            v-if="configString(section, 'subtitle')"
-                            class="mt-4 max-w-2xl text-base leading-7 text-ink-soft sm:text-[17px]"
-                        >
-                            {{ configString(section, 'subtitle') }}
-                        </p>
+                    <p class="mt-4 max-w-2xl text-base leading-7 text-ink-soft sm:text-[17px]">
+                        Jelajahi koleksi buku, baca langsung di browser, atau unduh PDF tanpa harus membuat akun.
+                    </p>
 
-                        <div v-if="!hasSearchSection" class="mt-7 max-w-2xl">
-                            <PublicSearchForm placeholder="Cari judul, penulis, topik, kategori, atau ISBN…" />
-                        </div>
+                    <div v-if="!hasSearchSection" class="mt-7 max-w-2xl">
+                        <PublicSearchForm placeholder="Cari judul, penulis, topik, kategori, atau ISBN…" />
+                    </div>
 
-                        <div class="mt-6 flex flex-wrap items-center gap-x-1 gap-y-2">
-                            <span class="mr-1 text-xs font-medium text-ink-faint">Jelajahi:</span>
-                            <Link
-                                v-for="item in discoveryLinks"
-                                :key="item.href"
-                                :href="item.href"
-                                class="rounded-full px-3 py-1.5 text-xs font-semibold text-ink-soft transition-colors hover:bg-surface-subtle hover:text-ink"
-                            >
-                                {{ item.label }}
-                            </Link>
-                        </div>
-
+                    <div class="mt-6 flex flex-wrap items-center gap-x-1 gap-y-2">
+                        <span class="mr-1 text-xs font-medium text-ink-faint">Jelajahi:</span>
                         <Link
-                            v-if="configString(section, 'cta_label')"
-                            :href="configString(section, 'cta_href', '/library')"
-                            class="mt-7 inline-flex min-h-10 items-center gap-2 rounded-[var(--radius-md)] bg-brand px-4 text-sm font-semibold text-brand-foreground transition-colors hover:bg-brand-hover"
+                            v-for="item in discoveryLinks"
+                            :key="item.href"
+                            :href="item.href"
+                            class="rounded-full px-3 py-1.5 text-xs font-semibold text-ink-soft transition-colors hover:bg-surface-subtle hover:text-ink"
                         >
-                            {{ configString(section, 'cta_label', 'Buka katalog') }}
-                            <ArrowRight class="size-4" />
+                            {{ item.label }}
                         </Link>
                     </div>
 
-                    <div
-                        v-if="configBoolean(section, 'show_access_card') && bookData(section).length"
-                        class="relative hidden min-h-[360px] overflow-hidden rounded-[var(--radius-xl)] bg-surface-subtle lg:block"
-                        aria-label="Pilihan koleksi"
+                    <Link
+                        href="/library"
+                        class="mt-7 inline-flex min-h-10 items-center gap-2 rounded-[var(--radius-md)] bg-brand px-4 text-sm font-semibold text-brand-foreground transition-colors hover:bg-brand-hover"
                     >
-                        <div class="absolute inset-x-5 bottom-5 flex items-center justify-between gap-4 rounded-[var(--radius-lg)] border border-line/80 bg-surface/95 px-4 py-3 shadow-[var(--shadow-float)] backdrop-blur">
-                            <div class="min-w-0">
-                                <p class="text-[11px] font-semibold uppercase tracking-[0.12em] text-brand">Pilihan koleksi</p>
-                                <p class="mt-1 truncate text-sm font-semibold text-ink">Baca langsung tanpa login</p>
-                            </div>
-                            <Sparkles class="size-4 shrink-0 text-brand" />
-                        </div>
-
-                        <Link
-                            v-for="(book, index) in bookData(section).slice(0, 3)"
-                            :key="book.id"
-                            :href="`/book/${book.slug}`"
-                            class="absolute aspect-[3/4] overflow-hidden rounded-[var(--radius-lg)] border border-line bg-surface shadow-[var(--shadow-cover)] transition-transform duration-200 hover:z-40 hover:scale-[1.03]"
-                            :class="heroCoverClass(index)"
-                            :aria-label="book.title"
-                        >
-                            <img
-                                v-if="book.cover_url"
-                                :src="book.cover_url"
-                                :alt="book.title"
-                                class="size-full object-cover"
-                                loading="eager"
-                                decoding="async"
-                            >
-                            <div v-else class="flex size-full flex-col items-center justify-center gap-3 bg-brand-soft px-5 text-center text-brand">
-                                <BookOpen class="size-8" />
-                                <span class="line-clamp-3 text-xs font-semibold leading-5">{{ book.title }}</span>
-                            </div>
-                        </Link>
-                    </div>
+                        Buka katalog
+                        <ArrowRight class="size-4" />
+                    </Link>
                 </div>
             </section>
 
@@ -199,7 +181,7 @@ function heroCoverClass(index: number) {
                             Pencarian katalog
                         </div>
                         <h2 class="mt-2 text-balance text-2xl font-semibold tracking-tight text-ink sm:text-[28px]">
-                            {{ configString(section, 'title', 'Temukan ebook') }}
+                            {{ configString(section, 'title', 'Temukan buku') }}
                         </h2>
                         <p v-if="configString(section, 'subtitle')" class="mt-2 max-w-xl text-sm leading-6 text-ink-soft">
                             {{ configString(section, 'subtitle') }}
@@ -218,8 +200,13 @@ function heroCoverClass(index: number) {
                 <PublicSectionHeader
                     :eyebrow="configString(section, 'eyebrow', bookSectionEyebrow(section))"
                     :title="configString(section, 'title', bookSectionTitle(section))"
-                    :href="bookSectionHref(section) && (section.type !== 'latest_books' || configBoolean(section, 'show_view_all')) ? bookSectionHref(section) : null"
-                />
+                    :href="bookSectionHref(section) && configBoolean(section, 'show_view_all') ? bookSectionHref(section) : null"
+                >
+                    <template #icon>
+                        <Star v-if="section.type === 'latest_books'" class="size-7 fill-current text-warning" />
+                        <Flame v-else-if="section.type === 'popular_books'" class="size-7 fill-current text-danger" />
+                    </template>
+                </PublicSectionHeader>
 
                 <div class="mt-6 grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
                     <PublicBookCard
@@ -284,7 +271,7 @@ function heroCoverClass(index: number) {
                         </div>
                         <p class="mt-4 truncate text-sm font-semibold text-ink group-hover:text-brand">{{ item.name }}</p>
                         <p v-if="item.description" class="mt-1.5 line-clamp-2 text-xs leading-5 text-ink-soft">{{ item.description }}</p>
-                        <p class="mt-3 text-[11px] font-medium text-ink-faint">{{ item.count }} ebook</p>
+                        <p class="mt-3 text-[11px] font-medium text-ink-faint">{{ item.count }} buku</p>
                     </Link>
                 </div>
             </section>

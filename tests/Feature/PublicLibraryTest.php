@@ -55,12 +55,11 @@ class PublicLibraryTest extends TestCase
                 fn (Assert $page) => $page
                     ->component('Public/Home')
                     ->where('sections.0.type', 'hero')
-                    ->has('sections.0.data', 1)
-                    ->where('sections.0.data.0.title', 'Ready Public Book')
-                    ->where('sections.2.type', 'latest_books')
-                    ->has('sections.2.data', 1)
-                    ->where('sections.2.data.0.title', 'Ready Public Book')
-                    ->where('sections.2.data.0.slug', $public['ebook']->slug),
+                    ->where('sections.0.data', null)
+                    ->where('sections.1.type', 'latest_books')
+                    ->has('sections.1.data', 1)
+                    ->where('sections.1.data.0.title', 'Ready Public Book')
+                    ->where('sections.1.data.0.slug', $public['ebook']->slug),
             );
     }
 

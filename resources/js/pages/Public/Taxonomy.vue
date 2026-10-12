@@ -89,23 +89,23 @@ function apply() {
                     </p>
                 </div>
 
-                <p class="text-xs font-medium tabular-nums text-ink-soft">{{ books.total }} ebook</p>
+                <p class="text-xs font-medium tabular-nums text-ink-soft">{{ books.total }} buku</p>
             </div>
 
             <div class="mt-5 flex flex-wrap items-center justify-between gap-3">
                 <p class="text-xs text-ink-soft">
-                    {{ books.total ? books.total + ' ebook dalam ' + labels[type].toLowerCase() + ' ini' : 'Belum ada ebook publik' }}
+                    {{ books.total ? books.total + ' buku dalam ' + labels[type].toLowerCase() + ' ini' : 'Belum ada buku publik' }}
                 </p>
 
                 <div class="flex items-center gap-2">
-                    <Select v-model="sort" class="w-auto min-w-36" aria-label="Urutkan ebook" @change="apply">
+                    <Select v-model="sort" class="w-auto min-w-36" aria-label="Urutkan buku" @change="apply">
                         <option value="popular">Paling populer</option>
                         <option value="newest">Terbaru</option>
                         <option value="title">Judul A–Z</option>
                         <option value="year_desc">Tahun terbaru</option>
                         <option value="year_asc">Tahun terlama</option>
                     </Select>
-                    <Select v-model="perPage" class="hidden w-auto min-w-32 sm:block" aria-label="Jumlah ebook per halaman" @change="apply">
+                    <Select v-model="perPage" class="hidden w-auto min-w-32 sm:block" aria-label="Jumlah buku per halaman" @change="apply">
                         <option :value="12">12 / halaman</option>
                         <option :value="24">24 / halaman</option>
                         <option :value="48">48 / halaman</option>
@@ -124,8 +124,8 @@ function apply() {
             <EmptyState
                 v-else
                 class="mt-8"
-                title="Belum ada ebook publik"
-                description="Koleksi akan muncul di halaman ini setelah ebook terkait dipublikasikan dan siap dibaca."
+                title="Belum ada buku publik"
+                description="Koleksi akan muncul di halaman ini setelah buku terkait dipublikasikan dan siap dibaca."
             >
                 <template #icon><BookOpen class="size-5" /></template>
             </EmptyState>

@@ -21,10 +21,10 @@ defineProps<{
     >
         <p class="text-ink-soft">
             <template v-if="total">
-                {{ from || 0 }}–{{ to || 0 }} dari {{ total }} ebook
+                {{ from || 0 }}–{{ to || 0 }} dari {{ total }} buku
             </template>
             <template v-else>
-                Belum ada ebook
+                Belum ada buku
             </template>
         </p>
 

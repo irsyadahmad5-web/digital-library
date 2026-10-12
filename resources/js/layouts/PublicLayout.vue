@@ -132,7 +132,7 @@ onBeforeUnmount(() => {
                 <div class="ml-auto flex items-center gap-1.5 lg:ml-0">
                     <IconButton
                         class="lg:hidden"
-                        :label="searchOpen ? 'Tutup pencarian' : 'Cari ebook'"
+                        :label="searchOpen ? 'Tutup pencarian' : 'Cari buku'"
                         variant="quiet"
                         :aria-expanded="searchOpen"
                         @click="toggleSearch"
@@ -175,7 +175,7 @@ onBeforeUnmount(() => {
             <div class="grid gap-6">
                 <PublicSearchForm
                     :initial-query="currentSearch"
-                    placeholder="Cari ebook…"
+                    placeholder="Cari buku…"
                     compact
                 />
 

@@ -56,7 +56,7 @@ function submit() {
             class="min-w-0 flex-1 bg-transparent px-2.5 text-sm text-ink outline-none placeholder:text-ink-faint"
             :placeholder="placeholder"
             :autofocus="autoFocus"
-            aria-label="Cari ebook"
+            aria-label="Cari buku"
         >
         <Button
             v-if="showSubmit"
