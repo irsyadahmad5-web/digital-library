@@ -10,6 +10,8 @@ import {
     Trash2,
     XCircle,
 } from '@lucide/vue';
+import CategoryIconPicker from '@/components/admin/CategoryIconPicker.vue';
+import CategoryIcon from '@/components/public/CategoryIcon.vue';
 import AdminLayout from '@/layouts/AdminLayout.vue';
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -34,7 +36,7 @@ interface ColumnMeta {
 
 interface FieldMeta {
     label: string;
-    type: 'text' | 'textarea' | 'url' | 'number' | 'boolean' | 'select';
+    type: 'text' | 'textarea' | 'url' | 'number' | 'boolean' | 'select' | 'icon';
     default: unknown;
     required: boolean;
     description: string;
@@ -373,6 +375,15 @@ function displayValue(item: MasterItem, column: ColumnMeta) {
                                         >
                                             {{ displayValue(item, column) }}
                                         </Badge>
+                                        <span
+                                            v-else-if="column.key === 'icon' && activeEntity === 'categories'"
+                                            class="inline-flex items-center gap-2 text-ink"
+                                        >
+                                            <span class="grid size-7 place-items-center rounded-[var(--radius-sm)] bg-brand-soft text-brand">
+                                                <CategoryIcon :name="String(item.icon || 'BookOpen')" />
+                                            </span>
+                                            <span class="truncate text-[11px] text-ink-soft">{{ displayValue(item, column) }}</span>
+                                        </span>
                                         <span v-else class="block truncate text-ink" :title="displayValue(item, column)">
                                             {{ displayValue(item, column) }}
                                         </span>
@@ -427,6 +438,15 @@ function displayValue(item: MasterItem, column: ColumnMeta) {
                                             >
                                                 {{ displayValue(item, column) }}
                                             </Badge>
+                                            <span
+                                                v-else-if="column.key === 'icon' && activeEntity === 'categories'"
+                                                class="inline-flex items-center gap-2"
+                                            >
+                                                <span class="grid size-7 place-items-center rounded-[var(--radius-sm)] bg-brand-soft text-brand">
+                                                    <CategoryIcon :name="String(item.icon || 'BookOpen')" />
+                                                </span>
+                                                <span class="truncate text-[11px] text-ink-soft">{{ displayValue(item, column) }}</span>
+                                            </span>
                                             <span v-else class="block truncate">{{ displayValue(item, column) }}</span>
                                         </dd>
                                     </div>
@@ -514,6 +534,12 @@ function displayValue(item: MasterItem, column: ColumnMeta) {
                                 <span class="text-xs text-ink-soft">{{ form[String(key)] ? 'Aktif' : 'Nonaktif' }}</span>
                                 <Switch v-model="form[String(key)]" />
                             </div>
+
+                            <CategoryIconPicker
+                                v-else-if="field.type === 'icon'"
+                                v-model="form[String(key)]"
+                                :options="optionList(String(key), field)"
+                            />
 
                             <textarea
                                 v-else-if="field.type === 'textarea'"

@@ -28,7 +28,7 @@ class PublicLibraryCatalog
     {
         $relations = [
             'authors:id,name,slug,is_active',
-            'categories:id,parent_id,name,slug,is_active',
+            'categories:id,parent_id,name,slug,icon,is_active',
             'publisher:id,name,slug,is_active',
             'language:id,code,name,native_name,is_active',
             'collection:id,name,slug,is_active',
@@ -425,7 +425,7 @@ class PublicLibraryCatalog
             'directory:categories',
             300,
             fn (): array => Category::query()
-                ->select(['id', 'parent_id', 'name', 'slug', 'description', 'is_active', 'sort_order'])
+                ->select(['id', 'parent_id', 'name', 'slug', 'description', 'icon', 'is_active', 'sort_order'])
                 ->where('is_active', true)
                 ->whereHas('ebooks', fn (Builder $query): Builder => $query->publiclyVisible())
                 ->with('parent:id,name,slug')
@@ -440,6 +440,7 @@ class PublicLibraryCatalog
                     'name' => $category->name,
                     'slug' => $category->slug,
                     'description' => $category->description,
+                    'icon' => $category->icon,
                     'count' => $category->ebooks_count,
                     'parent' => $category->parent ? [
                         'name' => $category->parent->name,
@@ -600,6 +601,7 @@ class PublicLibraryCatalog
                 ->map(fn ($category): array => [
                     'name' => $category->name,
                     'slug' => $category->slug,
+                    'icon' => $category->icon,
                 ])
                 ->values()
                 ->all(),
@@ -919,6 +921,7 @@ class PublicLibraryCatalog
             'name' => $category->name,
             'slug' => $category->slug,
             'description' => $category->description,
+            'icon' => $category->icon,
             'parent' => $category->parent ? [
                 'name' => $category->parent->name,
                 'slug' => $category->parent->slug,

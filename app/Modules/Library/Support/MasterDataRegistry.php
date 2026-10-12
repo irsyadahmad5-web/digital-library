@@ -21,12 +21,13 @@ class MasterDataRegistry
             'categories' => [
                 'label' => 'Kategori',
                 'singular' => 'Kategori',
-                'description' => 'Kelola kategori dan subkategori koleksi ebook.',
+                'description' => 'Kelola kategori, subkategori, dan ikon visual koleksi buku.',
                 'model' => Category::class,
                 'search' => ['name', 'slug', 'description'],
                 'order' => ['sort_order', 'name'],
                 'columns' => [
                     ['key' => 'name', 'label' => 'Nama'],
+                    ['key' => 'icon', 'label' => 'Ikon'],
                     ['key' => 'parent_name', 'label' => 'Induk'],
                     ['key' => 'slug', 'label' => 'Slug'],
                     ['key' => 'is_active', 'label' => 'Status'],
@@ -34,6 +35,7 @@ class MasterDataRegistry
                 'fields' => [
                     'parent_id' => $this->select('Kategori induk', null, false, 'Kosongkan untuk kategori utama.', ['nullable', 'integer']),
                     'name' => $this->field('Nama', 'text', '', true, ['required', 'string', 'max:120']),
+                    'icon' => $this->icon('Ikon kategori', CategoryIconRegistry::default()),
                     'slug' => $this->field('Slug', 'text', '', false, ['nullable', 'string', 'max:160'], 'Boleh dikosongkan agar dibuat otomatis.'),
                     'description' => $this->field('Deskripsi', 'textarea', '', false, ['nullable', 'string', 'max:2000']),
                     'sort_order' => $this->number('Urutan', 0, false, 0, 9999),
@@ -255,6 +257,28 @@ class MasterDataRegistry
     /**
      * @return array<string, mixed>
      */
+    private function icon(string $label, string $default): array
+    {
+        $field = $this->field(
+            $label,
+            'icon',
+            $default,
+            false,
+            ['nullable', 'string', Rule::in(CategoryIconRegistry::names())],
+            'Pilih ikon Lucide yang paling mewakili topik kategori.',
+        );
+
+        $field['options'] = collect(CategoryIconRegistry::options())
+            ->map(fn (string $optionLabel, string $value): array => [
+                'value' => $value,
+                'label' => $optionLabel,
+            ])
+            ->values()
+            ->all();
+
+        return $field;
+    }
+
     private function boolean(string $label, bool $default): array
     {
         return $this->field($label, 'boolean', $default, true, ['required', 'boolean']);
