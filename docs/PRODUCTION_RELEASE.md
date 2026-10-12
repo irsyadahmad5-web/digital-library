@@ -1,6 +1,6 @@
-# Production Release 1.2.0
+# Production Release 1.3.0
 
-Digital Library 1.2.0 is the stable post-v1.1.0 correction and homepage feature release. It fixes MariaDB/MySQL public search, adds the responsive admin-managed Hero Slider, promotes reader-based Buku Populer, aligns public Buku terminology, and keeps the hardened installer, storage, security, backup, restore, and release pipeline.
+Digital Library 1.3.0 is the stable Batch C visual-library release. It keeps the v1.2.0 search/slider improvements and adds cover-first public book cards plus admin-selectable category icons rendered consistently across homepage, directories, taxonomy pages, and admin master data.
 
 ## Release artifact
 
@@ -13,8 +13,8 @@ composer release:package
 The packaging command runs the full QA gate and browser smoke test, rebuilds frontend assets, exports only tracked source files, installs optimized production Composer dependencies without dev packages, adds `RELEASE.json`, generates `RELEASE_FILES.sha256`, and creates:
 
 ```text
-dist/digital-library-v1.2.0.zip
-dist/digital-library-v1.2.0.zip.sha256
+dist/digital-library-v1.3.0.zip
+dist/digital-library-v1.3.0.zip.sha256
 ```
 
 The archive deliberately excludes `.env`, Git metadata, `node_modules`, runtime logs, backups, uploaded ebooks, and other server state. It includes the full application source, migrations, tests/documentation, production `vendor/`, and compiled `public/build/`.
@@ -23,7 +23,7 @@ Verify the ZIP before deployment:
 
 ```bash
 cd dist
-sha256sum -c digital-library-v1.2.0.zip.sha256
+sha256sum -c digital-library-v1.3.0.zip.sha256
 ```
 
 After extraction, `RELEASE_FILES.sha256` can be used to validate all packaged files.
@@ -116,3 +116,5 @@ The release is ready to open publicly only when:
 - Real public searches such as /library?q=Taqrib and /search?q=Taqrib return HTTP 200, and a no-result query returns an empty state instead of HTTP 500.
 - Homepage Builder can upload and persist both desktop and mobile Hero Slider images without exposing private storage paths; public homepage rendering falls back safely when no slide image exists.
 - Buku Terbaru and reader-based Buku Populer render in the intended order when data is available, and the configured favicon is present on admin/auth/public pages.
+- Public book cards keep category and read-count badges on the cover, expose title/author on desktop hover/focus, keep the title usable on touch/mobile, and render no persistent metadata block beneath the cover.
+- Admin category create/edit exposes the curated icon picker; persisted category icons render on homepage categories, /categories, category taxonomy headers, and public book payloads with a safe fallback.
