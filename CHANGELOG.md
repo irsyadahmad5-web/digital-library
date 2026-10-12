@@ -2,6 +2,33 @@
 
 All notable changes to Digital Library are documented in this file.
 
+## [1.5.0] - 2026-10-12
+
+### Fixed
+
+- Fixed the blank Homepage Builder page caused by attempting to structured-clone Vue/Inertia Proxy props in the browser.
+- Replaced the unsafe clone path with a JSON-safe configuration clone, normalized Hero Slider slide arrays defensively, and added an explicit recovery state instead of a blank screen.
+- Hardened the Hero Slider editor with a safe default model so malformed or legacy homepage config cannot crash the admin page.
+
+### Added
+
+- Added a three-slide starter editorial carousel so the public homepage presents a real slider before administrators upload custom images.
+- Starter slides remain editable and can be replaced with responsive desktop/mobile images through Homepage Builder.
+- Added modern upload guidance for 1920 × 820 desktop and 1080 × 1350 mobile slider images with a centered safe area.
+- Added a redesigned dark editorial footer with a reading CTA, site identity, quick navigation, contact details, and privacy-safe aggregate statistics for public books, reader opens, categories, and authors.
+- Added short-lived cached footer statistics to avoid repeated aggregate queries on every public request.
+
+### Quality
+
+- Added regression coverage for the builder Proxy-clone failure, non-blank recovery state, starter slider rendering, responsive upload guidance, modern footer structure, and aggregate footer statistics.
+- Focused Batch E validation passed with 26 tests and 445 assertions before release promotion.
+- Full QA and Browser Smoke passed in GitHub Actions on the Batch E implementation PR.
+
+### Release
+
+- Stable Batch E release based on v1.4.0.
+- Production upgrade requires the verified artifact, backup/restore-readiness, starter-slider migration, Homepage Builder asset/runtime checks, public slider/footer smoke, health, security, and rollback gates in docs/PRODUCTION_RELEASE.md.
+
 ## [1.4.0] - 2026-10-12
 
 ### Changed
