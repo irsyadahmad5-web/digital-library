@@ -80,7 +80,11 @@ function statisticsData(section: HomepageSectionPayload) {
 function heroSlides(section: HomepageSectionPayload): HeroSlide[] {
     const value = section.config.slides;
 
-    return Array.isArray(value) ? value as HeroSlide[] : [];
+    if (!Array.isArray(value)) return [];
+
+    return (value as HeroSlide[]).filter((slide) =>
+        Boolean(slide?.desktop_url || slide?.mobile_url),
+    );
 }
 
 function configNumber(section: HomepageSectionPayload, key: string, fallback: number) {
@@ -124,7 +128,6 @@ function bookSectionHref(section: HomepageSectionPayload) {
                 :interval-seconds="configNumber(section, 'interval_seconds', 6)"
                 :show-arrows="configBoolean(section, 'show_arrows')"
                 :show-dots="configBoolean(section, 'show_dots')"
-                :overlay-strength="configNumber(section, 'overlay_strength', 42)"
             />
 
             <section
