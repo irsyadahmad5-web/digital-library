@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import { BookOpen, ChevronRight } from '@lucide/vue';
+import CategoryIcon from '@/components/public/CategoryIcon.vue';
 import PublicBookCard from '@/components/public/PublicBookCard.vue';
 import PublicPagination from '@/components/public/PublicPagination.vue';
 import SeoHead from '@/components/public/SeoHead.vue';
@@ -77,7 +78,15 @@ function apply() {
             <div class="mt-5 flex flex-col gap-4 border-b border-line pb-6 sm:flex-row sm:items-end sm:justify-between">
                 <div class="max-w-3xl">
                     <p class="text-xs font-semibold uppercase tracking-[0.12em] text-brand">{{ labels[type] }}</p>
-                    <h1 class="mt-1.5 text-balance text-3xl font-semibold tracking-[-0.025em] text-ink sm:text-4xl">{{ taxonomy.name }}</h1>
+                    <div class="mt-1.5 flex items-center gap-3">
+                        <span
+                            v-if="type === 'category'"
+                            class="grid size-11 shrink-0 place-items-center rounded-[var(--radius-md)] bg-brand-soft text-brand"
+                        >
+                            <CategoryIcon :name="taxonomy.icon" size-class="size-5" />
+                        </span>
+                        <h1 class="text-balance text-3xl font-semibold tracking-[-0.025em] text-ink sm:text-4xl">{{ taxonomy.name }}</h1>
+                    </div>
                     <p v-if="taxonomy.parent" class="mt-2 text-xs text-ink-soft">
                         Subkategori dari
                         <Link :href="'/category/' + taxonomy.parent.slug" class="font-semibold text-ink hover:text-brand">

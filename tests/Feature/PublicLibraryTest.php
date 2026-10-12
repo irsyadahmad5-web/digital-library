@@ -150,6 +150,7 @@ class PublicLibraryTest extends TestCase
     public function test_public_directories_only_count_ready_books(): void
     {
         $category = $this->category('Pendidikan');
+        $category->forceFill(['icon' => 'GraduationCap'])->save();
         $author = $this->author('Penulis Aktif');
         $publisher = $this->publisher('Penerbit Aktif');
         $collection = $this->collection('Koleksi Aktif');
@@ -177,6 +178,7 @@ class PublicLibraryTest extends TestCase
                 fn (Assert $page) => $page
                     ->component('Public/Directory')
                     ->where('items.0.name', 'Pendidikan')
+                    ->where('items.0.icon', 'GraduationCap')
                     ->where('items.0.count', 1),
             );
 
@@ -208,6 +210,7 @@ class PublicLibraryTest extends TestCase
     public function test_taxonomy_pages_show_only_matching_public_books(): void
     {
         $category = $this->category('Fiqih');
+        $category->forceFill(['icon' => 'Scale'])->save();
         $author = $this->author('Ulama Nusantara');
 
         $this->book(
@@ -224,8 +227,10 @@ class PublicLibraryTest extends TestCase
                     ->component('Public/Taxonomy')
                     ->where('type', 'category')
                     ->where('taxonomy.name', 'Fiqih')
+                    ->where('taxonomy.icon', 'Scale')
                     ->where('books.total', 1)
-                    ->where('books.data.0.title', 'Kitab A'),
+                    ->where('books.data.0.title', 'Kitab A')
+                    ->where('books.data.0.categories.0.icon', 'Scale'),
             );
 
         $this->get('/author/'.$author->slug)

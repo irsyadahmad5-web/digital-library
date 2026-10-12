@@ -11,6 +11,7 @@ import {
     Star,
 } from '@lucide/vue';
 import PublicBookCard from '@/components/public/PublicBookCard.vue';
+import CategoryIcon from '@/components/public/CategoryIcon.vue';
 import PublicHeroSlider from '@/components/public/PublicHeroSlider.vue';
 import PublicSearchForm from '@/components/public/PublicSearchForm.vue';
 import PublicSectionHeader from '@/components/public/PublicSectionHeader.vue';
@@ -228,19 +229,24 @@ function bookSectionHref(section: HomepageSectionPayload) {
                     link-label="Semua kategori"
                 />
 
-                <div class="mt-6 grid border-b border-line sm:grid-cols-2 lg:grid-cols-3">
+                <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     <Link
                         v-for="item in directoryData(section)"
                         :key="item.slug"
-                        :href="`/category/${item.slug}`"
-                        class="group flex min-w-0 items-start justify-between gap-4 border-t border-line py-4 pr-3 sm:odd:pr-5 sm:even:pl-5 lg:[&:nth-child(3n+2)]:px-5 lg:[&:nth-child(3n)]:pl-5"
+                        :href="'/category/' + item.slug"
+                        class="group flex min-w-0 items-center gap-3 rounded-[var(--radius-lg)] border border-line bg-surface px-3.5 py-3 transition-[transform,border-color,background-color] duration-150 hover:-translate-y-0.5 hover:border-line-strong hover:bg-surface-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/25"
                     >
-                        <div class="min-w-0">
+                        <span class="grid size-10 shrink-0 place-items-center rounded-[var(--radius-md)] bg-brand-soft text-brand transition-colors group-hover:bg-brand group-hover:text-brand-foreground">
+                            <CategoryIcon :name="item.icon" size-class="size-4.5" />
+                        </span>
+
+                        <div class="min-w-0 flex-1">
                             <p class="truncate text-sm font-semibold text-ink transition-colors group-hover:text-brand">{{ item.name }}</p>
-                            <p v-if="item.parent" class="mt-1 truncate text-xs text-ink-faint">{{ item.parent.name }}</p>
-                            <p v-if="item.description" class="mt-1.5 line-clamp-2 text-xs leading-5 text-ink-soft">{{ item.description }}</p>
+                            <p v-if="item.parent" class="mt-0.5 truncate text-[10px] text-ink-faint">{{ item.parent.name }}</p>
+                            <p class="mt-1 text-[11px] font-medium text-ink-soft">{{ item.count }} buku</p>
                         </div>
-                        <span class="shrink-0 text-xs font-semibold tabular-nums text-ink-faint">{{ item.count }}</span>
+
+                        <ArrowRight class="size-4 shrink-0 text-ink-faint transition-transform group-hover:translate-x-0.5 group-hover:text-brand" />
                     </Link>
                 </div>
             </section>

@@ -1,0 +1,68 @@
+import type { Component } from 'vue';
+import {
+    Baby,
+    BookMarked,
+    BookOpen,
+    Brain,
+    Briefcase,
+    Calculator,
+    Compass,
+    Feather,
+    FlaskConical,
+    Globe2,
+    GraduationCap,
+    Heart,
+    History,
+    Landmark,
+    Languages,
+    Leaf,
+    Library,
+    Lightbulb,
+    MessageSquareQuote,
+    MoonStar,
+    Music,
+    Palette,
+    Scale,
+    ShieldCheck,
+    Sparkles,
+    Star,
+    Trophy,
+    Users,
+} from '@lucide/vue';
+
+export const categoryIconMap: Record<string, Component> = {
+    BookOpen,
+    Scale,
+    Sparkles,
+    MoonStar,
+    Landmark,
+    MessageSquareQuote,
+    ShieldCheck,
+    Heart,
+    BookMarked,
+    GraduationCap,
+    Languages,
+    Brain,
+    Library,
+    Briefcase,
+    Palette,
+    Music,
+    Baby,
+    Leaf,
+    Trophy,
+    FlaskConical,
+    Calculator,
+    Compass,
+    History,
+    Feather,
+    Star,
+    Globe2,
+    Users,
+    Lightbulb,
+};
+
+export function categoryIconComponent(name?: string | null): Component {
+    if (!name) return BookOpen;
+
+    return categoryIconMap[name] ?? BookOpen;
+}

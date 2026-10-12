@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
 import { ArrowRight } from '@lucide/vue';
+import CategoryIcon from '@/components/public/CategoryIcon.vue';
 import type { DirectoryItem } from '@/types/public-library';
 
 defineProps<{
@@ -15,17 +16,27 @@ defineProps<{
         class="group flex min-h-32 min-w-0 flex-col justify-between rounded-[var(--radius-lg)] border border-line bg-surface p-4 transition-[border-color,background-color,transform] duration-150 hover:-translate-y-0.5 hover:border-line-strong hover:bg-surface-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/25"
     >
         <div class="flex items-start justify-between gap-3">
-            <div class="min-w-0">
-                <p v-if="item.parent" class="mb-1 truncate text-[11px] font-semibold uppercase tracking-[0.08em] text-brand">
-                    {{ item.parent.name }}
-                </p>
-                <h2 class="line-clamp-2 text-sm font-semibold leading-5 text-ink transition-colors group-hover:text-brand">
-                    {{ item.name }}
-                </h2>
-                <p v-if="item.description" class="mt-1.5 line-clamp-2 text-xs leading-5 text-ink-soft">
-                    {{ item.description }}
-                </p>
+            <div class="flex min-w-0 items-start gap-3">
+                <span
+                    v-if="item.icon"
+                    class="grid size-10 shrink-0 place-items-center rounded-[var(--radius-md)] bg-brand-soft text-brand transition-colors group-hover:bg-brand group-hover:text-brand-foreground"
+                >
+                    <CategoryIcon :name="item.icon" size-class="size-4.5" />
+                </span>
+
+                <div class="min-w-0">
+                    <p v-if="item.parent" class="mb-1 truncate text-[11px] font-semibold uppercase tracking-[0.08em] text-brand">
+                        {{ item.parent.name }}
+                    </p>
+                    <h2 class="line-clamp-2 text-sm font-semibold leading-5 text-ink transition-colors group-hover:text-brand">
+                        {{ item.name }}
+                    </h2>
+                    <p v-if="item.description" class="mt-1.5 line-clamp-2 text-xs leading-5 text-ink-soft">
+                        {{ item.description }}
+                    </p>
+                </div>
             </div>
+
             <span class="shrink-0 text-xs font-semibold tabular-nums text-ink-faint">{{ item.count }}</span>
         </div>
 

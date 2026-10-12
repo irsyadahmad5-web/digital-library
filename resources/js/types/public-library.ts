@@ -6,6 +6,7 @@ export interface PublicAuthor {
 export interface PublicNamedLink {
     name: string;
     slug: string;
+    icon?: string | null;
 }
 
 export interface PublicLanguage {
@@ -44,6 +45,7 @@ export interface DirectoryItem {
     name: string;
     slug: string;
     description: string | null;
+    icon?: string | null;
     count: number;
     parent?: PublicNamedLink | null;
 }
@@ -64,6 +66,7 @@ export interface TaxonomyInfo {
     name: string;
     slug: string;
     description: string | null;
+    icon?: string | null;
     parent: PublicNamedLink | null;
 }
 

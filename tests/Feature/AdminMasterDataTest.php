@@ -111,6 +111,42 @@ class AdminMasterDataTest extends TestCase
         $this->assertSoftDeleted('categories', ['id' => $root->getKey()]);
     }
 
+    public function test_category_icon_can_be_selected_and_invalid_icon_is_rejected(): void
+    {
+        $user = $this->createSuperAdmin();
+
+        $this->actingAs($user)
+            ->post('/admin/master-data/categories', [
+                'parent_id' => null,
+                'name' => 'Fiqih',
+                'slug' => '',
+                'description' => 'Kategori fiqih.',
+                'icon' => 'Scale',
+                'sort_order' => 5,
+                'is_active' => true,
+            ])
+            ->assertSessionHasNoErrors();
+
+        $category = Category::query()->where('slug', 'fiqih')->firstOrFail();
+        $this->assertSame('Scale', $category->icon);
+
+        $this->actingAs($user)
+            ->from('/admin/master-data/categories')
+            ->put('/admin/master-data/categories/'.$category->getKey(), [
+                'parent_id' => null,
+                'name' => 'Fiqih',
+                'slug' => 'fiqih',
+                'description' => 'Kategori fiqih.',
+                'icon' => 'NotARealIcon',
+                'sort_order' => 5,
+                'is_active' => true,
+            ])
+            ->assertSessionHasErrors('icon');
+
+        $category->refresh();
+        $this->assertSame('Scale', $category->icon);
+    }
+
     public function test_author_crud_generates_slug_and_creates_audit_events(): void
     {
         $user = $this->createSuperAdmin();
