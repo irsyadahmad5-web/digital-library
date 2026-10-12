@@ -28,7 +28,11 @@ class HomepageBuilderController extends Controller
         HomepageSliderMediaManager $media,
         AuditLogger $audit,
     ): RedirectResponse {
-        $sections = $request->validated('sections');
+        // The builder manager is the schema whitelist for config fields. Using the
+        // validated request envelope plus all nested config values is required here
+        // because Laravel prunes sibling config keys once slide file rules exist.
+        $request->validated();
+        $sections = $request->all('sections')['sections'] ?? [];
         $prepared = $media->prepare($sections);
 
         try {
