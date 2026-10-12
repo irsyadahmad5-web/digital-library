@@ -2,6 +2,31 @@
 
 All notable changes to Digital Library are documented in this file.
 
+## [1.2.0] - 2026-10-12
+
+### Fixed
+
+- Fixed the public catalog/search HTTP 500 caused by a relevance-ranking SQL placeholder and binding mismatch on MariaDB/MySQL.
+- Added regression coverage that keeps relevance SQL placeholders and bound parameters in sync.
+- Exposed the configured site favicon in the base Inertia document so public, admin, and authentication surfaces use the same favicon.
+
+### Added
+
+- Added a responsive admin-managed Hero Slider with separate recommended desktop 1600 × 900 (16:9) and mobile 1080 × 1350 (4:5) images, up to six slides, safe upload replacement/removal, autoplay interval, navigation arrows, dots, accessible keyboard controls, and reduced-motion support.
+- Added reader-based Buku Populer discovery using privacy-safe aggregate reader-open analytics and exposed aggregate read counts in public book card payloads.
+- Added distinct visual identities for Buku Terbaru and Buku Populer using different section icons and accent colors.
+
+### Changed
+
+- Standardized public-facing terminology from Ebook to Buku while keeping internal database/model naming stable.
+- Reordered the default public homepage to prioritize Hero Slider, Buku Terbaru, Buku Populer, Kategori, and Koleksi; the redundant standalone search section is disabled by default because global/header search remains available.
+- Existing customized settings are preserved; the migration changes old wording only when values still equal the previous defaults.
+
+### Release
+
+- Stable post-release correction and homepage feature release based on v1.1.0.
+- Production upgrade requires the verified artifact, backup/restore-readiness, migration, health, search smoke, slider/admin smoke, security-header, and rollback gates in docs/PRODUCTION_RELEASE.md.
+
 ## [1.1.0] - 2026-10-11
 
 ### Changed
