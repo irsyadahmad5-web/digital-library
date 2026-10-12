@@ -22,7 +22,7 @@ class PwaController extends Controller
         $shortName = trim((string) ($general['short_name'] ?? $name));
         $description = trim(
             (string) ($general['description']
-                ?? 'Perpustakaan digital untuk membaca ebook.'),
+                ?? 'Perpustakaan digital untuk membaca buku.'),
         );
         $themeColor = $this->color(
             (string) ($appearance['primary_color'] ?? '#2563EB'),
@@ -80,7 +80,7 @@ class PwaController extends Controller
             ],
             'shortcuts' => [
                 [
-                    'name' => 'Katalog Ebook',
+                    'name' => 'Katalog Buku',
                     'short_name' => 'Katalog',
                     'url' => '/library',
                     'icons' => [[
@@ -90,7 +90,7 @@ class PwaController extends Controller
                     ]],
                 ],
                 [
-                    'name' => 'Cari Ebook',
+                    'name' => 'Cari Buku',
                     'short_name' => 'Cari',
                     'url' => '/search',
                     'icons' => [[

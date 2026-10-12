@@ -278,7 +278,7 @@ onMounted(() => {
                     </div>
 
                     <div v-if="book.description" class="ui-reading-measure mt-8">
-                        <h2 class="text-lg font-semibold tracking-tight text-ink">Tentang ebook ini</h2>
+                        <h2 class="text-lg font-semibold tracking-tight text-ink">Tentang buku ini</h2>
                         <p class="mt-3 whitespace-pre-line text-[15px] leading-7 text-ink-soft">
                             {{ book.description }}
                         </p>
@@ -302,7 +302,7 @@ onMounted(() => {
 
         <section v-if="relatedBooks.length" class="ui-page-shell pb-10 pt-4 sm:pb-14">
             <div class="border-t border-line pt-8">
-                <PublicSectionHeader eyebrow="Rekomendasi" title="Ebook terkait" href="/library" />
+                <PublicSectionHeader eyebrow="Rekomendasi" title="Buku terkait" href="/library" />
                 <div class="mt-6 grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
                     <PublicBookCard
                         v-for="item in relatedBooks"

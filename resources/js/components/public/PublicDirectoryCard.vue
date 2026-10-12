@@ -30,7 +30,7 @@ defineProps<{
         </div>
 
         <span class="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-brand">
-            Lihat ebook
+            Lihat buku
             <ArrowRight class="size-3.5 transition-transform group-hover:translate-x-0.5" />
         </span>
     </Link>

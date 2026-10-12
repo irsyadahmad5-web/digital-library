@@ -5,10 +5,10 @@ import {
     ArrowDown,
     ArrowUp,
     Eye,
-    GripVertical,
     Save,
     ShieldAlert,
 } from '@lucide/vue';
+import AdminHeroSliderEditor from '@/components/admin/AdminHeroSliderEditor.vue';
 import AdminLayout from '@/layouts/AdminLayout.vue';
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -55,19 +55,31 @@ const props = defineProps<{
 }>();
 
 const page = usePage<SharedPageProps>();
-const form = useForm({
-    sections: props.sections.map((section) => ({
+function editableSections(sections: BuilderSection[]) {
+    return sections.map((section) => ({
         id: section.id,
         type: section.type,
         title: section.title,
         is_enabled: section.is_enabled,
-        config: { ...section.config },
-    })),
+        config: structuredClone(section.config),
+    }));
+}
+
+const form = useForm({
+    _method: 'put',
+    sections: editableSections(props.sections),
 });
 
 const enabledCount = computed(() =>
     form.sections.filter((section) => section.is_enabled).length,
 );
+
+const sectionError = computed(() => {
+    const entry = Object.entries(form.errors)
+        .find(([key]) => key === 'sections' || key.startsWith('sections.'));
+
+    return entry?.[1] || '';
+});
 
 function move(index: number, direction: -1 | 1) {
     const target = index + direction;
@@ -80,8 +92,17 @@ function move(index: number, direction: -1 | 1) {
 }
 
 function submit() {
-    form.put('/admin/homepage-builder', {
+    form.post('/admin/homepage-builder', {
+        forceFormData: true,
         preserveScroll: true,
+        onSuccess: (response) => {
+            const fresh = editableSections(response.props.sections as BuilderSection[]);
+            form.sections = fresh;
+            form.defaults({
+                _method: 'put',
+                sections: fresh,
+            });
+        },
     });
 }
 
@@ -211,6 +232,11 @@ function sectionSchema(type: string) {
                         >
                     </div>
 
+                    <AdminHeroSliderEditor
+                        v-if="section.type === 'hero'"
+                        v-model="section.config.slides"
+                    />
+
                     <div
                         v-for="(field, key) in sectionSchema(section.type)?.fields || {}"
                         :key="String(key)"
@@ -258,8 +284,8 @@ function sectionSchema(type: string) {
                 </section>
             </div>
 
-            <Alert v-if="form.errors.sections" tone="danger" title="Builder belum dapat disimpan">
-                {{ form.errors.sections }}
+            <Alert v-if="sectionError" tone="danger" title="Builder belum dapat disimpan">
+                {{ sectionError }}
             </Alert>
 
             <div class="sticky bottom-3 z-20 flex justify-end pointer-events-none">

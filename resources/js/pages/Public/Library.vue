@@ -82,7 +82,7 @@ const activeFilterCount = computed(() => activeFilters.value.length);
 const resultSummary = computed(() => {
     if (props.filters.q) return props.books.total + ' hasil untuk “' + props.filters.q + '”';
 
-    return props.books.total + ' ebook tersedia';
+    return props.books.total + ' buku tersedia';
 });
 
 function applyFilters(closeSheet = false) {
@@ -161,12 +161,12 @@ function removeFilter(key: FilterKey) {
             <div class="flex flex-col gap-4 border-b border-line pb-6 sm:flex-row sm:items-end sm:justify-between">
                 <div class="max-w-2xl">
                     <p class="text-xs font-semibold uppercase tracking-[0.12em] text-brand">Perpustakaan</p>
-                    <h1 class="mt-1.5 text-3xl font-semibold tracking-[-0.025em] text-ink sm:text-4xl">Katalog Ebook</h1>
+                    <h1 class="mt-1.5 text-3xl font-semibold tracking-[-0.025em] text-ink sm:text-4xl">Katalog Buku</h1>
                     <p class="mt-2 text-sm leading-6 text-ink-soft">
                         Temukan bacaan melalui judul, penulis, topik, penerbit, koleksi, bahasa, atau ISBN.
                     </p>
                 </div>
-                <p class="text-xs font-medium tabular-nums text-ink-soft">{{ books.total.toLocaleString('id-ID') }} ebook</p>
+                <p class="text-xs font-medium tabular-nums text-ink-soft">{{ books.total.toLocaleString('id-ID') }} buku</p>
             </div>
 
             <form class="mt-6" role="search" @submit.prevent="applyFilters()">
@@ -177,7 +177,7 @@ function removeFilter(key: FilterKey) {
                         type="search"
                         class="min-w-0 flex-1 bg-transparent px-2.5 text-sm text-ink outline-none placeholder:text-ink-faint"
                         placeholder="Cari judul, penulis, topik, kategori, atau ISBN…"
-                        aria-label="Cari katalog ebook"
+                        aria-label="Cari katalog buku"
                     >
                     <Button type="submit" size="small" class="shrink-0">Cari</Button>
                 </div>
@@ -244,7 +244,7 @@ function removeFilter(key: FilterKey) {
                             <Select
                                 v-model="sort"
                                 class="w-auto min-w-36"
-                                aria-label="Urutkan ebook"
+                                aria-label="Urutkan buku"
                                 @change="applyFilters()"
                             >
                                 <option v-if="q.trim()" value="relevance">Paling relevan</option>
@@ -258,7 +258,7 @@ function removeFilter(key: FilterKey) {
                             <Select
                                 v-model="perPage"
                                 class="hidden w-auto min-w-32 sm:block"
-                                aria-label="Jumlah ebook per halaman"
+                                aria-label="Jumlah buku per halaman"
                                 @change="applyFilters()"
                             >
                                 <option :value="12">12 / halaman</option>
@@ -279,7 +279,7 @@ function removeFilter(key: FilterKey) {
                     <EmptyState
                         v-else
                         class="mt-8"
-                        title="Ebook tidak ditemukan"
+                        title="Buku tidak ditemukan"
                         description="Coba gunakan kata kunci yang lebih singkat, hapus beberapa filter, atau kembali ke seluruh katalog."
                     >
                         <template #icon><BookOpen class="size-5" /></template>
@@ -305,7 +305,7 @@ function removeFilter(key: FilterKey) {
             :open="filtersOpen"
             side="bottom"
             title="Filter katalog"
-            :description="activeFilterCount + ' filter aktif · ' + books.total + ' ebook saat ini'"
+            :description="activeFilterCount + ' filter aktif · ' + books.total + ' buku saat ini'"
             @update:open="filtersOpen = $event"
         >
             <PublicCatalogFilters

@@ -15,6 +15,8 @@ use App\Modules\Settings\Support\HomepageSectionRegistry;
 use Database\Seeders\AccessControlSeeder;
 use Database\Seeders\SettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
@@ -31,6 +33,8 @@ class HomepageBuilderTest extends TestCase
             AccessControlSeeder::class,
             SettingsSeeder::class,
         ]);
+
+        Storage::fake('public');
     }
 
     public function test_builder_defaults_are_created_from_registry(): void
@@ -45,10 +49,12 @@ class HomepageBuilderTest extends TestCase
         $this->assertSame(count($types), HomepageSection::query()->count());
 
         $popular = HomepageSection::query()->where('type', 'popular_books')->firstOrFail();
+        $search = HomepageSection::query()->where('type', 'search')->firstOrFail();
         $recommendations = HomepageSection::query()->where('type', 'recommendations')->firstOrFail();
         $statistics = HomepageSection::query()->where('type', 'statistics')->firstOrFail();
 
-        $this->assertFalse($popular->is_enabled);
+        $this->assertTrue($popular->is_enabled);
+        $this->assertFalse($search->is_enabled);
         $this->assertFalse($recommendations->is_enabled);
         $this->assertFalse($statistics->is_enabled);
     }
@@ -111,12 +117,12 @@ class HomepageBuilderTest extends TestCase
 
             $config = match ($type) {
                 'hero' => [
-                    'eyebrow' => 'Kawan Library',
-                    'title' => 'Homepage Baru',
-                    'subtitle' => 'Susunan homepage diatur admin.',
-                    'show_access_card' => false,
-                    'cta_label' => 'Jelajahi',
-                    'cta_href' => 'https://evil.example.com',
+                    'autoplay' => false,
+                    'interval_seconds' => 99,
+                    'show_arrows' => false,
+                    'show_dots' => true,
+                    'overlay_strength' => 999,
+                    'slides' => [],
                 ],
                 'latest_books' => [
                     'eyebrow' => 'Baru',
@@ -158,8 +164,12 @@ class HomepageBuilderTest extends TestCase
         $this->assertFalse($categories->config_json['show_view_all']);
         $this->assertSame(4, $categories->config_json['limit']);
         $this->assertSame(24, $latest->config_json['limit']);
-        $this->assertSame('/library', $hero->config_json['cta_href']);
-        $this->assertFalse($hero->config_json['show_access_card']);
+        $this->assertFalse($hero->config_json['autoplay']);
+        $this->assertSame(12, $hero->config_json['interval_seconds']);
+        $this->assertFalse($hero->config_json['show_arrows']);
+        $this->assertTrue($hero->config_json['show_dots']);
+        $this->assertSame(80, $hero->config_json['overlay_strength']);
+        $this->assertSame([], $hero->config_json['slides']);
 
         $this->assertDatabaseHas('audit_logs', [
             'actor_id' => $user->getKey(),
@@ -167,6 +177,72 @@ class HomepageBuilderTest extends TestCase
             'subject_type' => 'homepage',
             'subject_id' => 'sections',
         ]);
+    }
+
+    public function test_admin_can_upload_responsive_hero_slider_images(): void
+    {
+        $user = $this->createSuperAdmin();
+        $sections = HomepageSection::query()
+            ->orderBy('sort_order')
+            ->get();
+
+        $hero = $sections->firstWhere('type', 'hero');
+        $this->assertNotNull($hero);
+
+        $key = (string) Str::uuid();
+        $payload = $sections
+            ->map(fn (HomepageSection $section): array => [
+                'id' => $section->getKey(),
+                'title' => $section->title,
+                'is_enabled' => $section->is_enabled,
+                'config' => $section->type === 'hero' ? [
+                    'autoplay' => true,
+                    'interval_seconds' => 6,
+                    'show_arrows' => true,
+                    'show_dots' => true,
+                    'overlay_strength' => 42,
+                    'slides' => [[
+                        'key' => $key,
+                        'title' => 'Membaca membuka wawasan',
+                        'subtitle' => 'Buku yang baik menemani proses belajar.',
+                        'alt' => 'Pembaca di perpustakaan',
+                        'cta_label' => 'Buka katalog',
+                        'cta_href' => '/library',
+                        'desktop_upload' => UploadedFile::fake()->image('desktop.jpg', 1600, 900),
+                        'mobile_upload' => UploadedFile::fake()->image('mobile.jpg', 1080, 1350),
+                    ]],
+                ] : ($section->config_json ?? []),
+            ])
+            ->values()
+            ->all();
+
+        $this->actingAs($user)
+            ->post('/admin/homepage-builder', [
+                '_method' => 'put',
+                'sections' => $payload,
+            ])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect();
+
+        $hero->refresh();
+        $slide = $hero->config_json['slides'][0];
+
+        $this->assertSame($key, $slide['key']);
+        $this->assertSame('Membaca membuka wawasan', $slide['title']);
+        $this->assertStringStartsWith('homepage/slides/', $slide['desktop_path']);
+        $this->assertStringStartsWith('homepage/slides/', $slide['mobile_path']);
+        Storage::disk('public')->assertExists($slide['desktop_path']);
+        Storage::disk('public')->assertExists($slide['mobile_path']);
+
+        $publicHero = collect(app(HomepageBuilderManager::class)->publicPayload())
+            ->firstWhere('type', 'hero');
+
+        $this->assertNotNull($publicHero);
+        $this->assertSame('Membaca membuka wawasan', $publicHero['config']['slides'][0]['title']);
+        $this->assertStringContainsString('/storage/homepage/slides/', $publicHero['config']['slides'][0]['desktop_url']);
+        $this->assertStringContainsString('/storage/homepage/slides/', $publicHero['config']['slides'][0]['mobile_url']);
+        $this->assertArrayNotHasKey('desktop_path', $publicHero['config']['slides'][0]);
+        $this->assertArrayNotHasKey('mobile_path', $publicHero['config']['slides'][0]);
     }
 
     public function test_public_home_follows_builder_order_and_enabled_state(): void

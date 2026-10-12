@@ -41,7 +41,8 @@ class PublicLibraryCatalog
 
         $query = Ebook::query()
             ->publiclyVisible()
-            ->with($relations);
+            ->with($relations)
+            ->withSum('dailyMetrics as reader_open_count', 'reader_opens');
 
         $search = $this->normalizeSearch($filters['q'] ?? '');
 
@@ -163,9 +164,8 @@ class PublicLibraryCatalog
             'catalog:popular:'.$limit,
             120,
             fn (): array => $this->query(['sort' => 'popular'])
-                ->whereHas(
-                    'downloadStat',
-                    fn (Builder $query): Builder => $query->where('downloads', '>', 0),
+                ->whereRaw(
+                    'COALESCE((SELECT SUM(reader_opens) FROM ebook_daily_metrics WHERE ebook_daily_metrics.ebook_id = ebooks.id), 0) > 0',
                 )
                 ->limit($limit)
                 ->get()
@@ -607,6 +607,7 @@ class PublicLibraryCatalog
             'page_count' => $ebook->page_count,
             'read_enabled' => $ebook->read_enabled,
             'download_enabled' => $ebook->download_enabled,
+            'reader_count' => (int) ($ebook->reader_open_count ?? 0),
             'published_at' => $ebook->published_at?->toIso8601String(),
         ];
     }
@@ -661,7 +662,7 @@ class PublicLibraryCatalog
         return match ($sort) {
             'popular' => $query
                 ->orderByRaw(
-                    'COALESCE((SELECT downloads FROM ebook_download_stats WHERE ebook_download_stats.ebook_id = ebooks.id), 0) DESC',
+                    'COALESCE((SELECT SUM(reader_opens) FROM ebook_daily_metrics WHERE ebook_daily_metrics.ebook_id = ebooks.id), 0) DESC',
                 )
                 ->orderByDesc('published_at')
                 ->orderByDesc('ebooks.id'),
@@ -748,6 +749,7 @@ class PublicLibraryCatalog
             $contains,
             $contains,
             $needle,
+            $contains,
             $contains,
             $contains,
             $contains,

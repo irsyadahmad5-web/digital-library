@@ -19,7 +19,7 @@ const description = computed(() => ({
     category: 'Jelajahi koleksi berdasarkan topik dan subkategori.',
     author: 'Temukan karya berdasarkan penulis yang tersedia.',
     publisher: 'Jelajahi koleksi berdasarkan penerbit.',
-    collection: 'Temukan ebook melalui koleksi yang telah dikurasi.',
+    collection: 'Temukan buku melalui koleksi yang telah dikurasi.',
 }[props.type]));
 
 const eyebrow = computed(() => ({
@@ -61,7 +61,7 @@ function href(slug: string) {
                 v-else
                 class="mt-8"
                 title="Belum ada data publik"
-                description="Direktori akan terisi setelah ebook dipublikasikan dan PDF selesai diproses."
+                description="Direktori akan terisi setelah buku dipublikasikan dan PDF selesai diproses."
             >
                 <template #icon><BookOpen class="size-5" /></template>
             </EmptyState>

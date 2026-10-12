@@ -3,6 +3,7 @@
 namespace App\Modules\Library\Domain\Models;
 
 use App\Models\User;
+use App\Modules\Analytics\Domain\Models\EbookDailyMetric;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -97,6 +98,11 @@ class Ebook extends Model
     public function downloadStat(): HasOne
     {
         return $this->hasOne(EbookDownloadStat::class);
+    }
+
+    public function dailyMetrics(): HasMany
+    {
+        return $this->hasMany(EbookDailyMetric::class);
     }
 
     public function uploadSessions(): HasMany
