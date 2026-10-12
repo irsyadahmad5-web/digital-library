@@ -28,6 +28,7 @@ const logoUrl = computed(() => page.props.site.general.logo_url ? String(page.pr
 const currentPath = computed(() => page.url.split('?')[0] || '/admin');
 const sidebarCollapsed = ref(false);
 const mobileOpen = ref(false);
+let rootScrollbarTimer: number | null = null;
 
 const SIDEBAR_STORAGE_KEY = 'digital-library.admin.sidebar.collapsed.v1';
 
@@ -125,22 +126,64 @@ const removeNavigateListener = router.on('navigate', () => {
     mobileOpen.value = false;
 });
 
+function hideRootScrollbarSoon() {
+    if (rootScrollbarTimer !== null) {
+        window.clearTimeout(rootScrollbarTimer);
+    }
+
+    rootScrollbarTimer = window.setTimeout(() => {
+        document.documentElement.classList.remove('admin-scrollbar-active');
+        rootScrollbarTimer = null;
+    }, 850);
+}
+
+function activateRootScrollbar() {
+    document.documentElement.classList.add('admin-scrollbar-active');
+    hideRootScrollbarSoon();
+}
+
+function revealRootScrollbarNearEdge(event: PointerEvent) {
+    if (window.innerWidth - event.clientX <= 36) {
+        activateRootScrollbar();
+    }
+}
+
 onMounted(() => {
     try {
         sidebarCollapsed.value = window.localStorage.getItem(SIDEBAR_STORAGE_KEY) === '1';
     } catch {
         sidebarCollapsed.value = false;
     }
+
+    document.documentElement.classList.add('admin-scrollbar-scope');
+    window.addEventListener('scroll', activateRootScrollbar, { passive: true });
+    window.addEventListener('wheel', activateRootScrollbar, { passive: true });
+    window.addEventListener('touchmove', activateRootScrollbar, { passive: true });
+    window.addEventListener('pointermove', revealRootScrollbarNearEdge, { passive: true });
 });
 
 onBeforeUnmount(() => {
     removeNavigateListener();
+    window.removeEventListener('scroll', activateRootScrollbar);
+    window.removeEventListener('wheel', activateRootScrollbar);
+    window.removeEventListener('touchmove', activateRootScrollbar);
+    window.removeEventListener('pointermove', revealRootScrollbarNearEdge);
+
+    if (rootScrollbarTimer !== null) {
+        window.clearTimeout(rootScrollbarTimer);
+        rootScrollbarTimer = null;
+    }
+
+    document.documentElement.classList.remove(
+        'admin-scrollbar-scope',
+        'admin-scrollbar-active',
+    );
 });
 </script>
 
 <template>
     <div
-        class="min-h-screen bg-canvas text-ink transition-[grid-template-columns] duration-200 md:grid"
+        class="admin-shell min-h-screen bg-canvas text-ink transition-[grid-template-columns] duration-200 md:grid"
         :class="sidebarCollapsed
             ? 'md:grid-cols-[72px_minmax(0,1fr)]'
             : 'md:grid-cols-[248px_minmax(0,1fr)]'"
@@ -165,7 +208,7 @@ onBeforeUnmount(() => {
                 </div>
             </div>
 
-            <nav class="min-h-0 flex-1 overflow-y-auto px-2 py-3" aria-label="Navigasi admin">
+            <nav class="ui-scrollbar-auto min-h-0 flex-1 overflow-y-auto px-2 py-3" aria-label="Navigasi admin">
                 <section
                     v-for="(group, groupIndex) in visibleGroups"
                     :key="group.label"
