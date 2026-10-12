@@ -1,6 +1,6 @@
-# Production Release 1.1.0
+# Production Release 1.2.0
 
-Digital Library 1.1.0 is the stable Modern Editorial Digital Library UI/UX release. It promotes the verified v1.1.0-rc.1 candidate after the complete responsive/accessibility acceptance pass while preserving the hardened installer, storage, security, backup, restore, and release pipeline.
+Digital Library 1.2.0 is the stable post-v1.1.0 correction and homepage feature release. It fixes MariaDB/MySQL public search, adds the responsive admin-managed Hero Slider, promotes reader-based Buku Populer, aligns public Buku terminology, and keeps the hardened installer, storage, security, backup, restore, and release pipeline.
 
 ## Release artifact
 
@@ -13,8 +13,8 @@ composer release:package
 The packaging command runs the full QA gate and browser smoke test, rebuilds frontend assets, exports only tracked source files, installs optimized production Composer dependencies without dev packages, adds `RELEASE.json`, generates `RELEASE_FILES.sha256`, and creates:
 
 ```text
-dist/digital-library-v1.1.0.zip
-dist/digital-library-v1.1.0.zip.sha256
+dist/digital-library-v1.2.0.zip
+dist/digital-library-v1.2.0.zip.sha256
 ```
 
 The archive deliberately excludes `.env`, Git metadata, `node_modules`, runtime logs, backups, uploaded ebooks, and other server state. It includes the full application source, migrations, tests/documentation, production `vendor/`, and compiled `public/build/`.
@@ -23,7 +23,7 @@ Verify the ZIP before deployment:
 
 ```bash
 cd dist
-sha256sum -c digital-library-v1.1.0.zip.sha256
+sha256sum -c digital-library-v1.2.0.zip.sha256
 ```
 
 After extraction, `RELEASE_FILES.sha256` can be used to validate all packaged files.
@@ -113,3 +113,6 @@ The release is ready to open publicly only when:
 - HTTPS, host validation, CSP, HSTS, and production debug settings pass.
 - No unresolved dependency security advisory remains.
 - Home, catalog/search, book detail, reader, download policy, admin login, PWA, maintenance behavior, and readiness endpoint have been smoke-tested on the deployed domain.
+- Real public searches such as /library?q=Taqrib and /search?q=Taqrib return HTTP 200, and a no-result query returns an empty state instead of HTTP 500.
+- Homepage Builder can upload and persist both desktop and mobile Hero Slider images without exposing private storage paths; public homepage rendering falls back safely when no slide image exists.
+- Buku Terbaru and reader-based Buku Populer render in the intended order when data is available, and the configured favicon is present on admin/auth/public pages.
