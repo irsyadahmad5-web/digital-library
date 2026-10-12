@@ -2,6 +2,26 @@
 
 All notable changes to Digital Library are documented in this file.
 
+## [1.4.0] - 2026-10-12
+
+### Changed
+
+- Modernized admin scrollbars into compact rounded overlay-style controls.
+- The main admin document scrollbar is visually hidden while idle and revealed briefly during scroll/wheel activity or when the pointer approaches the right edge.
+- Sidebar and nested admin overflow areas now use thin transparent-idle scrollbars that appear on hover or keyboard focus.
+- Admin scrollbar styling is scoped to the administration workspace so public-reader presentation remains unchanged.
+
+### Accessibility & Quality
+
+- Added forced-colors fallback so operating-system high-contrast scrollbar behavior remains available.
+- Preserved grouped/collapsible desktop navigation and mobile admin navigation contracts.
+- Added regression coverage for document, sidebar, nested overflow, auto-hide timing, and accessibility fallback behavior.
+
+### Release
+
+- Stable Batch D visual polish release based on v1.3.0.
+- Production upgrade requires the verified artifact, backup/restore-readiness, admin-scrollbar visual smoke, health, security, and rollback gates in docs/PRODUCTION_RELEASE.md.
+
 ## [1.3.0] - 2026-10-12
 
 ### Added
