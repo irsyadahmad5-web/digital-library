@@ -54,6 +54,9 @@ class PublicLibraryTest extends TestCase
             ->assertInertia(
                 fn (Assert $page) => $page
                     ->component('Public/Home')
+                    ->has('publicStats', 4)
+                    ->where('publicStats.0.key', 'books')
+                    ->where('publicStats.1.key', 'reads')
                     ->where('sections.0.type', 'hero')
                     ->where('sections.0.data', null)
                     ->where('sections.1.type', 'latest_books')

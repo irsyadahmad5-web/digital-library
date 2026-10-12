@@ -256,6 +256,45 @@ class AnalyticsReport
     /**
      * @return array<int, array{key: string, label: string, value: int}>
      */
+    public function footerStatistics(): array
+    {
+        $publicScope = fn (Builder $query): Builder => $query->publiclyVisible();
+
+        return [
+            [
+                'key' => 'books',
+                'label' => 'Buku publik',
+                'value' => Ebook::query()->publiclyVisible()->count(),
+            ],
+            [
+                'key' => 'reads',
+                'label' => 'Pembacaan',
+                'value' => (int) EbookDailyMetric::query()
+                    ->whereHas('ebook', $publicScope)
+                    ->sum('reader_opens'),
+            ],
+            [
+                'key' => 'categories',
+                'label' => 'Kategori',
+                'value' => Category::query()
+                    ->where('is_active', true)
+                    ->whereHas('ebooks', $publicScope)
+                    ->count(),
+            ],
+            [
+                'key' => 'authors',
+                'label' => 'Penulis',
+                'value' => Author::query()
+                    ->where('is_active', true)
+                    ->whereHas('ebooks', $publicScope)
+                    ->count(),
+            ],
+        ];
+    }
+
+    /**
+     * @return array<int, array{key: string, label: string, value: int}>
+     */
     public function publicStatistics(): array
     {
         $publicScope = fn (Builder $query): Builder => $query->publiclyVisible();

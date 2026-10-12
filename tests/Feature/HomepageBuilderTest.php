@@ -59,6 +59,32 @@ class HomepageBuilderTest extends TestCase
         $this->assertFalse($statistics->is_enabled);
     }
 
+    public function test_starter_hero_slider_is_available_before_custom_images_are_uploaded(): void
+    {
+        $adminHero = collect(app(HomepageBuilderManager::class)->adminPayload())
+            ->firstWhere('type', 'hero');
+
+        $this->assertNotNull($adminHero);
+        $this->assertTrue($adminHero['is_enabled']);
+        $this->assertCount(3, $adminHero['config']['slides']);
+        $this->assertSame(
+            'Baca lebih nyaman, temukan lebih mudah.',
+            $adminHero['config']['slides'][0]['title'],
+        );
+        $this->assertNull($adminHero['config']['slides'][0]['desktop_url']);
+        $this->assertNull($adminHero['config']['slides'][0]['mobile_url']);
+
+        $publicHero = collect(app(HomepageBuilderManager::class)->publicPayload())
+            ->firstWhere('type', 'hero');
+
+        $this->assertNotNull($publicHero);
+        $this->assertCount(3, $publicHero['config']['slides']);
+        $this->assertSame(
+            'Bacaan baik memperluas cara pandang.',
+            $publicHero['config']['slides'][1]['title'],
+        );
+    }
+
     public function test_super_admin_can_open_builder_and_provider_status_is_exposed(): void
     {
         $user = $this->createSuperAdmin();

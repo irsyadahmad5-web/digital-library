@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Modules\Analytics\Application\AnalyticsReport;
+use App\Modules\Library\Application\PublicLibrary\PublicLibraryCache;
 use App\Modules\Settings\Application\SettingsManager;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -28,6 +30,13 @@ class HandleInertiaRequests extends Middleware
             'appName' => $site['general']['site_name']
                 ?? config('app.name', 'Digital Library'),
             'site' => $site,
+            'publicStats' => fn (): array => $request->is('admin', 'admin/*')
+                ? []
+                : app(PublicLibraryCache::class)->remember(
+                    'footer:statistics',
+                    120,
+                    fn (): array => app(AnalyticsReport::class)->footerStatistics(),
+                ),
             'auth' => [
                 'user' => $user ? [
                     'id' => $user->getKey(),

@@ -30,7 +30,9 @@ class HomepageBuilderManager
         $initial = [
             'hero' => [
                 'enabled' => true,
-                'config' => [],
+                'config' => [
+                    'slides' => $this->starterHeroSlides(),
+                ],
             ],
             'search' => [
                 'enabled' => false,
@@ -408,9 +410,52 @@ class HomepageBuilderManager
             })
             ->filter(fn (array $slide): bool => $includePaths
                 || $slide['desktop_url'] !== null
-                || $slide['mobile_url'] !== null)
+                || $slide['mobile_url'] !== null
+                || trim((string) $slide['title']) !== '')
             ->values()
             ->all();
+    }
+
+    /**
+     * Starter slides keep the public homepage visually complete before the
+     * administrator replaces them with responsive image uploads.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function starterHeroSlides(): array
+    {
+        return [
+            [
+                'key' => '4f9eb52c-d5b8-4e2a-a5fd-5d501c9ae111',
+                'title' => 'Baca lebih nyaman, temukan lebih mudah.',
+                'subtitle' => 'Jelajahi koleksi buku digital yang bisa dibaca langsung dari browser, kapan saja.',
+                'alt' => '',
+                'cta_label' => 'Buka katalog',
+                'cta_href' => '/library',
+                'desktop_path' => null,
+                'mobile_path' => null,
+            ],
+            [
+                'key' => '88acdf19-6a9c-451d-8f82-6f9cf5d4e222',
+                'title' => 'Bacaan baik memperluas cara pandang.',
+                'subtitle' => 'Temukan topik, penulis, dan koleksi yang membantu belajar lebih dalam dan terarah.',
+                'alt' => '',
+                'cta_label' => 'Jelajahi kategori',
+                'cta_href' => '/categories',
+                'desktop_path' => null,
+                'mobile_path' => null,
+            ],
+            [
+                'key' => 'd0f432a7-1c11-46d3-b1a6-8e6bc026e333',
+                'title' => 'Satu halaman hari ini, wawasan baru esok hari.',
+                'subtitle' => 'Bangun kebiasaan membaca dengan akses perpustakaan yang sederhana, cepat, dan terbuka.',
+                'alt' => '',
+                'cta_label' => 'Lihat buku terbaru',
+                'cta_href' => '/library?sort=newest',
+                'desktop_path' => null,
+                'mobile_path' => null,
+            ],
+        ];
     }
 
     private function managedMediaPath(mixed $path): ?string
