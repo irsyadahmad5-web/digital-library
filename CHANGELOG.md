@@ -2,6 +2,30 @@
 
 All notable changes to Digital Library are documented in this file.
 
+## [1.3.0] - 2026-10-12
+
+### Added
+
+- Added curated Lucide category icons with a searchable visual icon picker in Admin → Master Data → Kategori.
+- Added a persisted category icon field with sensible migration defaults for existing categories and a safe BookOpen fallback for unknown/missing values.
+- Added category icons to homepage category cards, public category directory cards, category taxonomy headers, and admin category tables.
+
+### Changed
+
+- Redesigned public book cards into a cover-first presentation: category badge and aggregate read count live on the cover, with title/author revealed as an overlay on desktop hover/focus and kept visible on touch/mobile.
+- Removed permanent metadata text below public book covers so the cover remains the primary visual element.
+- Public category and book-card payloads now include category icon metadata while keeping internal library relationships unchanged.
+
+### Quality
+
+- Added regression coverage for category icon selection/validation, public icon propagation, and the cover-first book-card contract.
+- Focused AdminMasterData, PublicLibrary, and PublicBookCard UI tests pass before release promotion; full QA and browser smoke remain mandatory in GitHub Actions.
+
+### Release
+
+- Stable Batch C release based on v1.2.0.
+- Production upgrade requires the verified artifact, backup/restore-readiness, category-icon migration, public book-card/category smoke, health, security, and rollback gates in docs/PRODUCTION_RELEASE.md.
+
 ## [1.2.0] - 2026-10-12
 
 ### Fixed
