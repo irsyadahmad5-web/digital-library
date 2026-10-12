@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { Head, useForm, usePage } from '@inertiajs/vue3';
+import { Head, router, useForm, usePage } from '@inertiajs/vue3';
 import {
     ArrowDown,
     ArrowUp,
     Eye,
+    RefreshCw,
     Save,
     ShieldAlert,
 } from '@lucide/vue';
@@ -55,14 +56,34 @@ const props = defineProps<{
 }>();
 
 const page = usePage<SharedPageProps>();
-function editableSections(sections: BuilderSection[]) {
-    return sections.map((section) => ({
-        id: section.id,
-        type: section.type,
-        title: section.title,
-        is_enabled: section.is_enabled,
-        config: structuredClone(section.config),
-    }));
+
+function cloneConfig(config: Record<string, any> | null | undefined) {
+    // Inertia/Vue props may be reactive Proxy objects. Native structured cloning
+    // throws DataCloneError for those proxies, so clone only their JSON-safe payload.
+    const source = config && typeof config === 'object' ? config : {};
+    const cloned = JSON.parse(JSON.stringify(source)) as Record<string, any>;
+
+    return cloned && typeof cloned === 'object' ? cloned : {};
+}
+
+function editableSections(sections: BuilderSection[] | null | undefined) {
+    if (!Array.isArray(sections)) return [];
+
+    return sections.map((section) => {
+        const config = cloneConfig(section.config);
+
+        if (section.type === 'hero' && !Array.isArray(config.slides)) {
+            config.slides = [];
+        }
+
+        return {
+            id: section.id,
+            type: section.type,
+            title: section.title,
+            is_enabled: Boolean(section.is_enabled),
+            config,
+        };
+    });
 }
 
 const form = useForm({
@@ -96,7 +117,11 @@ function submit() {
         forceFormData: true,
         preserveScroll: true,
         onSuccess: (response) => {
-            const fresh = editableSections(response.props.sections as BuilderSection[]);
+            const incoming = Array.isArray(response.props.sections)
+                ? response.props.sections as BuilderSection[]
+                : props.sections;
+            const fresh = editableSections(incoming);
+
             form.sections = fresh;
             form.defaults({
                 _method: 'put',
@@ -107,7 +132,13 @@ function submit() {
 }
 
 function sectionSchema(type: string) {
-    return props.schemas[type];
+    return props.schemas?.[type];
+}
+
+function reloadBuilder() {
+    router.reload({
+        only: ['sections', 'schemas'],
+    });
 }
 </script>
 
@@ -148,7 +179,22 @@ function sectionSchema(type: string) {
                 <p class="text-[11px] text-ink-faint">Gunakan tombol ↑ ↓ untuk mengatur urutan.</p>
             </div>
 
-            <div class="grid gap-3">
+            <div
+                v-if="!form.sections.length"
+                class="rounded-[var(--radius-xl)] border border-dashed border-line bg-surface px-5 py-12 text-center"
+            >
+                <ShieldAlert class="mx-auto size-7 text-warning" />
+                <h2 class="mt-3 text-sm font-semibold text-ink">Section homepage belum dapat ditampilkan</h2>
+                <p class="mx-auto mt-1.5 max-w-lg text-xs leading-5 text-ink-soft">
+                    Muat ulang data builder. Jika kondisi ini tetap muncul, konfigurasi homepage perlu diperiksa oleh administrator.
+                </p>
+                <Button class="mt-4" size="small" variant="secondary" @click="reloadBuilder">
+                    <RefreshCw class="size-4" />
+                    Muat ulang builder
+                </Button>
+            </div>
+
+            <div v-else class="grid gap-3">
                 <section
                     v-for="(section, index) in form.sections"
                     :key="section.id"

@@ -28,10 +28,17 @@ export interface SiteSettings {
     [group: string]: Record<string, SettingValue>;
 }
 
+export interface PublicFooterStatistic {
+    key: 'books' | 'reads' | 'categories' | 'authors' | string;
+    label: string;
+    value: number;
+}
+
 export interface SharedPageProps {
     [key: string]: unknown;
     appName: string;
     site: SiteSettings;
+    publicStats: PublicFooterStatistic[];
     auth: {
         user: AuthUser | null;
     };

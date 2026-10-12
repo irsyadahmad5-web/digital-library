@@ -27,7 +27,7 @@ interface HeroSlide {
     remove_mobile?: boolean;
 }
 
-const slides = defineModel<HeroSlide[]>({ required: true });
+const slides = defineModel<HeroSlide[]>({ default: () => [] });
 const previews = reactive<Record<string, string>>({});
 
 function previewKey(slide: HeroSlide, variant: 'desktop' | 'mobile') {
@@ -211,7 +211,7 @@ onBeforeUnmount(() => {
                     <div class="grid gap-2">
                         <div>
                             <p class="text-xs font-semibold text-ink">Gambar desktop</p>
-                            <p class="mt-0.5 text-[10px] text-ink-faint">Rekomendasi 1600 × 900 px · rasio 16:9 · JPG/PNG/WebP · maks. 8 MB</p>
+                            <p class="mt-0.5 text-[10px] text-ink-faint">Rekomendasi 1920 × 820 px · format lebar · fokus utama di area tengah · JPG/PNG/WebP · maks. 8 MB</p>
                         </div>
 
                         <div class="aspect-video overflow-hidden rounded-[var(--radius-md)] border border-dashed border-line bg-surface">
@@ -252,7 +252,7 @@ onBeforeUnmount(() => {
                     <div class="grid gap-2">
                         <div>
                             <p class="text-xs font-semibold text-ink">Gambar mobile</p>
-                            <p class="mt-0.5 text-[10px] text-ink-faint">Rekomendasi 1080 × 1350 px · rasio 4:5 · JPG/PNG/WebP · maks. 8 MB</p>
+                            <p class="mt-0.5 text-[10px] text-ink-faint">Rekomendasi 1080 × 1350 px · rasio 4:5 · fokus utama di area tengah · JPG/PNG/WebP · maks. 8 MB</p>
                         </div>
 
                         <div class="mx-auto aspect-[4/5] w-full max-w-[220px] overflow-hidden rounded-[var(--radius-md)] border border-dashed border-line bg-surface">
