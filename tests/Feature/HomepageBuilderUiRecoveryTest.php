@@ -14,7 +14,7 @@ class HomepageBuilderUiRecoveryTest extends TestCase
 
         $this->assertStringNotContainsString('structuredClone(', $builder);
         $this->assertStringContainsString('JSON.parse(JSON.stringify(source))', $builder);
-        $this->assertStringContainsString("section.type === 'hero'", $builder);
+        $this->assertStringContainsString('section.type === \'hero\'', $builder);
         $this->assertStringContainsString('config.slides = []', $builder);
     }
 
@@ -29,8 +29,8 @@ class HomepageBuilderUiRecoveryTest extends TestCase
 
         $this->assertStringContainsString('Section homepage belum dapat ditampilkan', $builder);
         $this->assertStringContainsString('Muat ulang builder', $builder);
-        $this->assertStringContainsString("only: ['sections', 'schemas']", $builder);
-        $this->assertStringContainsString("default: () => []", $editor);
+        $this->assertStringContainsString('only: [\'sections\', \'schemas\']', $builder);
+        $this->assertStringContainsString('default: () => []', $editor);
         $this->assertStringContainsString('1920 × 820 px', $editor);
         $this->assertStringContainsString('1080 × 1350 px', $editor);
     }

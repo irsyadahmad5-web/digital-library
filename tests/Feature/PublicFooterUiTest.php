@@ -48,6 +48,6 @@ class PublicFooterUiTest extends TestCase
         $this->assertStringContainsString('Perpustakaan dalam angka', $layout);
         $this->assertStringContainsString('footerStats', $layout);
         $this->assertStringContainsString('Akses publik · Baca tanpa login', $layout);
-        $this->assertStringContainsString("bg-[#151B28]", $layout);
+        $this->assertStringContainsString('bg-[#151B28]', $layout);
     }
 }
