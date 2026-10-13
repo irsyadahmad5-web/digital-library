@@ -52,7 +52,7 @@ class PwaMobilePolishTest extends TestCase
             ->assertJsonPath('scope', '/')
             ->assertJsonPath('theme_color', '#123456')
             ->assertJsonPath('background_color', '#F5F5F0')
-            ->assertJsonPath('icons.0.src', '/pwa/site-icon/192.png?v=' . substr(hash('sha256', '|'), 0, 12))
+            ->assertJsonPath('icons.0.src', '/pwa/site-icon/192.png?v='.substr(hash('sha256', '|'), 0, 12))
             ->assertJsonPath('icons.0.sizes', '192x192')
             ->assertJsonPath('icons.1.sizes', '512x512')
             ->assertJsonPath('icons.2.purpose', 'maskable')
@@ -131,7 +131,7 @@ class PwaMobilePolishTest extends TestCase
         imagedestroy($image);
 
         $this->get('/manifest.webmanifest')
-            ->assertJsonPath('icons.0.src', '/pwa/site-icon/192.png?v=' . substr(hash('sha256', 'branding/site-logo.png|'), 0, 12));
+            ->assertJsonPath('icons.0.src', '/pwa/site-icon/192.png?v='.substr(hash('sha256', 'branding/site-logo.png|'), 0, 12));
     }
 
     public function test_pwa_icons_are_real_png_assets_with_expected_dimensions(): void

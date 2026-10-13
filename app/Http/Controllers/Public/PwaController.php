@@ -63,19 +63,19 @@ class PwaController extends Controller
             ],
             'icons' => [
                 [
-                    'src' => '/pwa/site-icon/192.png?v=' . $iconVersion,
+                    'src' => '/pwa/site-icon/192.png?v='.$iconVersion,
                     'sizes' => '192x192',
                     'type' => 'image/png',
                     'purpose' => 'any',
                 ],
                 [
-                    'src' => '/pwa/site-icon/512.png?v=' . $iconVersion,
+                    'src' => '/pwa/site-icon/512.png?v='.$iconVersion,
                     'sizes' => '512x512',
                     'type' => 'image/png',
                     'purpose' => 'any',
                 ],
                 [
-                    'src' => '/pwa/site-icon/maskable-512.png?v=' . $iconVersion,
+                    'src' => '/pwa/site-icon/maskable-512.png?v='.$iconVersion,
                     'sizes' => '512x512',
                     'type' => 'image/png',
                     'purpose' => 'maskable',
@@ -87,7 +87,7 @@ class PwaController extends Controller
                     'short_name' => 'Katalog',
                     'url' => '/library',
                     'icons' => [[
-                        'src' => '/pwa/site-icon/192.png?v=' . $iconVersion,
+                        'src' => '/pwa/site-icon/192.png?v='.$iconVersion,
                         'sizes' => '192x192',
                         'type' => 'image/png',
                     ]],
@@ -97,7 +97,7 @@ class PwaController extends Controller
                     'short_name' => 'Cari',
                     'url' => '/search',
                     'icons' => [[
-                        'src' => '/pwa/site-icon/192.png?v=' . $iconVersion,
+                        'src' => '/pwa/site-icon/192.png?v='.$iconVersion,
                         'sizes' => '192x192',
                         'type' => 'image/png',
                     ]],

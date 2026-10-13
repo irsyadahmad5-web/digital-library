@@ -4,9 +4,9 @@ use App\Http\Controllers\Installer\InstallerController;
 use App\Http\Controllers\Operations\HealthController;
 use App\Http\Controllers\Public\PublicDownloadController;
 use App\Http\Controllers\Public\PublicLibraryController;
+use App\Http\Controllers\Public\PublicPresenceController;
 use App\Http\Controllers\Public\PublicReaderController;
 use App\Http\Controllers\Public\PwaController;
-use App\Http\Controllers\Public\PublicPresenceController;
 use App\Http\Controllers\Public\SeoController;
 use Illuminate\Support\Facades\Route;
 
