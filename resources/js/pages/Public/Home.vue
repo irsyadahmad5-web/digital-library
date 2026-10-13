@@ -213,7 +213,7 @@ function bookSectionHref(section: HomepageSectionPayload) {
                     </template>
                 </PublicSectionHeader>
 
-                <div class="mt-2.5 grid grid-cols-3 gap-2 sm:mt-5 sm:gap-x-4 sm:gap-y-5 lg:grid-cols-4 xl:grid-cols-6">
+                <div class="mt-2.5 grid grid-cols-1 gap-2 sm:mt-5 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-5 lg:grid-cols-4 xl:grid-cols-6">
                     <PublicBookCard
                         v-for="book in bookData(section)"
                         :key="book.id"
