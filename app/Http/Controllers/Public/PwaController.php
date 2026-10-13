@@ -30,7 +30,7 @@ class PwaController extends Controller
             (string) ($appearance['primary_color'] ?? '#2563EB'),
             '#2563EB',
         );
-        $iconVersion = substr(hash('sha256', (string) ($general['logo_path'] ?? '').'|'.(string) ($general['favicon_path'] ?? '')), 0, 12);
+        $iconVersion = substr(hash('sha256', (string) ($general['logo_url'] ?? '').'|'.(string) ($general['favicon_url'] ?? '').'|'.(string) config('release.version')), 0, 12);
         $backgroundColor = $this->color(
             (string) ($appearance['background_color'] ?? '#FAFAF7'),
             '#FAFAF7',
@@ -106,7 +106,7 @@ class PwaController extends Controller
             'prefer_related_applications' => false,
         ], 200, [
             'Content-Type' => 'application/manifest+json; charset=UTF-8',
-            'Cache-Control' => 'public, max-age=300, must-revalidate',
+            'Cache-Control' => 'no-cache, max-age=0, must-revalidate',
             'X-Robots-Tag' => 'noindex, nofollow, noarchive',
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }

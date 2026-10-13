@@ -52,7 +52,7 @@ class PwaMobilePolishTest extends TestCase
             ->assertJsonPath('scope', '/')
             ->assertJsonPath('theme_color', '#123456')
             ->assertJsonPath('background_color', '#F5F5F0')
-            ->assertJsonPath('icons.0.src', '/pwa/site-icon/192.png?v='.substr(hash('sha256', '|'), 0, 12))
+            ->assertJsonPath('icons.0.src', '/pwa/site-icon/192.png?v='.substr(hash('sha256', '||'.config('release.version')), 0, 12))
             ->assertJsonPath('icons.0.sizes', '192x192')
             ->assertJsonPath('icons.1.sizes', '512x512')
             ->assertJsonPath('icons.2.purpose', 'maskable')
@@ -94,7 +94,7 @@ class PwaMobilePolishTest extends TestCase
                 false,
             )
             ->assertSee('rel="manifest"', false)
-            ->assertSee('/manifest.webmanifest', false)
+            ->assertSee('/manifest.webmanifest?v=', false)
             ->assertSee(
                 'site-icon/apple-180.png',
                 false,
@@ -131,7 +131,7 @@ class PwaMobilePolishTest extends TestCase
         imagedestroy($image);
 
         $this->get('/manifest.webmanifest')
-            ->assertJsonPath('icons.0.src', '/pwa/site-icon/192.png?v='.substr(hash('sha256', 'branding/site-logo.png|'), 0, 12));
+            ->assertJsonPath('icons.0.src', '/pwa/site-icon/192.png?v='.substr(hash('sha256', Storage::disk('public')->url('branding/site-logo.png').'||'.config('release.version')), 0, 12));
     }
 
     public function test_pwa_icons_are_real_png_assets_with_expected_dimensions(): void
@@ -193,6 +193,9 @@ class PwaMobilePolishTest extends TestCase
             "key.startsWith('digital-library-')",
             $worker,
         );
+        $this->assertStringContainsString("url.pathname === '/manifest.webmanifest'", $worker);
+        $this->assertStringContainsString("url.pathname.startsWith('/pwa/site-icon/')", $worker);
+        $this->assertStringNotContainsString("'/pwa/icon-192.png'", $worker);
         $this->assertStringNotContainsString(
             'caches.match(request).then',
             $worker,

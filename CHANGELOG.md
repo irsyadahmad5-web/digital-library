@@ -2,6 +2,26 @@
 
 All notable changes to Digital Library are documented in this file.
 
+## [1.5.3] - 2026-10-13
+
+### Changed
+
+- Homepage on narrow mobile screens now uses compact horizontal book rows with a small 75×100 thumbnail, title, author, category and reading count instead of large vertical poster cards. The catalog and tablet/desktop retain their existing cover-focused layouts.
+- Homepage latest/popular book sections use tighter mobile spacing and 18px headings while preserving the desktop layout.
+- The PWA manifest URL and every generated install icon are release- and branding-versioned to invalidate previous browser icon/manifest caches, helping new desktop installations pick up the configured site logo.
+- The dynamic manifest is revalidated on every request; the new service-worker cache generation no longer preloads obsolete generic install icons, and the service worker bypasses manifest and branded-icon requests.
+- Already installed Chrome desktop PWAs may still retain operating-system icon caches until the application is uninstalled and installed again.
+
+### Quality
+
+- Regression assertions added for compact-only mobile homepage book cards, unchanged desktop cover cards, branded PWA icon URLs and service-worker cache isolation.
+- Responsive browser audit checks mobile homepage book-row dimensions at narrow viewport widths.
+
+### Deployment
+
+- Presentation/PWA-only stable patch over v1.5.2; no database migration is required.
+- Full checksum-verified release, backup/restore-readiness, security and health gates remain mandatory.
+
 ## [1.5.2] - 2026-10-13
 
 ### Improved

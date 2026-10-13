@@ -7,24 +7,27 @@ withDefaults(defineProps<{
     title: string;
     href?: string | null;
     linkLabel?: string;
+    compactMobile?: boolean;
 }>(), {
     eyebrow: '',
     href: null,
     linkLabel: 'Lihat semua',
+    compactMobile: false,
 });
 </script>
 
 <template>
     <div class="flex min-w-0 items-end justify-between gap-2 sm:gap-4">
         <div class="min-w-0">
-            <p v-if="eyebrow" class="text-[10px] font-semibold uppercase tracking-[0.12em] text-brand sm:text-xs">
+            <p v-if="eyebrow" class="font-semibold uppercase tracking-[0.12em] text-brand sm:text-xs"
+                :class="compactMobile ? 'text-[9px]' : 'text-[10px]'">
                 {{ eyebrow }}
             </p>
             <h2
-                class="flex items-center gap-2 text-balance text-[21px] font-semibold leading-tight tracking-tight text-ink sm:gap-2.5 sm:text-[28px]"
-                :class="eyebrow ? 'mt-1' : ''"
+                class="flex items-center gap-2 text-balance font-semibold leading-tight tracking-tight text-ink sm:gap-2.5 sm:text-[28px]"
+                :class="[eyebrow ? 'mt-0.5 sm:mt-1' : '', compactMobile ? 'text-[18px]' : 'text-[21px]']"
             >
-                <span v-if="$slots.icon" class="grid size-6 shrink-0 place-items-center sm:size-8">
+                <span v-if="$slots.icon" class="grid size-5 shrink-0 place-items-center sm:size-8">
                     <slot name="icon" />
                 </span>
                 <span>{{ title }}</span>
