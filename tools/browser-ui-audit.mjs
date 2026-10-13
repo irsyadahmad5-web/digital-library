@@ -484,8 +484,8 @@ try {
                     failures.push(width + 'x' + height + ' homepage: no visible compact book card');
                 }
                 for (const card of audit.compactHomepageCards) {
-                    if (card.height > 150 || card.width < Math.floor(audit.clientWidth * 0.8)) {
-                        failures.push(width + 'x' + height + ' homepage: mobile book card not compact ' + JSON.stringify(card));
+                    if (card.height > 150 || card.height < 95 || card.width > 120 || card.width < 70) {
+                        failures.push(width + 'x' + height + ' homepage: compact portrait cover tile is out of bounds ' + JSON.stringify(card));
                     }
                 }
             }
@@ -566,9 +566,10 @@ try {
 
     await setViewport(session, 390, 844);
     await navigate(session, '/');
+    await auditAfterHydration(session);
     await evaluate(session, "document.querySelector('button[aria-label=\"Buka navigasi\"]')?.click()");
     await sleep(350);
-    const drawer = await evaluate(session, `(() => {
+    let drawer = await evaluate(session, `(() => {
         const panel = document.querySelector('[role="dialog"]');
         if (!panel) return { exists: false };
         const rect = panel.getBoundingClientRect();
@@ -585,6 +586,28 @@ try {
             searchRight: searchRect?.right ?? null,
         };
     })()`);
+    // Delayed Vue transitions and headless renderer startup can defer the panel.
+    // A missing panel after a single 350ms wait is not evidence of overflow.
+    for (let retry = 0; retry < 12 && !drawer.exists; retry += 1) {
+        await sleep(150);
+        drawer = await evaluate(session, `(() => {
+            const panel = document.querySelector('[role="dialog"]');
+            if (!panel) return { exists: false };
+            const rect = panel.getBoundingClientRect();
+            const search = panel.querySelector('form[role="search"]');
+            const searchRect = search?.getBoundingClientRect();
+            return {
+                exists: true,
+                left: rect.left,
+                right: rect.right,
+                viewport: window.innerWidth,
+                scrollWidth: panel.scrollWidth,
+                clientWidth: panel.clientWidth,
+                searchLeft: searchRect?.left ?? null,
+                searchRight: searchRect?.right ?? null,
+            };
+        })()`);
+    }
     results.push({ path: '/', mobileDrawer: drawer });
     if (!drawer.exists || drawer.left < -1 || drawer.right > drawer.viewport + 1
         || drawer.scrollWidth > drawer.clientWidth + 2

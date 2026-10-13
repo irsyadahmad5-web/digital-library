@@ -1,10 +1,10 @@
-# Production Release 1.5.3
+# Production Release 1.5.4
 
-Digital Library 1.5.3 is the stable presentation/PWA patch on top of v1.5.2. It changes only homepage book cards on narrow mobiles into compact horizontal rows and refreshes desktop PWA manifest/icon cache handling. All previous responsive, footer, online-presence and backup protections remain available.
+Digital Library 1.5.4 is the stable presentation refinement on top of v1.5.3. It restores the familiar poster/cover-first style for homepage book cards on narrow mobiles while retaining their compact section spacing, updated PWA icons, and all prior responsive, footer, online-presence and backup protections.
 
-## v1.5.3 acceptance checklist
+## v1.5.4 acceptance checklist
 
-- Mobile slider remains full-width/horizontal; homepage book sections use horizontal rows with cover thumbnails about 75 × 100 px and compact metadata, while desktop and catalog retain tall covers. Confirm on 360/390/430px mobile and 1440px desktop.
+- Mobile slider remains full-width/horizontal; homepage book sections keep the same compact padding and heading sizes as v1.5.3, but book entries use small ~100px-wide, 3:4 portrait cover tiles with category/read badges and bottom title overlay, **without the large white horizontal card**. Keep the original taller covers on desktop and in catalog. Test 360/390/430px mobile and 1440px desktop.
 - Mobile drawer has no horizontal overflow or clipped search button, and desktop top navigation contains Beranda.
 - Footer has no Ruang Baca Digital promotional banner; contact fields are shown directly when configured; heading Statistik and real-time Pengguna online appear with a 120-second window.
 - GET `/manifest.webmanifest?v=<branding-release-hash>` contains `/pwa/site-icon/192.png`, `/pwa/site-icon/512.png` and `/pwa/site-icon/maskable-512.png` with matching new cache-version hashes. Generated images must use the administrator-uploaded logo, including desktop. The service worker must not cache legacy generic `/pwa/icon-192.png` icons.
@@ -23,8 +23,8 @@ composer release:package
 The packaging command runs the full QA gate and browser smoke test, rebuilds frontend assets, exports only tracked source files, installs optimized production Composer dependencies without dev packages, adds `RELEASE.json`, generates `RELEASE_FILES.sha256`, and creates:
 
 ```text
-dist/digital-library-v1.5.3.zip
-dist/digital-library-v1.5.3.zip.sha256
+dist/digital-library-v1.5.4.zip
+dist/digital-library-v1.5.4.zip.sha256
 ```
 
 The archive deliberately excludes `.env`, Git metadata, `node_modules`, runtime logs, backups, uploaded ebooks, and other server state. It includes the full application source, migrations, tests/documentation, production `vendor/`, and compiled `public/build/`.
@@ -33,7 +33,7 @@ Verify the ZIP before deployment:
 
 ```bash
 cd dist
-sha256sum -c digital-library-v1.5.3.zip.sha256
+sha256sum -c digital-library-v1.5.4.zip.sha256
 ```
 
 After extraction, `RELEASE_FILES.sha256` can be used to validate all packaged files.

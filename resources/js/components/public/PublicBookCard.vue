@@ -27,13 +27,13 @@ function authorLabel() {
         <Link
             :href="'/book/' + book.slug"
             class="rounded-[var(--radius-lg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 focus-visible:ring-offset-4 focus-visible:ring-offset-canvas"
-            :class="compactMobile ? 'flex min-h-[110px] items-center gap-3 rounded-xl border border-line bg-surface p-2 sm:block sm:min-h-0 sm:border-0 sm:bg-transparent sm:p-0' : 'block'"
+            :class="compactMobile ? 'block w-[100px] max-w-full sm:w-auto' : 'block'"
             :aria-label="'Buka buku ' + book.title"
             prefetch="hover"
         >
             <div
                 class="relative overflow-hidden border border-line bg-surface-subtle shadow-[var(--shadow-cover)] transition-[transform,box-shadow,border-color] duration-200 group-hover:-translate-y-1 group-hover:border-line-strong group-focus-visible:-translate-y-1 group-focus-visible:border-line-strong"
-                :class="compactMobile ? 'h-[100px] w-[75px] shrink-0 rounded-lg sm:aspect-[3/4] sm:h-auto sm:w-full sm:rounded-[var(--radius-lg)]' : 'aspect-[3/4] rounded-[var(--radius-lg)]'"
+                :class="compactMobile ? 'aspect-[3/4] rounded-lg sm:rounded-[var(--radius-lg)]' : 'aspect-[3/4] rounded-[var(--radius-lg)]'"
             >
                 <img
                     v-if="book.cover_url"
@@ -56,12 +56,12 @@ function authorLabel() {
                 </div>
 
                 <div
-                    class="absolute inset-x-0 top-0 flex items-start justify-between gap-2 p-2.5"
-                    :class="compactMobile ? 'hidden sm:flex' : 'flex'"
+                    class="absolute inset-x-0 top-0 flex items-start justify-between gap-1 p-1 sm:gap-2 sm:p-2.5"
                 >
                     <span
                         v-if="book.categories.length"
                         class="max-w-[72%] truncate rounded-full border border-white/15 bg-black/62 px-2.5 py-1 text-[10px] font-semibold text-white shadow-sm backdrop-blur-sm"
+                        :class="compactMobile ? 'max-w-[52%] px-1 py-0.5 text-[8px] sm:max-w-[72%] sm:px-2.5 sm:py-1 sm:text-[10px]' : ''"
                         :title="book.categories[0].name"
                     >
                         {{ book.categories[0].name }}
@@ -70,34 +70,24 @@ function authorLabel() {
 
                     <span
                         class="inline-flex min-h-6 shrink-0 items-center gap-1 rounded-full border border-white/15 bg-black/62 px-2 py-1 text-[10px] font-semibold tabular-nums text-white shadow-sm backdrop-blur-sm"
+                        :class="compactMobile ? 'min-h-4 gap-0.5 px-1 py-0.5 text-[8px] sm:min-h-6 sm:gap-1 sm:px-2 sm:py-1 sm:text-[10px]' : ''"
                         :title="book.reader_count.toLocaleString('id-ID') + ' kali dibaca'"
                     >
-                        <Eye class="size-3.5" />
+                        <Eye class="size-3.5" :class="compactMobile ? 'size-2.5 sm:size-3.5' : ''" />
                         {{ readerCount(book.reader_count) }}
                     </span>
                 </div>
 
                 <div
                     class="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/92 via-black/62 to-transparent px-3 pb-3 pt-16 text-white transition-[opacity,transform] duration-200 md:translate-y-2 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 md:group-focus-visible:translate-y-0 md:group-focus-visible:opacity-100"
-                    :class="compactMobile ? 'hidden sm:block' : ''"
+                    :class="compactMobile ? 'px-1.5 pb-1.5 pt-9 sm:px-3 sm:pb-3 sm:pt-16' : ''"
                 >
-                    <h3 class="line-clamp-2 text-sm font-semibold leading-5 tracking-[-0.01em]">
+                    <h3 class="line-clamp-2 text-sm font-semibold leading-5 tracking-[-0.01em]" :class="compactMobile ? 'text-[11px] leading-3.5 sm:text-sm sm:leading-5' : ''">
                         {{ book.title }}
                     </h3>
-                    <p class="mt-1 line-clamp-1 text-[10px] leading-4 text-white/75">
+                    <p class="mt-1 line-clamp-1 text-[10px] leading-4 text-white/75" :class="compactMobile ? 'mt-0.5 text-[8px] leading-3 sm:mt-1 sm:text-[10px] sm:leading-4' : ''">
                         {{ authorLabel() }}
                     </p>
-                </div>
-            </div>
-            <div v-if="compactMobile" class="flex min-w-0 flex-1 flex-col justify-center gap-1.5 sm:hidden">
-                <h3 class="line-clamp-2 text-[14px] font-semibold leading-5 text-ink">{{ book.title }}</h3>
-                <p class="line-clamp-1 text-[11px] leading-4 text-ink-soft">{{ authorLabel() }}</p>
-                <div class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-[10px] leading-4">
-                    <span v-if="book.categories.length" class="max-w-[65%] truncate rounded-md bg-brand-soft px-1.5 py-0.5 font-semibold text-brand">{{ book.categories[0].name }}</span>
-                    <span class="inline-flex items-center gap-1 text-ink-faint" :aria-label="book.reader_count.toLocaleString('id-ID') + ' kali dibaca'">
-                        <Eye class="size-3" aria-hidden="true" />
-                        {{ readerCount(book.reader_count) }} dibaca
-                    </span>
                 </div>
             </div>
         </Link>

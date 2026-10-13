@@ -2,6 +2,25 @@
 
 All notable changes to Digital Library are documented in this file.
 
+## [1.5.4] - 2026-10-13
+
+### Changed
+
+- Restore the original cover-first poster tile appearance for public homepage books on phones, with the category and reader-count badges and the title/author caption overlaid on the image.
+- Keep the tightly spaced v1.5.3 homepage section layout, short section headings, horizontal image-only hero, and all desktop/catalog book card appearances unchanged.
+- The homepage mobile cover tile is just 100px wide at the original 3:4 aspect ratio; remove the large bordered white horizontal card and redundant metadata panel.
+- On phones, show up to three compact cover tiles in a row when a section contains multiple books.
+
+### Quality
+
+- Updated cover-card regression tests to verify overlay styling, absence of the large mobile white panel, and unchanged desktop/card proportions.
+- Updated responsive browser acceptance to check compact portrait book covers, no horizontal overflow, and layout integrity at small viewports.
+
+### Deployment
+
+- Presentation-only stable patch over v1.5.3, without database migration.
+- Full checksum-verified source release, backup/restore-readiness, security and health gates required as usual.
+
 ## [1.5.3] - 2026-10-13
 
 ### Changed
