@@ -28,11 +28,14 @@ class PublicBookCardUiTest extends TestCase
         $header = (string) file_get_contents(resource_path('js/components/public/PublicSectionHeader.vue'));
 
         $this->assertStringContainsString('compact-mobile', $home);
-        $this->assertStringContainsString('grid-cols-1 gap-2 sm:mt-5 sm:grid-cols-3', $home);
+        $this->assertStringContainsString('grid-cols-3 gap-2 sm:mt-5 sm:gap-x-4', $home);
         $this->assertStringContainsString('compactMobile?: boolean', $card);
-        $this->assertStringContainsString('h-[100px] w-[75px]', $card);
-        $this->assertStringContainsString('sm:aspect-[3/4]', $card);
-        $this->assertStringContainsString('sm:hidden', $card);
+        $this->assertStringContainsString('block w-[100px] max-w-full sm:w-auto', $card);
+        $this->assertStringContainsString('aspect-[3/4] rounded-lg', $card);
+        $this->assertStringContainsString('bg-gradient-to-t', $card);
+        $this->assertStringContainsString('text-[11px] leading-3.5 sm:text-sm', $card);
+        $this->assertStringNotContainsString('min-h-[110px] items-center gap-3 rounded-xl border', $card);
+        $this->assertStringNotContainsString('flex min-w-0 flex-1 flex-col justify-center', $card);
         $this->assertStringContainsString("compactMobile ? 'text-[18px]'", $header);
     }
 
