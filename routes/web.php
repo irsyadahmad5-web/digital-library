@@ -4,6 +4,7 @@ use App\Http\Controllers\Installer\InstallerController;
 use App\Http\Controllers\Operations\HealthController;
 use App\Http\Controllers\Public\PublicDownloadController;
 use App\Http\Controllers\Public\PublicLibraryController;
+use App\Http\Controllers\Public\PublicPresenceController;
 use App\Http\Controllers\Public\PublicReaderController;
 use App\Http\Controllers\Public\PwaController;
 use App\Http\Controllers\Public\SeoController;
@@ -38,6 +39,10 @@ Route::get('/health/ready', [HealthController::class, 'ready'])
 Route::get('/manifest.webmanifest', [PwaController::class, 'manifest'])
     ->name('pwa.manifest');
 
+Route::get('/pwa/site-icon/{variant}.png', [PwaController::class, 'siteIcon'])
+    ->where('variant', '(192|512|maskable-512|apple-180)')
+    ->name('pwa.site-icon');
+
 Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])
     ->name('seo.sitemap');
 
@@ -47,6 +52,10 @@ Route::get('/robots.txt', [SeoController::class, 'robots'])
 $slugPattern = '[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*';
 
 Route::middleware('site.maintenance')->group(function () use ($slugPattern): void {
+    Route::post('/presence/heartbeat', [PublicPresenceController::class, 'heartbeat'])
+        ->middleware('throttle:10,1,public-presence-')
+        ->name('public.presence');
+
     Route::get('/', [PublicLibraryController::class, 'home'])
         ->name('home');
 

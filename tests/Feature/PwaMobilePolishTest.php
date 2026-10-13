@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Modules\Settings\Application\SettingsManager;
 use Database\Seeders\SettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class PwaMobilePolishTest extends TestCase
@@ -51,6 +52,7 @@ class PwaMobilePolishTest extends TestCase
             ->assertJsonPath('scope', '/')
             ->assertJsonPath('theme_color', '#123456')
             ->assertJsonPath('background_color', '#F5F5F0')
+            ->assertJsonPath('icons.0.src', '/pwa/site-icon/192.png?v='.substr(hash('sha256', '|'), 0, 12))
             ->assertJsonPath('icons.0.sizes', '192x192')
             ->assertJsonPath('icons.1.sizes', '512x512')
             ->assertJsonPath('icons.2.purpose', 'maskable')
@@ -94,13 +96,42 @@ class PwaMobilePolishTest extends TestCase
             ->assertSee('rel="manifest"', false)
             ->assertSee('/manifest.webmanifest', false)
             ->assertSee(
-                'rel="apple-touch-icon" sizes="180x180" href="/pwa/apple-touch-icon.png"',
+                'site-icon/apple-180.png',
                 false,
             )
             ->assertSee(
                 'name="apple-mobile-web-app-capable" content="yes"',
                 false,
             );
+    }
+
+    public function test_generated_pwa_icons_reuse_uploaded_website_logo(): void
+    {
+        Storage::fake('public');
+        $source = imagecreatetruecolor(64, 48);
+        $green = imagecolorallocate($source, 15, 115, 75);
+        imagefill($source, 0, 0, $green);
+        ob_start();
+        imagepng($source);
+        $png = ob_get_clean();
+        imagedestroy($source);
+        Storage::disk('public')->put('branding/site-logo.png', $png);
+
+        app(SettingsManager::class)->updateGroup('general', [
+            'logo_path' => 'branding/site-logo.png',
+        ], null);
+
+        $response = $this->get('/pwa/site-icon/192.png');
+        $response->assertOk()->assertHeader('Content-Type', 'image/png');
+        $image = imagecreatefromstring($response->getContent());
+        $this->assertNotFalse($image);
+        $this->assertSame(192, imagesx($image));
+        $this->assertSame(192, imagesy($image));
+        $this->assertSame(15, imagecolorsforindex($image, imagecolorat($image, 96, 96))['red']);
+        imagedestroy($image);
+
+        $this->get('/manifest.webmanifest')
+            ->assertJsonPath('icons.0.src', '/pwa/site-icon/192.png?v='.substr(hash('sha256', 'branding/site-logo.png|'), 0, 12));
     }
 
     public function test_pwa_icons_are_real_png_assets_with_expected_dimensions(): void

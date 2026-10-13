@@ -37,17 +37,22 @@ class PublicFooterUiTest extends TestCase
         }
     }
 
-    public function test_public_layout_contains_modern_footer_contract(): void
+    public function test_public_layout_contains_compact_footer_contract(): void
     {
         $layout = (string) file_get_contents(
             resource_path('js/layouts/PublicLayout.vue'),
         );
 
-        $this->assertStringContainsString('Ruang baca digital', $layout);
-        $this->assertStringContainsString('Mulai membaca', $layout);
-        $this->assertStringContainsString('Perpustakaan dalam angka', $layout);
+        $this->assertStringNotContainsString('Ruang baca digital', $layout);
+        $this->assertStringNotContainsString('Temukan bacaan yang layak dibawa lebih jauh.', $layout);
+        $this->assertStringNotContainsString('Perpustakaan dalam angka', $layout);
+        $this->assertStringContainsString('>Statistik</p>', $layout);
+        $this->assertStringContainsString('Pengguna online', $layout);
+        $this->assertStringContainsString('tel:', $layout);
+        $this->assertStringContainsString('mailto:', $layout);
+        $this->assertStringNotContainsString('Lihat informasi kontak', $layout);
         $this->assertStringContainsString('footerStats', $layout);
-        $this->assertStringContainsString('Akses publik · Baca tanpa login', $layout);
+        $this->assertStringContainsString('Baca buku tanpa login', $layout);
         $this->assertStringContainsString('bg-[#151B28]', $layout);
     }
 }

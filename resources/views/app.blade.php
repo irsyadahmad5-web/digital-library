@@ -31,7 +31,7 @@
     @if (! empty($generalProps['favicon_url']))
         <link rel="icon" href="{{ $generalProps['favicon_url'] }}">
     @endif
-    <link rel="apple-touch-icon" sizes="180x180" href="/pwa/apple-touch-icon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ route('pwa.site-icon', ['variant' => 'apple-180']) }}">
 
     <title data-inertia="">{{ $serverTitle }}</title>
 

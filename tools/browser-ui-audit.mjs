@@ -419,6 +419,17 @@ const results = [];
 const auditExpression = '(' + auditPage.toString() + ')()';
 const stressExpression = '(' + stressPage.toString() + ')()';
 
+async function auditAfterHydration(session) {
+    let audit;
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+        audit = await evaluate(session, auditExpression);
+        if (audit.h1Count > 0) return audit;
+        await sleep(200);
+    }
+    return audit;
+}
+
+
 const referenceViewports = [
     [360, 800],
     [390, 844],
@@ -449,7 +460,7 @@ try {
 
         for (const path of coreRoutes) {
             await navigate(session, path);
-            const audit = await evaluate(session, auditExpression);
+            const audit = await auditAfterHydration(session);
 
             results.push({ width, height, path, audit });
 
@@ -476,7 +487,7 @@ try {
 
         for (const path of representativeRoutes) {
             await navigate(session, path);
-            const audit = await evaluate(session, auditExpression);
+            const audit = await auditAfterHydration(session);
             const stress = await evaluate(session, stressExpression);
 
             results.push({ width, height, path, audit, stress });
@@ -530,6 +541,36 @@ try {
             failures.push(path + ': keyboard focus is not visibly indicated ' + JSON.stringify(focus));
         }
     }
+
+    await setViewport(session, 390, 844);
+    await navigate(session, '/');
+    await evaluate(session, "document.querySelector('button[aria-label=\"Buka navigasi\"]')?.click()");
+    await sleep(350);
+    const drawer = await evaluate(session, `(() => {
+        const panel = document.querySelector('[role="dialog"]');
+        if (!panel) return { exists: false };
+        const rect = panel.getBoundingClientRect();
+        const search = panel.querySelector('form[role="search"]');
+        const searchRect = search?.getBoundingClientRect();
+        return {
+            exists: true,
+            left: rect.left,
+            right: rect.right,
+            viewport: window.innerWidth,
+            scrollWidth: panel.scrollWidth,
+            clientWidth: panel.clientWidth,
+            searchLeft: searchRect?.left ?? null,
+            searchRight: searchRect?.right ?? null,
+        };
+    })()`);
+    results.push({ path: '/', mobileDrawer: drawer });
+    if (!drawer.exists || drawer.left < -1 || drawer.right > drawer.viewport + 1
+        || drawer.scrollWidth > drawer.clientWidth + 2
+        || drawer.searchLeft === null || drawer.searchLeft < drawer.left - 1
+        || drawer.searchRight > drawer.right + 1) {
+        failures.push('Mobile navigation panel has horizontal overflow or clipped search: ' + JSON.stringify(drawer));
+    }
+    await evaluate(session, "document.querySelector('button[aria-label=\"Tutup panel\"]')?.click()");
 
     await setViewport(session, 390, 844);
     await navigate(session, '/');
