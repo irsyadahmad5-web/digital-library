@@ -16,6 +16,7 @@
         $pwaName = is_array($generalProps)
             ? ($generalProps['short_name'] ?? $generalProps['site_name'] ?? config('app.name', 'Digital Library'))
             : config('app.name', 'Digital Library');
+        $pwaManifestVersion = substr(hash('sha256', (string) ($generalProps['logo_url'] ?? '').'|'.(string) ($generalProps['favicon_url'] ?? '').'|'.(string) config('release.version')), 0, 12);
         $serverSeo = $page['props']['seo'] ?? null;
         $serverTitle = is_array($serverSeo)
             ? ($serverSeo['title'] ?? config('app.name', 'Digital Library'))
@@ -27,11 +28,11 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="{{ $pwaName }}">
-    <link rel="manifest" href="{{ route('pwa.manifest') }}">
+    <link rel="manifest" href="{{ route('pwa.manifest') }}?v={{ $pwaManifestVersion }}">
     @if (! empty($generalProps['favicon_url']))
         <link rel="icon" href="{{ $generalProps['favicon_url'] }}">
     @endif
-    <link rel="apple-touch-icon" sizes="180x180" href="{{ route('pwa.site-icon', ['variant' => 'apple-180']) }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ route('pwa.site-icon', ['variant' => 'apple-180']) }}?v={{ $pwaManifestVersion }}">
 
     <title data-inertia="">{{ $serverTitle }}</title>
 

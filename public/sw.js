@@ -1,10 +1,7 @@
-const SHELL_CACHE = 'digital-library-shell-v1';
-const IMAGE_CACHE = 'digital-library-images-v1';
+const SHELL_CACHE = 'digital-library-shell-v2';
+const IMAGE_CACHE = 'digital-library-images-v2';
 const SHELL_ASSETS = [
     '/offline.html',
-    '/pwa/icon-192.png',
-    '/pwa/icon-512.png',
-    '/pwa/icon-maskable-512.png',
 ];
 
 self.addEventListener('install', (event) => {
@@ -97,6 +94,11 @@ self.addEventListener('fetch', (event) => {
     if (request.method !== 'GET') return;
 
     const url = new URL(request.url);
+
+    // The manifest and branded install icons must not be tied to legacy generic icon caches.
+    if (url.pathname === '/manifest.webmanifest' || url.pathname.startsWith('/pwa/site-icon/')) {
+        return;
+    }
 
     if (url.origin !== self.location.origin || isSensitivePath(url.pathname)) {
         return;

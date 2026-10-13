@@ -21,6 +21,21 @@ class PublicBookCardUiTest extends TestCase
         $this->assertStringNotContainsString('publication_year', $card);
     }
 
+    public function test_homepage_mobile_book_cards_are_compact_and_preserve_desktop_cover_layout(): void
+    {
+        $home = (string) file_get_contents(resource_path('js/pages/Public/Home.vue'));
+        $card = (string) file_get_contents(resource_path('js/components/public/PublicBookCard.vue'));
+        $header = (string) file_get_contents(resource_path('js/components/public/PublicSectionHeader.vue'));
+
+        $this->assertStringContainsString('compact-mobile', $home);
+        $this->assertStringContainsString('grid-cols-1 gap-2 sm:mt-5 sm:grid-cols-3', $home);
+        $this->assertStringContainsString('compactMobile?: boolean', $card);
+        $this->assertStringContainsString('h-[100px] w-[75px]', $card);
+        $this->assertStringContainsString('sm:aspect-[3/4]', $card);
+        $this->assertStringContainsString('sm:hidden', $card);
+        $this->assertStringContainsString("compactMobile ? 'text-[18px]'", $header);
+    }
+
     public function test_category_icon_picker_and_public_icon_surfaces_are_wired(): void
     {
         $master = (string) file_get_contents(

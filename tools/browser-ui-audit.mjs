@@ -291,6 +291,16 @@ function auditPage() {
         })
         .slice(0, 12);
 
+    const compactHomepageCards = location.pathname === '/'
+        ? [...document.querySelectorAll('main a[href^="/book/"]')]
+            .filter(visible)
+            .slice(0, 4)
+            .map((element) => {
+                const rect = element.getBoundingClientRect();
+                return { width: Math.round(rect.width), height: Math.round(rect.height) };
+            })
+        : [];
+
     const overflow = Math.max(root.scrollWidth, body?.scrollWidth || 0) - root.clientWidth;
 
     return {
@@ -301,6 +311,7 @@ function auditPage() {
         clientWidth: root.clientWidth,
         scrollWidth: Math.max(root.scrollWidth, body?.scrollWidth || 0),
         overflow,
+        compactHomepageCards,
         unlabeled,
         undersizedTargets,
     };
@@ -466,6 +477,17 @@ try {
 
             if (audit.overflow > 2) {
                 failures.push(width + 'x' + height + ' ' + path + ': horizontal overflow ' + audit.overflow + 'px');
+            }
+
+            if (path === '/' && width <= 430) {
+                if (!audit.compactHomepageCards.length) {
+                    failures.push(width + 'x' + height + ' homepage: no visible compact book card');
+                }
+                for (const card of audit.compactHomepageCards) {
+                    if (card.height > 150 || card.width < Math.floor(audit.clientWidth * 0.8)) {
+                        failures.push(width + 'x' + height + ' homepage: mobile book card not compact ' + JSON.stringify(card));
+                    }
+                }
             }
 
             if (audit.h1Count !== 1) {

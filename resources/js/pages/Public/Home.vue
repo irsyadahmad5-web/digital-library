@@ -199,31 +199,33 @@ function bookSectionHref(section: HomepageSectionPayload) {
 
             <section
                 v-else-if="['latest_books', 'popular_books', 'recommendations'].includes(section.type) && bookData(section).length"
-                class="ui-page-shell py-5 sm:py-8 lg:py-9"
+                class="ui-page-shell py-3 sm:py-8 lg:py-9"
             >
                 <PublicSectionHeader
+                    compact-mobile
                     :eyebrow="configString(section, 'eyebrow', bookSectionEyebrow(section))"
                     :title="configString(section, 'title', bookSectionTitle(section))"
                     :href="bookSectionHref(section) && configBoolean(section, 'show_view_all') ? bookSectionHref(section) : null"
                 >
                     <template #icon>
-                        <Star v-if="section.type === 'latest_books'" class="size-7 fill-current text-warning" />
-                        <Flame v-else-if="section.type === 'popular_books'" class="size-7 fill-current text-danger" />
+                        <Star v-if="section.type === 'latest_books'" class="size-5 fill-current text-warning sm:size-7" />
+                        <Flame v-else-if="section.type === 'popular_books'" class="size-5 fill-current text-danger sm:size-7" />
                     </template>
                 </PublicSectionHeader>
 
-                <div class="mt-3.5 grid grid-cols-2 gap-x-3 gap-y-5 sm:mt-5 sm:grid-cols-3 sm:gap-x-4 lg:grid-cols-4 xl:grid-cols-6">
+                <div class="mt-2.5 grid grid-cols-1 gap-2 sm:mt-5 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-5 lg:grid-cols-4 xl:grid-cols-6">
                     <PublicBookCard
                         v-for="book in bookData(section)"
                         :key="book.id"
                         :book="book"
+                        compact-mobile
                     />
                 </div>
             </section>
 
             <section
                 v-else-if="section.type === 'categories' && directoryData(section).length"
-                class="ui-page-shell py-5 sm:py-8 lg:py-9"
+                class="ui-page-shell py-3 sm:py-8 lg:py-9"
             >
                 <PublicSectionHeader
                     :eyebrow="configString(section, 'eyebrow', 'Jelajahi topik')"

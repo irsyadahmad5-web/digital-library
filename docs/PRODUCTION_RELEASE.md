@@ -1,13 +1,14 @@
-# Production Release 1.5.2
+# Production Release 1.5.3
 
-Digital Library 1.5.2 is the stable responsive/mobile experience patch on top of v1.5.1. It tightens homepage section spacing, corrects the mobile drawer and search button, simplifies footer and statistics, adds realtime active visitor counts with a tiny indexed database table, and uses the configured website logo for PWA icons.
+Digital Library 1.5.3 is the stable presentation/PWA patch on top of v1.5.2. It changes only homepage book cards on narrow mobiles into compact horizontal rows and refreshes desktop PWA manifest/icon cache handling. All previous responsive, footer, online-presence and backup protections remain available.
 
-## v1.5.2 acceptance checklist
+## v1.5.3 acceptance checklist
 
-- Mobile slider stays full-width/horizontal while book, category, statistics and discovery sections use compact responsive spacing and readable type. Desktop keeps editorial spacing.
+- Mobile slider remains full-width/horizontal; homepage book sections use horizontal rows with cover thumbnails about 75 × 100 px and compact metadata, while desktop and catalog retain tall covers. Confirm on 360/390/430px mobile and 1440px desktop.
 - Mobile drawer has no horizontal overflow or clipped search button, and desktop top navigation contains Beranda.
 - Footer has no Ruang Baca Digital promotional banner; contact fields are shown directly when configured; heading Statistik and real-time Pengguna online appear with a 120-second window.
-- GET `/manifest.webmanifest` contains `/pwa/site-icon/192.png`, `/pwa/site-icon/512.png` and `/pwa/site-icon/maskable-512.png`. Icons should show the uploaded site logo.
+- GET `/manifest.webmanifest?v=<branding-release-hash>` contains `/pwa/site-icon/192.png`, `/pwa/site-icon/512.png` and `/pwa/site-icon/maskable-512.png` with matching new cache-version hashes. Generated images must use the administrator-uploaded logo, including desktop. The service worker must not cache legacy generic `/pwa/icon-192.png` icons.
+- Existing desktop Chrome installations can retain their OS-level old app icon; if so remove the older installed app in Chrome and install afresh after reloading the website. Do not delete website data unrelated to this PWA.
 - POST `/presence/heartbeat` requires CSRF, is rate limited and returns a non-cached visitor count after migration. No IP/user agent is stored.
 - Maintain backup/restore-readiness, artifact file hash validation, search/category/books smoke, and final health/security checks before acceptance.
 
@@ -22,8 +23,8 @@ composer release:package
 The packaging command runs the full QA gate and browser smoke test, rebuilds frontend assets, exports only tracked source files, installs optimized production Composer dependencies without dev packages, adds `RELEASE.json`, generates `RELEASE_FILES.sha256`, and creates:
 
 ```text
-dist/digital-library-v1.5.2.zip
-dist/digital-library-v1.5.2.zip.sha256
+dist/digital-library-v1.5.3.zip
+dist/digital-library-v1.5.3.zip.sha256
 ```
 
 The archive deliberately excludes `.env`, Git metadata, `node_modules`, runtime logs, backups, uploaded ebooks, and other server state. It includes the full application source, migrations, tests/documentation, production `vendor/`, and compiled `public/build/`.
@@ -32,7 +33,7 @@ Verify the ZIP before deployment:
 
 ```bash
 cd dist
-sha256sum -c digital-library-v1.5.2.zip.sha256
+sha256sum -c digital-library-v1.5.3.zip.sha256
 ```
 
 After extraction, `RELEASE_FILES.sha256` can be used to validate all packaged files.
