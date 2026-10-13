@@ -180,6 +180,7 @@ onBeforeUnmount(() => {
         @focusout="focusOut"
         @keydown="onKeydown"
     >
+        <h1 class="sr-only">Perpustakaan Digital — membaca dan menemukan ilmu</h1>
         <div
             class="relative isolate aspect-[16/9] w-full overflow-hidden bg-[#172033] md:aspect-[8/3]"
             tabindex="0"

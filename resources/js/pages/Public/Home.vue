@@ -176,9 +176,9 @@ function bookSectionHref(section: HomepageSectionPayload) {
 
             <section
                 v-else-if="section.type === 'search'"
-                class="ui-page-shell py-5 sm:py-7"
+                class="ui-page-shell py-4 sm:py-7"
             >
-                <div class="grid gap-5 border-y border-line py-6 md:grid-cols-[minmax(0,.7fr)_minmax(360px,1.3fr)] md:items-center md:gap-8">
+                <div class="grid gap-3 border-y border-line py-4 sm:gap-5 sm:py-6 md:grid-cols-[minmax(0,.7fr)_minmax(360px,1.3fr)] md:items-center md:gap-8">
                     <div class="min-w-0">
                         <div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-brand">
                             <Search class="size-4" />
@@ -199,7 +199,7 @@ function bookSectionHref(section: HomepageSectionPayload) {
 
             <section
                 v-else-if="['latest_books', 'popular_books', 'recommendations'].includes(section.type) && bookData(section).length"
-                class="ui-page-shell py-9 sm:py-11"
+                class="ui-page-shell py-5 sm:py-8 lg:py-9"
             >
                 <PublicSectionHeader
                     :eyebrow="configString(section, 'eyebrow', bookSectionEyebrow(section))"
@@ -212,7 +212,7 @@ function bookSectionHref(section: HomepageSectionPayload) {
                     </template>
                 </PublicSectionHeader>
 
-                <div class="mt-6 grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+                <div class="mt-3.5 grid grid-cols-2 gap-x-3 gap-y-5 sm:mt-5 sm:grid-cols-3 sm:gap-x-4 lg:grid-cols-4 xl:grid-cols-6">
                     <PublicBookCard
                         v-for="book in bookData(section)"
                         :key="book.id"
@@ -223,7 +223,7 @@ function bookSectionHref(section: HomepageSectionPayload) {
 
             <section
                 v-else-if="section.type === 'categories' && directoryData(section).length"
-                class="ui-page-shell py-9 sm:py-11"
+                class="ui-page-shell py-5 sm:py-8 lg:py-9"
             >
                 <PublicSectionHeader
                     :eyebrow="configString(section, 'eyebrow', 'Jelajahi topik')"
@@ -232,7 +232,7 @@ function bookSectionHref(section: HomepageSectionPayload) {
                     link-label="Semua kategori"
                 />
 
-                <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <div class="mt-4 grid gap-2.5 sm:mt-6 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3 xl:grid-cols-4">
                     <Link
                         v-for="item in directoryData(section)"
                         :key="item.slug"
@@ -256,7 +256,7 @@ function bookSectionHref(section: HomepageSectionPayload) {
 
             <section
                 v-else-if="section.type === 'collections' && directoryData(section).length"
-                class="ui-page-shell py-9 sm:py-11"
+                class="ui-page-shell py-5 sm:py-8 lg:py-9"
             >
                 <PublicSectionHeader
                     :eyebrow="configString(section, 'eyebrow', 'Pilihan koleksi')"
@@ -265,7 +265,7 @@ function bookSectionHref(section: HomepageSectionPayload) {
                     link-label="Semua koleksi"
                 />
 
-                <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <div class="mt-4 grid gap-2.5 sm:mt-6 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4">
                     <Link
                         v-for="item in directoryData(section)"
                         :key="item.slug"
@@ -287,32 +287,33 @@ function bookSectionHref(section: HomepageSectionPayload) {
 
             <section
                 v-else-if="section.type === 'statistics' && statisticsData(section).length"
-                class="my-8 border-y border-line bg-surface sm:my-10"
+                class="my-4 border-y border-line bg-surface/75 sm:my-8"
             >
-                <div class="ui-page-shell py-8 sm:py-10">
-                    <div class="grid gap-6 lg:grid-cols-[1fr_1.7fr] lg:items-end">
-                        <div>
-                            <p class="text-xs font-semibold uppercase tracking-[0.12em] text-brand">
-                                {{ configString(section, 'eyebrow', 'Perpustakaan dalam angka') }}
-                            </p>
-                            <h2 class="mt-1.5 text-2xl font-semibold tracking-tight text-ink sm:text-[28px]">
-                                {{ configString(section, 'title', 'Statistik') }}
-                            </h2>
-                        </div>
-
-                        <div class="grid grid-cols-2 divide-x divide-line lg:grid-cols-4">
-                            <div v-for="item in statisticsData(section)" :key="item.key" class="px-4 first:pl-0 last:pr-0">
-                                <p class="text-2xl font-semibold tracking-tight text-ink sm:text-3xl">{{ item.value.toLocaleString('id-ID') }}</p>
-                                <p class="mt-1 text-xs text-ink-soft">{{ item.label }}</p>
-                            </div>
+                <div class="ui-page-shell py-5 sm:py-8">
+                    <div class="mb-3 sm:mb-5">
+                        <p class="text-[10px] font-semibold uppercase tracking-[0.12em] text-brand sm:text-xs">
+                            {{ configString(section, 'eyebrow', 'Perpustakaan dalam angka') }}
+                        </p>
+                        <h2 class="mt-1 text-xl font-semibold tracking-tight text-ink sm:text-[28px]">
+                            {{ configString(section, 'title', 'Statistik') }}
+                        </h2>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3">
+                        <div
+                            v-for="item in statisticsData(section)"
+                            :key="item.key"
+                            class="min-w-0 rounded-xl border border-line/80 bg-surface px-3 py-3 sm:px-4 sm:py-4"
+                        >
+                            <p class="text-[23px] font-semibold leading-none tabular-nums tracking-tight text-ink sm:text-3xl">{{ item.value.toLocaleString('id-ID') }}</p>
+                            <p class="mt-2 text-xs leading-4 text-ink-soft">{{ item.key === 'ebooks' ? 'Buku publik' : item.label }}</p>
                         </div>
                     </div>
                 </div>
             </section>
         </template>
 
-        <section class="ui-page-shell pb-6 pt-4 sm:pb-10">
-            <div class="flex flex-col gap-4 rounded-[var(--radius-xl)] bg-brand-soft px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <section class="ui-page-shell pb-4 pt-3 sm:pb-8 sm:pt-4">
+            <div class="flex flex-col gap-3 rounded-xl bg-brand-soft px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
                 <div class="flex min-w-0 items-start gap-3">
                     <span class="grid size-9 shrink-0 place-items-center rounded-[var(--radius-md)] bg-surface text-brand">
                         <Compass class="size-4" />

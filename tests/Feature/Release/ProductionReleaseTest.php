@@ -179,11 +179,11 @@ class ProductionReleaseTest extends TestCase
         );
 
         $this->assertStringContainsString(
-            '## [1.5.1] - 2026-10-13',
+            '## [1.5.2] - 2026-10-13',
             $changelog,
         );
         $this->assertStringContainsString(
-            '# Production Release 1.5.1',
+            '# Production Release 1.5.2',
             $runbook,
         );
         $this->assertStringContainsString(

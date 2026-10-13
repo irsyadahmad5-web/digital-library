@@ -45,6 +45,7 @@ class HomepageBuilderUiRecoveryTest extends TestCase
         );
 
         $this->assertStringContainsString('displaySlides', $slider);
+        $this->assertStringContainsString('<h1 class="sr-only">', $slider);
         $this->assertStringContainsString('class="w-full overflow-hidden bg-[#172033]"', $slider);
         $this->assertStringContainsString('aspect-[16/9]', $slider);
         $this->assertStringContainsString('md:aspect-[8/3]', $slider);

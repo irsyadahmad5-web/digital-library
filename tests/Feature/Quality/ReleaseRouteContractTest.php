@@ -188,8 +188,18 @@ class ReleaseRouteContractTest extends TestCase
     {
         $allowedPrefixes = ['admin', 'install'];
 
+        $presence = Route::getRoutes()->getByName('public.presence');
+        $this->assertInstanceOf(IlluminateRoute::class, $presence);
+        $this->assertContains('site.maintenance', $presence->gatherMiddleware());
+        $this->assertContains('throttle:10,1,public-presence-', $presence->gatherMiddleware());
+        $this->assertSame(['POST'], $presence->methods());
+
         $unexpected = collect(Route::getRoutes())
             ->filter(function (IlluminateRoute $route) use ($allowedPrefixes): bool {
+                if ($route->getName() === 'public.presence') {
+                    return false;
+                }
+
                 if (
                     array_intersect(
                         $route->methods(),

@@ -39,7 +39,7 @@ async function install() {
 </script>
 
 <template>
-    <div class="pwa-floating-safe pointer-events-none fixed inset-x-0 bottom-0 z-[80] sm:p-5">
+    <div class="pwa-floating-safe pointer-events-none fixed inset-x-0 bottom-0 z-[80] px-3 pb-2 sm:p-5">
         <div class="mx-auto flex max-w-lg flex-col gap-2">
             <div
                 v-if="!online"
@@ -109,11 +109,13 @@ async function install() {
             <button
                 v-if="!installDismissed && (canPromptInstall || needsManualIosInstall)"
                 type="button"
-                class="pointer-events-auto ml-auto inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-md)] border border-line bg-surface px-4 text-xs font-semibold text-ink shadow-[var(--shadow-float)] hover:bg-surface-subtle"
+                class="pointer-events-auto ml-auto inline-flex size-11 items-center justify-center gap-2 rounded-full border border-line bg-surface text-xs font-semibold text-ink shadow-[var(--shadow-float)] hover:bg-surface-subtle sm:min-h-11 sm:w-auto sm:rounded-[var(--radius-md)] sm:px-4"
+                aria-label="Pasang aplikasi"
+                title="Pasang aplikasi"
                 @click="install"
             >
                 <Download class="size-4" />
-                Pasang aplikasi
+                <span class="hidden sm:inline">Pasang aplikasi</span>
             </button>
         </div>
     </div>

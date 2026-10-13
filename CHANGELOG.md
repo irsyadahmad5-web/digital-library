@@ -2,6 +2,30 @@
 
 All notable changes to Digital Library are documented in this file.
 
+## [1.5.2] - 2026-10-13
+
+### Improved
+
+- Tightened mobile homepage spacing and responsive type/card sizing under the full-width hero banner, with subtle desktop spacing refinements.
+- Fixed the mobile navigation panel's horizontal clipping and scrollbar, and redesigned the constrained search input/button with accessible touch targets.
+- Added Beranda to the desktop navigation and simplified footer branding, navigation, contact display, and compact statistics.
+- Removed the old Ruang Baca Digital promotional strip from the footer.
+- Added privacy-preserving realtime active visitor counts (120-second presence window, 45-second heartbeat, no stored IP/user-agent); includes a small indexed presence table migration and throttled CSRF-protected endpoint.
+- PWA manifest icons and Apple touch icon are now generated from the administrator-uploaded site logo, with a maskable safe area and generic fallback when no valid logo exists.
+- Reduced the intrusive floating PWA install control to an icon-sized mobile button while retaining clear accessible naming.
+- Preserved image-only hero presentation while adding a screen-reader-accessible page heading.
+
+### Verification
+
+- Responsive visual/browser QA covers the mobile drawer's bounds and search input, all major viewport sizes, accessible controls, and reduced motion.
+- Backend feature and release route contracts cover realtime presence, logo-derived PWA images, footer, and navigation behavior.
+
+### Deployment
+
+- Production upgrade from v1.5.1 requires database migration `2026_10_13_020000_create_public_presence_table.php`.
+- Update existing PWA installations by refreshing the manifest and, when an installed device retains the old cached icon, reinstalling the app.
+- Keep full backup, verified artifact checksum, health/security gates, and rollback readiness.
+
 ## [1.5.1] - 2026-10-13
 
 ### Changed

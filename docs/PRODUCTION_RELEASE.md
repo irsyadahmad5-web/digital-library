@@ -1,6 +1,15 @@
-# Production Release 1.5.1
+# Production Release 1.5.2
 
-Digital Library 1.5.1 is the stable presentation patch on top of v1.5.0. It keeps the Homepage Builder recovery and modern footer while changing the public Hero Slider to a full-bleed, image-only horizontal banner, simplifying slider administration, auto-hiding translucent carousel controls, and bringing the admin-style compact auto-hiding document scrollbar to public pages.
+Digital Library 1.5.2 is the stable responsive/mobile experience patch on top of v1.5.1. It tightens homepage section spacing, corrects the mobile drawer and search button, simplifies footer and statistics, adds realtime active visitor counts with a tiny indexed database table, and uses the configured website logo for PWA icons.
+
+## v1.5.2 acceptance checklist
+
+- Mobile slider stays full-width/horizontal while book, category, statistics and discovery sections use compact responsive spacing and readable type. Desktop keeps editorial spacing.
+- Mobile drawer has no horizontal overflow or clipped search button, and desktop top navigation contains Beranda.
+- Footer has no Ruang Baca Digital promotional banner; contact fields are shown directly when configured; heading Statistik and real-time Pengguna online appear with a 120-second window.
+- GET `/manifest.webmanifest` contains `/pwa/site-icon/192.png`, `/pwa/site-icon/512.png` and `/pwa/site-icon/maskable-512.png`. Icons should show the uploaded site logo.
+- POST `/presence/heartbeat` requires CSRF, is rate limited and returns a non-cached visitor count after migration. No IP/user agent is stored.
+- Maintain backup/restore-readiness, artifact file hash validation, search/category/books smoke, and final health/security checks before acceptance.
 
 ## Release artifact
 
@@ -13,8 +22,8 @@ composer release:package
 The packaging command runs the full QA gate and browser smoke test, rebuilds frontend assets, exports only tracked source files, installs optimized production Composer dependencies without dev packages, adds `RELEASE.json`, generates `RELEASE_FILES.sha256`, and creates:
 
 ```text
-dist/digital-library-v1.5.1.zip
-dist/digital-library-v1.5.1.zip.sha256
+dist/digital-library-v1.5.2.zip
+dist/digital-library-v1.5.2.zip.sha256
 ```
 
 The archive deliberately excludes `.env`, Git metadata, `node_modules`, runtime logs, backups, uploaded ebooks, and other server state. It includes the full application source, migrations, tests/documentation, production `vendor/`, and compiled `public/build/`.
@@ -23,7 +32,7 @@ Verify the ZIP before deployment:
 
 ```bash
 cd dist
-sha256sum -c digital-library-v1.5.1.zip.sha256
+sha256sum -c digital-library-v1.5.2.zip.sha256
 ```
 
 After extraction, `RELEASE_FILES.sha256` can be used to validate all packaged files.
