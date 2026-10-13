@@ -2,6 +2,24 @@
 
 All notable changes to Digital Library are documented in this file.
 
+## [1.5.5] - 2026-10-13
+
+### Changed
+
+- Fix cramped mobile homepage book cards reported on phones: no more truncated category badge or author over a tiny cover, and no large blank column beside a miniature poster.
+- Retain the original cover image as the visual focus on the left at a compact 84×112 px size while showing full readable title, author, category and reader count on the right, **without a large white framed card**.
+- Preserve existing v1.5.4 homepage section padding, typography, horizontal hero, desktop/tablet book cards and catalog presentation.
+- Use one unboxed compact book row per grid line on phone sizes, instead of spreading miniature poster tiles across the page.
+
+### Verification
+
+- Updated mobile browser layout audit measures the book row, cover dimensions and visibility of title and author at 360/390/430px; existing desktop, search, PWA and navigation audits retained.
+- Regression test verifies borderless markup, visible mobile metadata, and unchanged non-mobile cover overlays.
+
+### Deployment
+
+- Stable presentation-only v1.5.5 over v1.5.4. No new database migration or user content changes.
+
 ## [1.5.4] - 2026-10-13
 
 ### Changed

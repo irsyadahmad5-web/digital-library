@@ -109,7 +109,7 @@ class CdpSession {
             const timeout = setTimeout(() => {
                 this.pending.delete(id);
                 reject(new Error('CDP timeout: ' + method));
-            }, 10000);
+            }, method === 'Page.navigate' ? 30000 : 10000);
 
             this.pending.set(id, {
                 resolve: (value) => {
@@ -297,7 +297,18 @@ function auditPage() {
             .slice(0, 4)
             .map((element) => {
                 const rect = element.getBoundingClientRect();
-                return { width: Math.round(rect.width), height: Math.round(rect.height) };
+                const cover = element.firstElementChild;
+                const coverRect = cover?.getBoundingClientRect();
+                const mobileTitle = [...element.querySelectorAll('h3')].find(visible);
+                const mobileAuthor = [...element.querySelectorAll('p')].find(visible);
+                return {
+                    width: Math.round(rect.width),
+                    height: Math.round(rect.height),
+                    coverWidth: Math.round(coverRect?.width ?? 0),
+                    coverHeight: Math.round(coverRect?.height ?? 0),
+                    titleVisible: Boolean(mobileTitle),
+                    authorVisible: Boolean(mobileAuthor),
+                };
             })
         : [];
 
@@ -484,8 +495,12 @@ try {
                     failures.push(width + 'x' + height + ' homepage: no visible compact book card');
                 }
                 for (const card of audit.compactHomepageCards) {
-                    if (card.height > 150 || card.height < 95 || card.width > 120 || card.width < 70) {
-                        failures.push(width + 'x' + height + ' homepage: compact portrait cover tile is out of bounds ' + JSON.stringify(card));
+                    if (card.height > 148 || card.height < 100
+                        || card.width < Math.floor(audit.clientWidth * 0.75)
+                        || card.coverWidth < 80 || card.coverWidth > 90
+                        || card.coverHeight < 103 || card.coverHeight > 120
+                        || !card.titleVisible || !card.authorVisible) {
+                        failures.push(width + 'x' + height + ' homepage: compact borderless book row failed sizing/readability acceptance ' + JSON.stringify(card));
                     }
                 }
             }
